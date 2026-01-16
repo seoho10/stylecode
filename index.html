@@ -223,8 +223,8 @@
                 <h2 class="text-2xl font-black text-slate-900 tracking-tight">2. CUSTOMER ANALYSIS</h2>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                <div class="lg:col-span-4">
                     <div class="section-title"><span>회원 채널별 실적 (3-Depth)</span></div>
                     <div class="table-container">
                         <table>
@@ -254,12 +254,21 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="mt-6">
+                        <div class="section-title"><span>회원 구분</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>회원 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                                <tbody id="cust-member-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div>
+                <div class="lg:col-span-4">
                     <div class="section-title"><span>회원 컬러별 판매</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                     <div class="table-container"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
                 </div>
-                <div>
+                <div class="lg:col-span-4">
                     <div class="section-title"><span>회원 사이즈별 판매</span><span id="cust-t-size" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                     <div class="table-container"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
                 </div>
@@ -285,13 +294,13 @@
                 '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 40, WHITE: 40}, sizes: {'250': 100, '260': 100, '270': 80}, geo: {서울: 100, 경기: 100, 부산: 80} }
             },
             cust: {
-                '회원 전체': { qty: 6300, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300} },
-                '온라인': { qty: 3500, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000} },
-                '자사몰': { qty: 3500, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000} }, // 온라인과 동일
-                '오프라인': { qty: 2800, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500} },
-                '백화점': { qty: 1960, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360} },
-                '대리점': { qty: 560, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100} },
-                '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40} }
+                '회원 전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300}, members: {기존회원: {qty: 4410, sales: 540470000}, 신규회원: {qty: 1890, sales: 231630000}} },
+                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}} },
+                '자사몰': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}} },
+                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500}, members: {기존회원: {qty: 1960, sales: 224000000}, 신규회원: {qty: 840, sales: 96000000}} },
+                '백화점': { qty: 1960, sales: 224000000, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360}, members: {기존회원: {qty: 1372, sales: 156800000}, 신규회원: {qty: 588, sales: 67200000}} },
+                '대리점': { qty: 560, sales: 64000000, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100}, members: {기존회원: {qty: 392, sales: 44800000}, 신규회원: {qty: 168, sales: 19200000}} },
+                '직영점': { qty: 280, sales: 32000000, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40}, members: {기존회원: {qty: 196, sales: 22400000}, 신규회원: {qty: 84, sales: 9600000}} }
             }
         };
 
@@ -343,9 +352,26 @@
             $(rowElement).addClass('selected-customer');
             $('#cust-t-color').text(name);
             $('#cust-t-size').text(name);
+            $('#cust-t-member').text(name);
             const d = DATA.cust[name];
             fillTable('cust-color-body', d.colors, d.qty);
             fillTable('cust-size-body', d.sizes, d.qty);
+            fillMemberTable('cust-member-body', d.members, d.qty, d.sales);
+        }
+
+        function fillMemberTable(id, members, totalQty, totalSales) {
+            const b = document.getElementById(id);
+            b.innerHTML = '';
+            Object.entries(members).forEach(([memberType, data]) => {
+                const qtyRatio = ((data.qty / totalQty) * 100).toFixed(1);
+                const salesRatio = ((data.sales / totalSales) * 100).toFixed(1);
+                b.innerHTML += `<tr>
+                    <td class="font-bold">${memberType}</td>
+                    <td>${data.sales.toLocaleString()}</td>
+                    <td>${data.qty.toLocaleString()}</td>
+                    <td class="text-slate-400">${qtyRatio}%</td>
+                </tr>`;
+            });
         }
 
         function fillTable(id, obj, total) {
