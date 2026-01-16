@@ -31,13 +31,17 @@
         
         .filter-label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; display: block; }
         .select2-container--default .select2-selection--multiple { border: 1px solid #e2e8f0; border-radius: 6px; min-height: 38px; background-color: #f8fafc; }
+        
+        /* 스티커(Badge) 공통 스타일 */
+        .badge-online { font-size: 10px; background-color: #dbeafe; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
+        .badge-offline { font-size: 10px; background-color: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
     </style>
 </head>
 <body class="p-6 text-slate-900">
     <div class="max-w-7xl mx-auto">
         
         <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.2 (Table Focused)</span></h1>
+            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.3 (Final Table Layout)</span></h1>
             <button onclick="fetchAll()" class="bg-blue-600 text-white px-8 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition active:scale-95">조회하기</button>
         </header>
 
@@ -119,17 +123,17 @@
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>컬러별 판매</span><span id="on-t-color" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">온라인 전체</span></div>
+                    <div class="section-title"><span>컬러별 판매</span><span id="on-t-color" class="badge-online">온라인 전체</span></div>
                     <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
                 </div>
                 <div>
-                    <div class="section-title"><span>사이즈별 판매</span><span id="on-t-size" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">온라인 전체</span></div>
+                    <div class="section-title"><span>사이즈별 판매</span><span id="on-t-size" class="badge-online">온라인 전체</span></div>
                     <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
                 </div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
-                    <span id="on-chart-title" class="text-xs font-bold text-blue-600">ONLINE CHANNEL TREND (온라인 전체)</span>
+                    <span id="on-chart-title" class="text-xs font-bold text-blue-600 uppercase tracking-tighter">ONLINE CHANNEL TREND (온라인 전체)</span>
                     <div class="control-group">
                         <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
                         <button id="on-qty" onclick="setChart('on', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
@@ -157,18 +161,18 @@
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
+                    <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="badge-offline">오프라인 전체</span></div>
                     <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
                 </div>
                 <div>
-                    <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
+                    <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="badge-offline">오프라인 전체</span></div>
                     <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
                 </div>
             </div>
             
             <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
                 <div class="flex justify-between items-center mb-4">
-                    <span id="off-chart-title" class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND (오프라인 전체)</span>
+                    <span id="off-chart-title" class="text-xs font-bold text-red-600 uppercase tracking-tighter">OFFLINE CHANNEL TREND (오프라인 전체)</span>
                     <div class="control-group">
                         <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
                         <button id="off-qty" onclick="setChart('off', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
@@ -179,17 +183,17 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="section-title"><span id="shop-rank-title">오프라인 매장 실적 TOP 15</span></div>
-                    <div class="table-container" style="height: 400px;">
+                    <div class="section-title"><span>오프라인 매장 실적 TOP 10</span><span id="off-t-shop" class="badge-offline">오프라인 전체</span></div>
+                    <div class="table-container" style="height: 380px;">
                         <table class="w-full text-left">
-                            <thead><tr><th>순위</th><th>매장명</th><th>매출액</th><th>수량</th></tr></thead>
+                            <thead><tr><th>순위</th><th>매장명</th><th>매출액(원)</th><th>판매수량</th></tr></thead>
                             <tbody id="shop-rank-body"></tbody>
                         </table>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="section-title"><span id="region-rank-title">지역별 매출 실적</span><span id="off-t-region" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
-                    <div class="table-container" style="height: 400px;">
+                    <div class="section-title"><span>지역별 매출 실적</span><span id="off-t-region" class="badge-offline">오프라인 전체</span></div>
+                    <div class="table-container" style="height: 380px;">
                         <table class="w-full text-left">
                             <thead><tr><th>지역</th><th>매출액(원)</th><th>판매수량</th><th>비중</th></tr></thead>
                             <tbody id="region-rank-body"></tbody>
@@ -253,10 +257,10 @@
             if(rowElement) rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
             else document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
 
+            // 스티커(뱃지) 텍스트 업데이트
             document.getElementById(`${type}-t-color`).innerText = name;
             document.getElementById(`${type}-t-size`).innerText = name;
-            document.getElementById(`${type}-chart-title`).innerText = `${type.toUpperCase()} CHANNEL TREND (${name})`;
-
+            
             const d = DATA[type][name] || DATA[type][type === 'on' ? '온라인 전체' : '오프라인 전체'];
             fillTable(`${type}-color-body`, d.colors, d.qty);
             fillTable(`${type}-size-body`, d.sizes, d.qty);
@@ -266,8 +270,12 @@
 
             if(type === 'off') {
                 document.getElementById('off-t-region').innerText = name;
+                document.getElementById('off-t-shop').innerText = name; // TOP 10 스티커 업데이트
+                document.getElementById('off-chart-title').innerText = `OFFLINE CHANNEL TREND (${name})`;
                 updateShopRank(name);
                 updateRegionTable(d.geo, d.qty);
+            } else {
+                document.getElementById('on-chart-title').innerText = `ONLINE CHANNEL TREND (${name})`;
             }
         }
 
@@ -282,8 +290,8 @@
             const body = document.getElementById('shop-rank-body');
             body.innerHTML = '';
             const prefix = channel.includes('전체') ? '우수' : channel;
-            for(let i=1; i<=15; i++) {
-                const sales = Math.floor(Math.random() * 2000000) + 1000000;
+            for(let i=1; i<=10; i++) { // TOP 10으로 조정
+                const sales = Math.floor(Math.random() * 2000000) + 3000000;
                 body.innerHTML += `<tr><td class="font-bold text-slate-400">${i}</td><td>${prefix} ${i}호점</td><td>${sales.toLocaleString()}원</td><td>${Math.floor(sales/70000)}</td></tr>`;
             }
         }
@@ -291,23 +299,13 @@
         function updateRegionTable(geoData, totalQty) {
             const body = document.getElementById('region-rank-body');
             body.innerHTML = '';
-            
-            const catLen = $('#category').val()?.length || 1;
-            const styleLen = $('#styleCode').val()?.length || 1;
-            const multiplier = Math.max(catLen, styleLen);
+            const multiplier = Math.max($('#category').val()?.length || 1, $('#styleCode').val()?.length || 1);
 
             Object.entries(geoData).forEach(([region, qty]) => {
                 const finalQty = qty * multiplier;
-                const sales = finalQty * 65000; // 평균 단가 가산
+                const sales = finalQty * 65000;
                 const ratio = ((qty / totalQty) * 100).toFixed(1);
-                
-                body.innerHTML += `
-                    <tr>
-                        <td class="font-semibold">${region}</td>
-                        <td>${sales.toLocaleString()}원</td>
-                        <td>${finalQty.toLocaleString()}</td>
-                        <td class="text-blue-600 font-bold">${ratio}%</td>
-                    </tr>`;
+                body.innerHTML += `<tr><td class="font-semibold">${region}</td><td>${sales.toLocaleString()}원</td><td>${finalQty.toLocaleString()}</td><td class="text-red-600 font-bold">${ratio}%</td></tr>`;
             });
         }
 
@@ -320,10 +318,7 @@
 
             const labels = s.view === 'daily' ? ['01-12', '01-13', '01-14', '01-15', '01-16'] : ['W1', 'W2', 'W3', 'W4', 'W5'];
             let ds = [];
-            
-            const catLen = $('#category').val()?.length || 1;
-            const styleLen = $('#styleCode').val()?.length || 1;
-            const multiplier = Math.max(catLen, styleLen);
+            const multiplier = Math.max($('#category').val()?.length || 1, $('#styleCode').val()?.length || 1);
 
             if(key === 'main') {
                 ds = [
@@ -334,7 +329,7 @@
                 const filter = s.selectedChannel;
                 const isOn = key === 'on';
                 const targets = filter.includes('전체') ? (isOn ? ['자사몰','네이버','무신사','카카오'] : ['백화점','대리점','직영점']) : [filter];
-                const colorPalette = ['#3b82f6', '#10b981', '#000000', '#facc15', '#ef4444', '#f97316'];
+                const colorPalette = isOn ? ['#3b82f6', '#10b981', '#000000', '#facc15'] : ['#ef4444', '#f97316', '#7c3aed'];
 
                 ds = targets.map((name, i) => ({
                     label: name,
@@ -366,9 +361,9 @@
             renderSingleChart('main'); 
             renderSingleChart('on'); 
             renderSingleChart('off'); 
-            const currentOffChannel = states.off.selectedChannel;
-            const d = DATA.off[currentOffChannel] || DATA.off['오프라인 전체'];
+            const d = DATA.off[states.off.selectedChannel] || DATA.off['오프라인 전체'];
             updateRegionTable(d.geo, d.qty);
+            updateShopRank(states.off.selectedChannel);
         }
     </script>
 </body>
