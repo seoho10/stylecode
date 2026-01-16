@@ -274,19 +274,22 @@
                 </div>
             </div>
 
-            <div class="mt-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 class="text-lg font-extrabold text-slate-800">성별/연령대 분석</h3>
-                            <p class="text-sm text-slate-400 mt-1">회원 구매 패턴을 성별 및 연령대별로 분석합니다.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+                <div class="lg:col-span-4"></div>
+                <div class="lg:col-span-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-extrabold text-slate-800">성별/연령대 분석</h3>
+                                <p class="text-sm text-slate-400 mt-1">회원 구매 패턴을 성별 및 연령대별로 분석합니다.</p>
+                            </div>
+                            <div class="control-group">
+                                <button id="age-sales" onclick="setAgeChart('sales')" class="btn-toggle btn-active">매출액</button>
+                                <button id="age-qty" onclick="setAgeChart('qty')" class="btn-toggle btn-inactive">판매량</button>
+                            </div>
                         </div>
-                        <div class="control-group">
-                            <button id="age-sales" onclick="setAgeChart('sales')" class="btn-toggle btn-active">매출액</button>
-                            <button id="age-qty" onclick="setAgeChart('qty')" class="btn-toggle btn-inactive">판매량</button>
-                        </div>
+                        <div style="height: 350px;"><canvas id="ageChart"></canvas></div>
                     </div>
-                    <div style="height: 400px;"><canvas id="ageChart"></canvas></div>
                 </div>
             </div>
         </div>
