@@ -10,77 +10,119 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         /* 모든 표의 세로 길이를 동일하게 고정 */
-        .table-container { height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
-        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; }
+        .table-container { height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; padding: 12px 8px; }
+        td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; }
         .clickable-row:hover { background-color: #f1f5f9; cursor: pointer; }
-        .section-title { font-size: 0.875 font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; }
+        .section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body class="p-8">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-8 flex justify-between items-end">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
-                <p class="text-slate-500">브랜드 및 스타일별 매출 분석</p>
+                <p class="text-slate-500">브랜드 및 스타일별 매출 분석 (2026)</p>
             </div>
-            <div class="flex gap-2">
-                <input type="date" id="startDate" class="border rounded-md p-2 text-sm">
-                <span class="self-center">~</span>
-                <input type="date" id="endDate" class="border rounded-md p-2 text-sm">
-                <button onclick="fetchData()" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">조회</button>
+            <div class="flex flex-wrap gap-3 bg-white p-4 rounded-xl shadow-sm border">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Brand</label>
+                    <select id="brand" class="outline-none text-sm font-semibold">
+                        <option>Brand A</option>
+                        <option>Brand B</option>
+                    </select>
+                </div>
+                <div class="w-[1px] h-8 bg-slate-200 self-center"></div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Category</label>
+                    <select id="category" class="outline-none text-sm font-semibold">
+                        <option value="ALL">전체 카테고리</option>
+                        <option>TOP</option>
+                        <option>PANTS</option>
+                    </select>
+                </div>
+                <div class="w-[1px] h-8 bg-slate-200 self-center"></div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Style Code</label>
+                    <input type="text" id="styleCode" placeholder="전체" class="outline-none text-sm font-semibold w-24">
+                </div>
             </div>
         </header>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm mb-10">
-            <canvas id="salesChart" height="80"></canvas>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex gap-4 items-center">
+                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button onclick="updateMetric('sales')" class="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm">매출액</button>
+                        <button onclick="updateMetric('qty')" class="px-3 py-1 text-xs font-bold text-slate-500">판매수량</button>
+                    </div>
+                    <select id="viewType" onchange="renderChart()" class="text-xs border-none bg-transparent font-semibold outline-none">
+                        <option value="daily">일별 보기</option>
+                        <option value="weekly">주별 보기</option>
+                        <option value="monthly">월별 보기</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <input type="date" id="startDate" class="border rounded-md px-2 py-1 text-xs">
+                    <span class="text-slate-400">~</span>
+                    <input type="date" id="endDate" class="border rounded-md px-2 py-1 text-xs">
+                    <button onclick="fetchData()" class="bg-slate-800 text-white px-4 py-1 rounded-md text-xs font-bold hover:bg-black transition">조회하기</button>
+                </div>
+            </div>
+            <div style="height: 300px;">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
 
         <div class="mb-12">
-            <h2 class="text-lg font-bold mb-4 text-blue-700 flex items-center">
-                <span class="w-2 h-6 bg-blue-700 mr-2 rounded"></span> ONLINE ANALYSIS
-            </h2>
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-1 h-5 bg-blue-600 rounded-full"></div>
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight">ONLINE PERFORMANCE</h2>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <div class="section-title"><span>채널별 실적 (온라인)</span></div>
-                    <div class="table-container text-sm">
-                        <table class="w-full text-left">
+                    <div class="section-title"><span>채널별 실적</span></div>
+                    <div class="table-container text-xs">
+                        <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr><th class="p-3">구분</th><th class="p-3">매출</th><th class="p-3">수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>구분</th><th>매출</th><th>수량</th><th>비중</th></tr>
                             </thead>
                             <tbody>
-                                <tr class="clickable-row bg-blue-50/50 font-bold" onclick="updateDetail('온라인 전체')"><td class="p-3">온라인 합계</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">100%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('자사몰')"><td class="p-3 pl-6 text-slate-600 text-xs">자사몰</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('네이버')"><td class="p-3 pl-6 text-slate-600 text-xs">네이버</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('카카오')"><td class="p-3 pl-6 text-slate-600 text-xs">카카오</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('무신사')"><td class="p-3 pl-6 text-slate-600 text-xs">무신사</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row bg-blue-50/50 font-bold" onclick="updateDetail('온라인 전체', 'on')"><td class="text-blue-700">온라인 합계</td><td>-</td><td>-</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('자사몰', 'on')"><td class="pl-4">자사몰</td><td>-</td><td>-</td><td>-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('네이버', 'on')"><td class="pl-4">네이버</td><td>-</td><td>-</td><td>-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('카카오', 'on')"><td class="pl-4">카카오</td><td>-</td><td>-</td><td>-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('무신사', 'on')"><td class="pl-4">무신사</td><td>-</td><td>-</td><td>-</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>컬러 비중</span> <span id="on-color-target" class="text-blue-500 text-xs">Target: 전체</span></div>
-                    <div class="table-container text-sm">
+                    <div class="section-title"><span>컬러 지표</span><span id="on-target-color" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded">전체</span></div>
+                    <div class="table-container text-xs">
                         <table class="w-full text-left">
                             <thead>
-                                <tr><th class="p-3">컬러</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>컬러</th><th>판매수량</th><th>비중</th></tr>
                             </thead>
                             <tbody id="onlineColorBody">
-                                <tr><td class="p-3">블랙</td><td class="p-3">-</td><td class="p-3">70%</td></tr>
-                                <tr><td class="p-3">화이트</td><td class="p-3">-</td><td class="p-3">20%</td></tr>
+                                <tr><td>블랙</td><td>-</td><td>70%</td></tr>
+                                <tr><td>화이트</td><td>-</td><td>20%</td></tr>
+                                <tr><td>그레이</td><td>-</td><td>10%</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>사이즈 비중</span></div>
-                    <div class="table-container text-sm">
+                    <div class="section-title"><span>사이즈 지표</span></div>
+                    <div class="table-container text-xs">
                         <table class="w-full text-left">
                             <thead>
-                                <tr><th class="p-3">사이즈</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td class="p-3">230</td><td class="p-3">-</td><td class="p-3">50%</td></tr>
-                                <tr><td class="p-3">240</td><td class="p-3">-</td><td class="p-3">30%</td></tr>
+                                <tr><td>230</td><td>-</td><td>50%</td></tr>
+                                <tr><td>240</td><td>-</td><td>30%</td></tr>
+                                <tr><td>250</td><td>-</td><td>20%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -89,50 +131,51 @@
         </div>
 
         <div class="mb-12">
-            <h2 class="text-lg font-bold mb-4 text-red-700 flex items-center">
-                <span class="w-2 h-6 bg-red-700 mr-2 rounded"></span> OFFLINE ANALYSIS
-            </h2>
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-1 h-5 bg-red-600 rounded-full"></div>
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight">OFFLINE PERFORMANCE</h2>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <div class="section-title"><span>채널별 실적 (오프라인)</span></div>
-                    <div class="table-container text-sm">
-                        <table class="w-full text-left">
+                    <div class="section-title"><span>채널별 실적</span></div>
+                    <div class="table-container text-xs">
+                        <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr><th class="p-3">구분</th><th class="p-3">매출</th><th class="p-3">수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>구분</th><th>매출</th><th>수량</th><th>비중</th></tr>
                             </thead>
                             <tbody>
-                                <tr class="clickable-row bg-red-50/50 font-bold" onclick="updateDetail('오프라인 전체')"><td class="p-3">오프라인 합계</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">100%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('백화점')"><td class="p-3 pl-6 text-slate-600 text-xs">백화점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('대리점')"><td class="p-3 pl-6 text-slate-600 text-xs">대리점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
-                                <tr class="clickable-row" onclick="updateDetail('직영점')"><td class="p-3 pl-6 text-slate-600 text-xs">직영점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row bg-red-50/50 font-bold" onclick="updateDetail('오프라인 전체', 'off')"><td class="text-red-700">오프라인 합계</td><td>-</td><td>-</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('백화점', 'off')"><td class="pl-4">백화점</td><td>-</td><td>-</td><td>-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('대리점', 'off')"><td class="pl-4">대리점</td><td>-</td><td>-</td><td>-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('직영점', 'off')"><td class="pl-4">직영점</td><td>-</td><td>-</td><td>-</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>컬러 비중</span> <span id="off-color-target" class="text-red-500 text-xs">Target: 전체</span></div>
-                    <div class="table-container text-sm">
+                    <div class="section-title"><span>컬러 지표</span><span id="off-target-color" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded">전체</span></div>
+                    <div class="table-container text-xs">
                         <table class="w-full text-left">
                             <thead>
-                                <tr><th class="p-3">컬러</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>컬러</th><th>판매수량</th><th>비중</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td class="p-3">블랙</td><td class="p-3">-</td><td class="p-3">60%</td></tr>
-                                <tr><td class="p-3">네이비</td><td class="p-3">-</td><td class="p-3">40%</td></tr>
+                                <tr><td>블랙</td><td>-</td><td>60%</td></tr>
+                                <tr><td>베이지</td><td>-</td><td>40%</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div>
-                    <div class="section-title"><span>사이즈 비중</span></div>
-                    <div class="table-container text-sm">
+                    <div class="section-title"><span>사이즈 지표</span></div>
+                    <div class="table-container text-xs">
                         <table class="w-full text-left">
                             <thead>
-                                <tr><th class="p-3">사이즈</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                                <tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td class="p-3">260</td><td class="p-3">-</td><td class="p-3">40%</td></tr>
-                                <tr><td class="p-3">270</td><td class="p-3">-</td><td class="p-3">60%</td></tr>
+                                <tr><td>260</td><td>-</td><td>40%</td></tr>
+                                <tr><td>270</td><td>-</td><td>60%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -142,19 +185,55 @@
     </div>
 
     <script>
-        // 클릭 시 타겟 텍스트 변경 예시
-        function updateDetail(name) {
-            const isOnline = ["온라인 전체", "자사몰", "네이버", "카카오", "무신사"].includes(name);
-            const targetId = isOnline ? 'on-color-target' : 'off-color-target';
-            document.getElementById(targetId).innerText = `Target: ${name}`;
-            // 여기서 향후 API 호출 로직 추가
+        let myChart;
+        let currentMetric = 'sales';
+
+        function updateMetric(metric) {
+            currentMetric = metric;
+            alert(metric === 'sales' ? '매출액 기준으로 전환합니다.' : '판매수량 기준으로 전환합니다.');
+            renderChart();
         }
 
-        // 초기 날짜 설정
+        function updateDetail(name, type) {
+            const labelId = type === 'on' ? 'on-target-color' : 'off-target-color';
+            document.getElementById(labelId).innerText = name;
+            console.log(`${name} 상세 데이터 로드 시뮬레이션`);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['01-10', '01-11', '01-12', '01-13', '01-14', '01-15', '01-16'],
+                    datasets: [
+                        { label: 'Online', data: [30, 45, 60, 55, 70, 85, 90], borderColor: '#2563eb', backgroundColor: '#2563eb22', fill: true, tension: 0.4 },
+                        { label: 'Offline', data: [20, 35, 40, 45, 50, 45, 60], borderColor: '#dc2626', backgroundColor: '#dc262622', fill: true, tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        function fetchData() {
+            const s = document.getElementById('startDate').value;
+            const e = document.getElementById('endDate').value;
+            alert(`${s} ~ ${e} 기간 데이터를 조회합니다.`);
+            renderChart();
+        }
+
         window.onload = () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = today;
             document.getElementById('endDate').value = today;
+            renderChart();
         };
     </script>
 </body>
