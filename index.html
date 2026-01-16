@@ -6,6 +6,9 @@
     <title>StyleCode Analytics Full Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; font-size: 14px; }
@@ -20,6 +23,10 @@
         .btn-active { background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #1e293b; border-color: #e2e8f0; }
         .btn-inactive { color: #94a3b8; }
         .control-group { background-color: #f1f5f9; padding: 3px; border-radius: 6px; display: flex; gap: 2px; }
+        /* Select2 커스텀 스타일 */
+        .select2-container--default .select2-selection--multiple { border-color: #e2e8f0; border-radius: 0.375rem; min-height: 38px; }
+        .select2-container { width: 100% !important; }
+        .filter-label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body class="p-6 text-slate-900">
@@ -29,23 +36,48 @@
             <button onclick="fetchAll()" class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:bg-blue-700 shadow-md transition active:scale-95">조회하기</button>
         </header>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm border mb-8 flex flex-wrap gap-4 items-end">
-            <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 mb-1 uppercase">Brand</label>
-                <select id="brand" class="border rounded px-2 py-1 text-xs font-semibold outline-none"><option>Brand A</option></select>
-            </div>
-            <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 mb-1 uppercase">Style Code</label>
-                <input type="text" id="styleCode" value="SC-2026-SHOE" class="border rounded px-2 py-1 text-xs font-semibold outline-none w-32">
-            </div>
-            <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 mb-1 uppercase">Period</label>
-                <div class="flex items-center gap-2 border rounded px-2 py-1 bg-slate-50">
-                    <input type="date" id="startDate" class="bg-transparent text-xs outline-none"><span class="text-slate-400 text-xs">~</span><input type="date" id="endDate" class="bg-transparent text-xs outline-none">
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+                <div>
+                    <label class="filter-label">Brand</label>
+                    <select id="brand" class="w-full border rounded-md px-3 py-2 text-sm outline-none bg-slate-50 font-semibold">
+                        <option>Brand A</option>
+                        <option>Brand B</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label">Category (Multi)</label>
+                    <select id="category" class="js-example-basic-multiple" name="categories[]" multiple="multiple">
+                        <option value="shoes">신발</option>
+                        <option value="hat">모자</option>
+                        <option value="top">상의</option>
+                        <option value="bottom">하의</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label">Style Code (Multi)</label>
+                    <select id="styleCode" class="js-example-basic-multiple" name="styles[]" multiple="multiple">
+                        <option value="SC-001">SC-001 (스니커즈)</option>
+                        <option value="SC-002">SC-002 (러닝화)</option>
+                        <option value="SC-003">SC-003 (비니)</option>
+                        <option value="SC-004">SC-004 (캡)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label">Period</label>
+                    <div class="flex items-center gap-2 border rounded-md px-3 py-2 bg-slate-50 h-[38px]">
+                        <input type="date" id="startDate" class="bg-transparent text-xs outline-none w-full">
+                        <span class="text-slate-400">~</span>
+                        <input type="date" id="endDate" class="bg-transparent text-xs outline-none w-full">
+                    </div>
                 </div>
             </div>
+            <p class="mt-3 text-[11px] text-slate-400 italic">* 카테고리와 스타일코드 중 하나를 선택하면 데이터가 합산(Sum)되어 노출됩니다.</p>
         </div>
 
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-sm text-slate-700 underline decoration-blue-500 underline-offset-4">통합 매출/수량 추이</h3>
+                <h3 class="font-bold text-sm text-slate-700 underline decoration-blue-500 underline-offset-4">통합 매출/수량 추이 (선택 Sum 기준)</h3>
                 <div class="flex gap-3">
                     <div class="control-group">
                         <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
@@ -154,6 +186,26 @@
     </div>
 
     <script>
+        $(document).ready(function() {
+            // Select2 초기화 (멀티선택, 타이핑 검색 지원)
+            $('.js-example-basic-multiple').select2({
+                placeholder: "선택 또는 검색하세요",
+                allowClear: true
+            });
+
+            // 카테고리/스타일코드 상호 배타적 선택 로직 (필요시 활성화)
+            $('#category').on('change', function() {
+                if($(this).val().length > 0) {
+                    // 카테고리 선택 시 스타일코드 초기화는 하지 않되, 비즈니스 로직상 합산 처리
+                    console.log("Categories selected:", $(this).val());
+                }
+            });
+
+            fetchAll();
+            updateIndicator('on', '온라인 전체', null);
+            updateIndicator('off', '오프라인 전체', null);
+        });
+
         const DATA = {
             on: {
                 '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
@@ -189,7 +241,6 @@
         function updateIndicator(type, name, rowElement) {
             const rows = document.querySelectorAll(`#${type}-list tr`);
             rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
-            
             if(rowElement) rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
             else document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
 
@@ -200,8 +251,6 @@
             const d = DATA[type][name];
             fillTable(`${type}-color-body`, d.colors, d.qty);
             fillTable(`${type}-size-body`, d.sizes, d.qty);
-
-            // 그래프 필터 연동
             states[type].selectedChannel = name;
             renderSingleChart(type);
         }
@@ -223,23 +272,26 @@
             const labels = s.view === 'daily' ? ['01-12', '01-13', '01-14', '01-15', '01-16'] : s.view === 'weekly' ? ['1주차', '2주차'] : ['11월', '12월'];
             let ds = [];
 
+            // 필터 Sum 효과를 위한 배수 시뮬레이션
+            const catCount = $('#category').val()?.length || 1;
+            const styleCount = $('#styleCode').val()?.length || 1;
+            const multiplier = Math.max(catCount, styleCount);
+
             if(key === 'main') {
                 ds = [
-                    { label: 'Online', data: [300, 350, 320, 400, 380].map(v => s.metric === 'sales' ? v*50000 : v), borderColor: '#2563eb' },
-                    { label: 'Offline', data: [200, 220, 210, 250, 230].map(v => s.metric === 'sales' ? v*60000 : v), borderColor: '#dc2626' }
+                    { label: 'Online', data: [300, 350, 320, 400, 380].map(v => (s.metric === 'sales' ? v*50000 : v) * multiplier), borderColor: '#2563eb' },
+                    { label: 'Offline', data: [200, 220, 210, 250, 230].map(v => (s.metric === 'sales' ? v*60000 : v) * multiplier), borderColor: '#dc2626' }
                 ];
             } else {
-                // 채널별 상세 로직 (합계 선택 vs 개별 채널 선택)
                 const isOnline = key === 'on';
                 const allChannels = isOnline ? ['자사몰', '네이버', '무신사', '카카오'] : ['백화점', '대리점', '직영점'];
                 const colors = ['#3b82f6', '#10b981', '#000000', '#facc15', '#ef4444', '#f97316', '#8b5cf6'];
-                
                 const filter = s.selectedChannel;
                 const targets = (filter.includes('전체')) ? allChannels : [filter];
 
                 ds = targets.map((name, idx) => ({
                     label: name,
-                    data: [20, 30, 25, 40, 35].map(v => (s.metric === 'sales' ? v*(isOnline?55000:60000) : v) * (0.8 + Math.random()*0.4)),
+                    data: [20, 30, 25, 40, 35].map(v => (s.metric === 'sales' ? v*(isOnline?55000:60000) : v) * (0.8 + Math.random()*0.4) * multiplier),
                     borderColor: colors[idx % colors.length],
                     tension: 0.3
                 }));
@@ -252,15 +304,20 @@
             });
         }
 
-        function fetchAll() { renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); }
+        function fetchAll() { 
+            // 조회하기 클릭 시 필터 값 확인 (콘솔 로그용)
+            console.log("Selected Categories:", $('#category').val());
+            console.log("Selected StyleCodes:", $('#styleCode').val());
+            renderSingleChart('main'); 
+            renderSingleChart('on'); 
+            renderSingleChart('off'); 
+        }
 
-        window.onload = () => {
-            document.getElementById('startDate').value = '2026-01-12';
-            document.getElementById('endDate').value = '2026-01-16';
-            fetchAll();
-            updateIndicator('on', '온라인 전체', null);
-            updateIndicator('off', '오프라인 전체', null);
-        };
+        // 초기 날짜 설정
+        const today = new Date();
+        const lastWeek = new Date(today); lastWeek.setDate(today.getDate() - 7);
+        document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
     </script>
 </body>
 </html>
