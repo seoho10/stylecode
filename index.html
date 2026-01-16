@@ -264,13 +264,20 @@
                         </div>
                     </div>
                 </div>
-                <div class="lg:col-span-4">
-                    <div class="section-title"><span>회원 컬러별 판매</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
-                    <div class="table-container"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
-                </div>
-                <div class="lg:col-span-4">
-                    <div class="section-title"><span>회원 사이즈별 판매</span><span id="cust-t-size" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
-                    <div class="table-container"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
+                <div class="lg:col-span-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-extrabold text-slate-800">성별/연령대 분석</h3>
+                                <p class="text-sm text-slate-400 mt-1">회원 구매 패턴을 성별 및 연령대별로 분석합니다.</p>
+                            </div>
+                            <div class="control-group">
+                                <button id="age-sales" onclick="setAgeChart('sales')" class="btn-toggle btn-active">매출액</button>
+                                <button id="age-qty" onclick="setAgeChart('qty')" class="btn-toggle btn-inactive">판매량</button>
+                            </div>
+                        </div>
+                        <div style="height: 400px;"><canvas id="ageChart"></canvas></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,20 +301,21 @@
                 '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 40, WHITE: 40}, sizes: {'250': 100, '260': 100, '270': 80}, geo: {서울: 100, 경기: 100, 부산: 80} }
             },
             cust: {
-                '회원 전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300}, members: {기존회원: {qty: 4410, sales: 540470000}, 신규회원: {qty: 1890, sales: 231630000}} },
-                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}} },
-                '자사몰': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}} },
-                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500}, members: {기존회원: {qty: 1960, sales: 224000000}, 신규회원: {qty: 840, sales: 96000000}} },
-                '백화점': { qty: 1960, sales: 224000000, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360}, members: {기존회원: {qty: 1372, sales: 156800000}, 신규회원: {qty: 588, sales: 67200000}} },
-                '대리점': { qty: 560, sales: 64000000, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100}, members: {기존회원: {qty: 392, sales: 44800000}, 신규회원: {qty: 168, sales: 19200000}} },
-                '직영점': { qty: 280, sales: 32000000, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40}, members: {기존회원: {qty: 196, sales: 22400000}, 신규회원: {qty: 84, sales: 9600000}} }
+                '회원 전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300}, members: {기존회원: {qty: 4410, sales: 540470000}, 신규회원: {qty: 1890, sales: 231630000}}, ageGender: {male: {'15-19': {qty: 180, sales: 22000000}, '20-24': {qty: 520, sales: 64000000}, '25-29': {qty: 850, sales: 104000000}, '30-34': {qty: 920, sales: 112000000}, '35-39': {qty: 680, sales: 83000000}, '40-44': {qty: 450, sales: 55000000}, '45-49': {qty: 320, sales: 39000000}, '50-54': {qty: 220, sales: 27000000}, '55-59': {qty: 150, sales: 18000000}, '60~': {qty: 120, sales: 15000000}}, female: {'15-19': {qty: 200, sales: 24000000}, '20-24': {qty: 680, sales: 83000000}, '25-29': {qty: 950, sales: 116000000}, '30-34': {qty: 780, sales: 95000000}, '35-39': {qty: 520, sales: 64000000}, '40-44': {qty: 380, sales: 46000000}, '45-49': {qty: 280, sales: 34000000}, '50-54': {qty: 200, sales: 24000000}, '55-59': {qty: 130, sales: 16000000}, '60~': {qty: 100, sales: 12000000}}} },
+                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}}, ageGender: {male: {'15-19': {qty: 100, sales: 12000000}, '20-24': {qty: 290, sales: 36000000}, '25-29': {qty: 470, sales: 58000000}, '30-34': {qty: 510, sales: 62000000}, '35-39': {qty: 380, sales: 46000000}, '40-44': {qty: 250, sales: 30000000}, '45-49': {qty: 180, sales: 22000000}, '50-54': {qty: 120, sales: 15000000}, '55-59': {qty: 80, sales: 10000000}, '60~': {qty: 70, sales: 8000000}}, female: {'15-19': {qty: 110, sales: 13000000}, '20-24': {qty: 380, sales: 46000000}, '25-29': {qty: 530, sales: 65000000}, '30-34': {qty: 430, sales: 52000000}, '35-39': {qty: 290, sales: 35000000}, '40-44': {qty: 210, sales: 25000000}, '45-49': {qty: 150, sales: 18000000}, '50-54': {qty: 110, sales: 13000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 60, sales: 7000000}}} },
+                '자사몰': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}}, ageGender: {male: {'15-19': {qty: 100, sales: 12000000}, '20-24': {qty: 290, sales: 36000000}, '25-29': {qty: 470, sales: 58000000}, '30-34': {qty: 510, sales: 62000000}, '35-39': {qty: 380, sales: 46000000}, '40-44': {qty: 250, sales: 30000000}, '45-49': {qty: 180, sales: 22000000}, '50-54': {qty: 120, sales: 15000000}, '55-59': {qty: 80, sales: 10000000}, '60~': {qty: 70, sales: 8000000}}, female: {'15-19': {qty: 110, sales: 13000000}, '20-24': {qty: 380, sales: 46000000}, '25-29': {qty: 530, sales: 65000000}, '30-34': {qty: 430, sales: 52000000}, '35-39': {qty: 290, sales: 35000000}, '40-44': {qty: 210, sales: 25000000}, '45-49': {qty: 150, sales: 18000000}, '50-54': {qty: 110, sales: 13000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 60, sales: 7000000}}} },
+                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500}, members: {기존회원: {qty: 1960, sales: 224000000}, 신규회원: {qty: 840, sales: 96000000}}, ageGender: {male: {'15-19': {qty: 80, sales: 10000000}, '20-24': {qty: 230, sales: 28000000}, '25-29': {qty: 380, sales: 46000000}, '30-34': {qty: 410, sales: 50000000}, '35-39': {qty: 300, sales: 37000000}, '40-44': {qty: 200, sales: 25000000}, '45-49': {qty: 140, sales: 17000000}, '50-54': {qty: 100, sales: 12000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 50, sales: 6000000}}, female: {'15-19': {qty: 90, sales: 11000000}, '20-24': {qty: 300, sales: 37000000}, '25-29': {qty: 420, sales: 51000000}, '30-34': {qty: 350, sales: 43000000}, '35-39': {qty: 230, sales: 29000000}, '40-44': {qty: 170, sales: 21000000}, '45-49': {qty: 130, sales: 16000000}, '50-54': {qty: 90, sales: 11000000}, '55-59': {qty: 60, sales: 8000000}, '60~': {qty: 40, sales: 5000000}}} },
+                '백화점': { qty: 1960, sales: 224000000, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360}, members: {기존회원: {qty: 1372, sales: 156800000}, 신규회원: {qty: 588, sales: 67200000}}, ageGender: {male: {'15-19': {qty: 56, sales: 7000000}, '20-24': {qty: 161, sales: 19600000}, '25-29': {qty: 266, sales: 32200000}, '30-34': {qty: 287, sales: 35000000}, '35-39': {qty: 210, sales: 25900000}, '40-44': {qty: 140, sales: 17500000}, '45-49': {qty: 98, sales: 11900000}, '50-54': {qty: 70, sales: 8400000}, '55-59': {qty: 49, sales: 5600000}, '60~': {qty: 35, sales: 4200000}}, female: {'15-19': {qty: 63, sales: 7700000}, '20-24': {qty: 210, sales: 25900000}, '25-29': {qty: 294, sales: 35700000}, '30-34': {qty: 245, sales: 30100000}, '35-39': {qty: 161, sales: 24500000}, '40-44': {qty: 119, sales: 17500000}, '45-49': {qty: 91, sales: 11200000}, '50-54': {qty: 63, sales: 9100000}, '55-59': {qty: 42, sales: 5600000}, '60~': {qty: 28, sales: 3500000}}} },
+                '대리점': { qty: 560, sales: 64000000, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100}, members: {기존회원: {qty: 392, sales: 44800000}, 신규회원: {qty: 168, sales: 19200000}}, ageGender: {male: {'15-19': {qty: 16, sales: 2000000}, '20-24': {qty: 46, sales: 5600000}, '25-29': {qty: 76, sales: 9200000}, '30-34': {qty: 82, sales: 10000000}, '35-39': {qty: 60, sales: 7400000}, '40-44': {qty: 40, sales: 5000000}, '45-49': {qty: 28, sales: 3400000}, '50-54': {qty: 20, sales: 2400000}, '55-59': {qty: 14, sales: 1600000}, '60~': {qty: 10, sales: 1200000}}, female: {'15-19': {qty: 18, sales: 2200000}, '20-24': {qty: 60, sales: 7400000}, '25-29': {qty: 84, sales: 10200000}, '30-34': {qty: 70, sales: 8600000}, '35-39': {qty: 46, sales: 7000000}, '40-44': {qty: 34, sales: 5000000}, '45-49': {qty: 26, sales: 3200000}, '50-54': {qty: 18, sales: 2200000}, '55-59': {qty: 12, sales: 1600000}, '60~': {qty: 8, sales: 1000000}}} },
+                '직영점': { qty: 280, sales: 32000000, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40}, members: {기존회원: {qty: 196, sales: 22400000}, 신규회원: {qty: 84, sales: 9600000}}, ageGender: {male: {'15-19': {qty: 8, sales: 1000000}, '20-24': {qty: 23, sales: 2800000}, '25-29': {qty: 38, sales: 4600000}, '30-34': {qty: 41, sales: 5000000}, '35-39': {qty: 30, sales: 3700000}, '40-44': {qty: 20, sales: 2500000}, '45-49': {qty: 14, sales: 1700000}, '50-54': {qty: 10, sales: 1200000}, '55-59': {qty: 7, sales: 800000}, '60~': {qty: 5, sales: 600000}}, female: {'15-19': {qty: 9, sales: 1100000}, '20-24': {qty: 30, sales: 3700000}, '25-29': {qty: 42, sales: 5100000}, '30-34': {qty: 35, sales: 4300000}, '35-39': {qty: 23, sales: 2900000}, '40-44': {qty: 17, sales: 2100000}, '45-49': {qty: 13, sales: 1600000}, '50-54': {qty: 9, sales: 1100000}, '55-59': {qty: 6, sales: 800000}, '60~': {qty: 4, sales: 500000}}} }
             }
         };
 
         const states = {
             main: { metric: 'sales', view: 'daily', chart: null },
             on: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '온라인 전체' },
-            off: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '오프라인 전체' }
+            off: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '오프라인 전체' },
+            age: { metric: 'sales', chart: null, selectedChannel: '회원 전체' }
         };
 
         $(document).ready(function() {
@@ -365,6 +373,10 @@
             fillTable('cust-color-body', d.colors, d.qty);
             fillTable('cust-size-body', d.sizes, d.qty);
             fillMemberTable('cust-member-body', d.members, d.qty, d.sales, name);
+            
+            // 연령대 그래프 업데이트
+            states.age.selectedChannel = name;
+            renderAgeChart();
         }
 
         function fillMemberTable(id, members, totalQty, totalSales, channelName) {
@@ -463,10 +475,95 @@
             });
         }
 
+        function setAgeChart(metric) {
+            states.age.metric = metric;
+            $('#age-sales, #age-qty').removeClass('btn-active').addClass('btn-inactive');
+            $(`#age-${metric}`).addClass('btn-active').removeClass('btn-inactive');
+            renderAgeChart();
+        }
+
+        function renderAgeChart() {
+            const canvasEl = document.getElementById('ageChart');
+            if(!canvasEl) return;
+            const s = states.age;
+            if (s.chart) s.chart.destroy();
+
+            const ageLabels = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60~'];
+            const channelName = s.selectedChannel || '회원 전체';
+            const d = DATA.cust[channelName];
+            
+            if (!d || !d.ageGender) return;
+
+            const maleData = ageLabels.map(age => {
+                const data = d.ageGender.male[age] || {qty: 0, sales: 0};
+                return s.metric === 'sales' ? data.sales : data.qty;
+            });
+
+            const femaleData = ageLabels.map(age => {
+                const data = d.ageGender.female[age] || {qty: 0, sales: 0};
+                return s.metric === 'sales' ? data.sales : data.qty;
+            });
+
+            s.chart = new Chart(canvasEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ageLabels,
+                    datasets: [
+                        {
+                            label: '남성',
+                            data: maleData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 2
+                        },
+                        {
+                            label: '여성',
+                            data: femaleData,
+                            backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                            borderColor: '#ec4899',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    return context.dataset.label + ': ' + (s.metric === 'sales' ? value.toLocaleString() + '원' : value.toLocaleString());
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return s.metric === 'sales' ? (value / 1000000).toFixed(0) + 'M' : value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
         function fetchAll() { 
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
+            renderAgeChart();
         }
     </script>
 </body>
