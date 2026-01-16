@@ -325,7 +325,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
                 <div class="lg:col-span-4">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
-                        <div class="section-title mb-4"><span id="cust-member-title">회원 전체</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                        <div class="section-title mb-4"><span>기존/신규 회원</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                         <div class="table-container flex-1" style="height: calc(100% - 60px);">
                             <table>
                                 <thead><tr><th>회원 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
@@ -452,12 +452,11 @@
             $('#cust-t-color').text(name);
             $('#cust-t-size').text(name);
             
-            // 회원 구분 제목 업데이트
+            // 회원 구분 배지 업데이트 (제목은 "기존/신규 회원"으로 고정)
             let displayName = name;
             if (!name.includes('전체') && name !== '자사몰') {
                 displayName = name + ' 전체';
             }
-            $('#cust-member-title').text(displayName);
             $('#cust-t-member').text(displayName);
             
             const d = DATA.cust[name];
