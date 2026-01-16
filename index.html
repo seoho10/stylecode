@@ -31,11 +31,15 @@
         
         .filter-label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; display: block; }
         
-        /* 한반도 지도 컨테이너 */
+        /* [수정] 한반도 지도 배경 적용 및 스타일 최적화 */
         #korea-map { 
             width: 100%; 
-            height: 500px; 
-            background-color: #f1f5f9;
+            height: 450px; 
+            background-color: #f8fafc;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/South_Korea_adm_location_map.svg/538px-South_Korea_adm_location_map.svg.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
             border-radius: 12px; 
             position: relative; 
             overflow: hidden; 
@@ -52,11 +56,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
         }
         .map-label { 
             position: absolute; 
-            font-size: 11px; 
+            font-size: 10px; 
             font-weight: 800; 
             color: #1e293b; 
             transform: translate(-50%, 0); 
@@ -72,7 +75,7 @@
     <div class="max-w-7xl mx-auto">
         
         <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.5 (Stable Map)</span></h1>
+            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.1 (Map Integrated)</span></h1>
             <button onclick="fetchAll()" class="bg-blue-600 text-white px-8 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition active:scale-95">조회하기</button>
         </header>
 
@@ -115,6 +118,7 @@
                     </div>
                 </div>
             </div>
+            <p class="mt-3 text-[11px] text-slate-400 italic font-medium">* 카테고리와 스타일코드는 복수 선택 시 데이터가 합산(Sum)되어 대시보드에 반영됩니다.</p>
         </div>
 
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
@@ -135,71 +139,117 @@
             <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            <div class="space-y-6">
-                <div class="flex items-center gap-2"><div class="w-1.5 h-6 bg-blue-600 rounded-full"></div><h2 class="text-xl font-bold">ONLINE</h2></div>
-                <div class="table-container">
-                    <table class="w-full text-left">
-                        <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
-                        <tbody id="on-list">
-                            <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
-                            <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-4 text-slate-500">└ 자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
-                            <tr class="clickable-row" onclick="updateIndicator('on', '네이버', this)"><td class="pl-4 text-slate-500">└ 네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
-                            <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-4 text-slate-500">└ 무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
-                        </tbody>
-                    </table>
+        <div class="mb-12">
+            <div class="flex items-center gap-2 mb-4"><div class="w-1.5 h-6 bg-blue-600 rounded-full"></div><h2 class="text-xl font-bold">ONLINE PERFORMANCE</h2></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <div class="section-title"><span>채널별 실적 (Online)</span></div>
+                    <div class="table-container">
+                        <table class="w-full text-left">
+                            <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
+                            <tbody id="on-list">
+                                <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-4 text-slate-500">└ 자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '네이버', this)"><td class="pl-4 text-slate-500">└ 네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-4 text-slate-500">└ 무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '카카오', this)"><td class="pl-4 text-slate-500">└ 카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl border">
-                    <div style="height: 200px;"><canvas id="onChart"></canvas></div>
+                <div>
+                    <div class="section-title"><span>컬러별 판매</span><span id="on-t-color" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">온라인 전체</span></div>
+                    <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
+                </div>
+                <div>
+                    <div class="section-title"><span>사이즈별 판매</span><span id="on-t-size" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">온라인 전체</span></div>
+                    <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
                 </div>
             </div>
-
-            <div class="space-y-6">
-                <div class="flex items-center gap-2"><div class="w-1.5 h-6 bg-red-600 rounded-full"></div><h2 class="text-xl font-bold">OFFLINE & GEO</h2></div>
-                <div id="korea-map">
-                    <svg viewBox="0 0 538 800" class="absolute inset-0 w-full h-full p-8 opacity-20" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M220,100 L250,80 L300,50 L340,100 L370,200 L380,300 L350,400 L320,450 L280,500 L260,550 L250,600 L230,640 L200,660 L180,680 L175,700 L150,680 L145,600 L140,500 L150,400 L160,300 L180,200 L200,120 Z" fill="#475569"/>
-                    </svg>
-
-                    <div id="bubble-seoul" class="map-bubble" style="top: 22%; left: 34%;"></div>
-                    <div class="map-label" style="top: 16%; left: 34%;">서울</div>
-                    
-                    <div id="bubble-gyeonggi" class="map-bubble" style="top: 25%; left: 45%;"></div>
-                    <div class="map-label" style="top: 19%; left: 45%;">경기</div>
-                    
-                    <div id="bubble-daejeon" class="map-bubble" style="top: 48%; left: 43%;"></div>
-                    <div class="map-label" style="top: 53%; left: 43%;">대전</div>
-                    
-                    <div id="bubble-daegu" class="map-bubble" style="top: 60%; left: 65%;"></div>
-                    <div class="map-label" style="top: 65%; left: 65%;">대구</div>
-                    
-                    <div id="bubble-busan" class="map-bubble" style="top: 75%; left: 75%;"></div>
-                    <div class="map-label" style="top: 80%; left: 75%;">부산</div>
-                    
-                    <div id="bubble-gwangju" class="map-bubble" style="top: 75%; left: 28%;"></div>
-                    <div class="map-label" style="top: 80%; left: 28%;">광주</div>
-                    
-                    <div id="bubble-jeju" class="map-bubble" style="top: 92%; left: 25%;"></div>
-                    <div class="map-label" style="top: 87%; left: 25%;">제주</div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="on-chart-title" class="text-xs font-bold text-blue-600">ONLINE CHANNEL TREND (온라인 전체)</span>
+                    <div class="control-group">
+                        <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
+                        <button id="on-qty" onclick="setChart('on', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                    </div>
                 </div>
+                <div style="height: 220px;"><canvas id="onChart"></canvas></div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div class="section-title"><span>매장 실적 TOP 10</span></div>
-                <div class="table-container" style="height: 350px;">
-                    <table class="w-full text-left">
-                        <thead><tr><th>순위</th><th>매장명</th><th>매출액</th><th>수량</th></tr></thead>
-                        <tbody id="shop-rank-body"></tbody>
-                    </table>
+        <div class="mb-12">
+            <div class="flex items-center gap-2 mb-4"><div class="w-1.5 h-6 bg-red-600 rounded-full"></div><h2 class="text-xl font-bold">OFFLINE PERFORMANCE</h2></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <div class="section-title"><span>채널별 실적 (Offline)</span></div>
+                    <div class="table-container">
+                        <table class="w-full text-left">
+                            <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
+                            <tbody id="off-list">
+                                <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-4 text-slate-500">└ 백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-4 text-slate-500">└ 대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-4 text-slate-500">└ 직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
+                    <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
+                </div>
+                <div>
+                    <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
+                    <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div class="section-title"><span>컬러/사이즈 비중</span></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="table-container" style="height: 350px;"><table class="w-full text-left"><thead><tr><th>컬러</th><th>수량</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
-                    <div class="table-container" style="height: 350px;"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>수량</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="off-chart-title" class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND (오프라인 전체)</span>
+                    <div class="control-group">
+                        <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
+                        <button id="off-qty" onclick="setChart('off', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                    </div>
+                </div>
+                <div style="height: 220px;"><canvas id="offChart"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="section-title"><span id="shop-rank-title">오프라인 매장 실적 TOP 10</span></div>
+                    <div class="table-container" style="height: 450px;">
+                        <table class="w-full text-left">
+                            <thead><tr><th>순위</th><th>매장명</th><th>매출액</th><th>수량</th></tr></thead>
+                            <tbody id="shop-rank-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border text-center">
+                    <div class="section-title"><span>지역별 매출 분포 (Geo Bubble Map)</span></div>
+                    <div id="korea-map">
+                        <div id="bubble-seoul" class="map-bubble" style="top: 22%; left: 34%;"></div>
+                        <div class="map-label" style="top: 15%; left: 34%;">서울</div>
+                        
+                        <div id="bubble-gyeonggi" class="map-bubble" style="top: 25%; left: 45%;"></div>
+                        <div class="map-label" style="top: 18%; left: 45%;">경기</div>
+                        
+                        <div id="bubble-daejeon" class="map-bubble" style="top: 48%; left: 43%;"></div>
+                        <div class="map-label" style="top: 52%; left: 43%;">대전</div>
+                        
+                        <div id="bubble-daegu" class="map-bubble" style="top: 60%; left: 65%;"></div>
+                        <div class="map-label" style="top: 64%; left: 65%;">대구</div>
+                        
+                        <div id="bubble-busan" class="map-bubble" style="top: 75%; left: 75%;"></div>
+                        <div class="map-label" style="top: 80%; left: 75%;">부산</div>
+                        
+                        <div id="bubble-gwangju" class="map-bubble" style="top: 75%; left: 28%;"></div>
+                        <div class="map-label" style="top: 80%; left: 28%;">광주</div>
+                        
+                        <div id="bubble-jeju" class="map-bubble" style="top: 92%; left: 25%;"></div>
+                        <div class="map-label" style="top: 87%; left: 25%;">제주</div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2 font-medium italic">* 원의 지름은 채널별 지역 매출 비중에 따라 실시간으로 변화합니다.</p>
                 </div>
             </div>
         </div>
@@ -211,11 +261,14 @@
                 '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
                 '자사몰': { qty: 90, colors: {BLACK: 50, WHITE: 30, GREY: 10}, sizes: {'230': 10, '240': 40, '250': 40} },
                 '네이버': { qty: 75, colors: {BLACK: 45, WHITE: 25, GREY: 5}, sizes: {'230': 20, '240': 30, '250': 25} },
-                '무신사': { qty: 105, colors: {BLACK: 70, WHITE: 30, GREY: 5}, sizes: {'230': 25, '240': 40, '250': 40} }
+                '무신사': { qty: 105, colors: {BLACK: 70, WHITE: 30, GREY: 5}, sizes: {'230': 25, '240': 40, '250': 40} },
+                '카카오': { qty: 30, colors: {BLACK: 15, WHITE: 5, GREY: 10}, sizes: {'230': 5, '240': 10, '250': 15} }
             },
             off: {
                 '오프라인 전체': { qty: 200, colors: {BLACK: 140, BEIGE: 60}, sizes: {'260': 100, '270': 100}, geo: {seoul: 80, gyeonggi: 60, busan: 30, daegu: 20, gwangju: 10, daejeon: 15, jeju: 5} },
-                '백화점': { qty: 140, colors: {BLACK: 100, BEIGE: 40}, sizes: {'260': 70, '270': 70}, geo: {seoul: 100, gyeonggi: 20, busan: 10, daegu: 5, gwangju: 5, daejeon: 2, jeju: 2} }
+                '백화점': { qty: 140, colors: {BLACK: 100, BEIGE: 40}, sizes: {'260': 70, '270': 70}, geo: {seoul: 100, gyeonggi: 20, busan: 10, daegu: 5, gwangju: 5, daejeon: 2, jeju: 2} },
+                '대리점': { qty: 40, colors: {BLACK: 30, BEIGE: 10}, sizes: {'260': 20, '270': 20}, geo: {seoul: 10, gyeonggi: 10, busan: 40, daegu: 20, gwangju: 20, daejeon: 15, jeju: 10} },
+                '직영점': { qty: 20, colors: {BLACK: 10, BEIGE: 10}, sizes: {'260': 10, '270': 10}, geo: {seoul: 20, gyeonggi: 40, busan: 10, daegu: 10, gwangju: 20, daejeon: 10, jeju: 10} }
             }
         };
 
@@ -227,65 +280,88 @@
 
         $(document).ready(function() {
             $('.js-example-basic-multiple').select2({ placeholder: "선택 또는 검색", allowClear: true });
+            
             const today = new Date();
             const lastWeek = new Date(today); lastWeek.setDate(today.getDate() - 7);
             document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
             document.getElementById('endDate').value = today.toISOString().split('T')[0];
-            fetchAll();
-        });
 
-        function fetchAll() { 
-            renderSingleChart('main'); 
-            renderSingleChart('on'); 
+            fetchAll();
+            updateIndicator('on', '온라인 전체', null);
             updateIndicator('off', '오프라인 전체', null);
-        }
+        });
 
         function setChart(key, type, val) {
             states[key][type] = val;
             const group = type === 'metric' ? ['sales', 'qty'] : ['daily', 'weekly', 'monthly'];
-            group.forEach(id => { $(`#${key}-${id}`).removeClass('btn-active').addClass('btn-inactive'); });
+            group.forEach(id => { 
+                $(`#${key}-${id}`).removeClass('btn-active').addClass('btn-inactive'); 
+            });
             $(`#${key}-${val}`).addClass('btn-active').removeClass('btn-inactive');
             renderSingleChart(key);
         }
 
         function updateIndicator(type, name, rowElement) {
-            const d = DATA[type][name] || DATA[type][Object.keys(DATA[type])[0]];
-            if(type === 'off') {
-                updateMapBubbles(d.geo);
-                updateShopRank(name);
-                fillTable('off-color-body', d.colors, d.qty);
-                fillTable('off-size-body', d.sizes, d.qty);
-            }
+            const rows = document.querySelectorAll(`#${type}-list tr`);
+            rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
+            
+            if(rowElement) rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+            else document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+
+            document.getElementById(`${type}-t-color`).innerText = name;
+            document.getElementById(`${type}-t-size`).innerText = name;
+            document.getElementById(`${type}-chart-title`).innerText = `${type.toUpperCase()} CHANNEL TREND (${name})`;
+
+            const d = DATA[type][name] || DATA[type][type === 'on' ? '온라인 전체' : '오프라인 전체'];
+            fillTable(`${type}-color-body`, d.colors, d.qty);
+            fillTable(`${type}-size-body`, d.sizes, d.qty);
+            
             states[type].selectedChannel = name;
             renderSingleChart(type);
-        }
 
-        function updateMapBubbles(geoData) {
-            const multiplier = Math.max($('#category').val()?.length || 1, $('#styleCode').val()?.length || 1);
-            Object.entries(geoData).forEach(([region, val]) => {
-                const bubble = document.getElementById(`bubble-${region}`);
-                if(bubble) {
-                    const finalSize = Math.max(Math.sqrt(val * multiplier) * 8, 15);
-                    bubble.style.width = `${finalSize}px`;
-                    bubble.style.height = `${finalSize}px`;
-                    bubble.innerHTML = `<span style="font-size: ${finalSize/3}px; color: white; font-weight: bold;">${val}</span>`;
-                }
-            });
+            if(type === 'off') {
+                updateShopRank(name);
+                updateMapBubbles(d.geo);
+            }
         }
 
         function fillTable(id, obj, total) {
             const b = document.getElementById(id); b.innerHTML = '';
             Object.entries(obj).forEach(([k, v]) => {
-                b.innerHTML += `<tr><td>${k}</td><td>${v.toLocaleString()}</td></tr>`;
+                b.innerHTML += `<tr><td>${k}</td><td>${v.toLocaleString()}</td><td>${((v/total)*100).toFixed(0)}%</td></tr>`;
             });
         }
 
         function updateShopRank(channel) {
-            const body = document.getElementById('shop-rank-body'); body.innerHTML = '';
-            for(let i=1; i<=10; i++) {
+            const body = document.getElementById('shop-rank-body');
+            body.innerHTML = '';
+            const prefix = channel.includes('전체') ? '우수' : channel;
+            for(let i=1; i<=15; i++) {
                 const sales = Math.floor(Math.random() * 2000000) + 1000000;
-                body.innerHTML += `<tr><td class="font-bold text-slate-400">${i}</td><td>매장 ${i}호점</td><td>${sales.toLocaleString()}원</td><td>${Math.floor(sales/70000)}</td></tr>`;
+                body.innerHTML += `<tr><td class="font-bold text-slate-400">${i}</td><td>${prefix} ${i}호점</td><td>${sales.toLocaleString()}원</td><td>${Math.floor(sales/70000)}</td></tr>`;
             }
+        }
+
+        function updateMapBubbles(geoData) {
+            if(!geoData) return;
+            // 필터 비중에 따른 지름 계산 (Sum 멀티플라이어 적용)
+            const catLen = $('#category').val()?.length || 1;
+            const styleLen = $('#styleCode').val()?.length || 1;
+            const multiplier = Math.max(catLen, styleLen);
+
+            Object.entries(geoData).forEach(([region, val]) => {
+                const bubble = document.getElementById(`bubble-${region}`);
+                if(bubble) {
+                    // 기본 비중(val)에 필터 합산(multiplier)을 반영하여 크기 조절
+                    const baseSize = Math.sqrt(val * multiplier) * 8; 
+                    const finalSize = Math.max(baseSize, 10); // 최소 크기 보장
+                    bubble.style.width = `${finalSize}px`;
+                    bubble.style.height = `${finalSize}px`;
+                    
+                    // 버블 안에 수치 표시 (선택 사항)
+                    bubble.innerHTML = `<span style="font-size: ${finalSize/3.5}px; color: white; font-weight: bold;">${val}</span>`;
+                }
+            });
         }
 
         function renderSingleChart(key) {
@@ -295,24 +371,58 @@
             const s = states[key];
             if (s.chart) s.chart.destroy();
 
-            const multiplier = Math.max($('#category').val()?.length || 1, $('#styleCode').val()?.length || 1);
-            const labels = ['01-12', '01-13', '01-14', '01-15', '01-16'];
+            const labels = s.view === 'daily' ? ['01-12', '01-13', '01-14', '01-15', '01-16'] : ['W1', 'W2', 'W3', 'W4', 'W5'];
+            let ds = [];
             
+            const catLen = $('#category').val()?.length || 1;
+            const styleLen = $('#styleCode').val()?.length || 1;
+            const multiplier = Math.max(catLen, styleLen);
+
+            if(key === 'main') {
+                ds = [
+                    { label: 'Online Total', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*50000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4 },
+                    { label: 'Offline Total', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4 }
+                ];
+            } else {
+                const filter = s.selectedChannel;
+                const isOn = key === 'on';
+                const targets = filter.includes('전체') ? (isOn ? ['자사몰','네이버','무신사','카카오'] : ['백화점','대리점','직영점']) : [filter];
+                const colorPalette = ['#3b82f6', '#10b981', '#000000', '#facc15', '#ef4444', '#f97316'];
+
+                ds = targets.map((name, i) => ({
+                    label: name,
+                    data: [40, 60, 55, 80, 70].map(v => (s.metric === 'sales' ? v*55000 : v) * multiplier * (0.7 + Math.random()*0.6)),
+                    borderColor: colorPalette[i % colorPalette.length],
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3
+                }));
+            }
+
             s.chart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: s.selectedChannel || key,
-                        data: [300, 400, 350, 500, 450].map(v => (s.metric === 'sales' ? v*50000 : v) * multiplier),
-                        borderColor: key === 'off' ? '#ef4444' : '#3b82f6',
-                        tension: 0.4,
-                        fill: true,
-                        backgroundColor: key === 'off' ? 'rgba(239,68,68,0.05)' : 'rgba(59,130,246,0.05)'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                data: { labels, datasets: ds },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
             });
+        }
+
+        function fetchAll() { 
+            renderSingleChart('main'); 
+            renderSingleChart('on'); 
+            renderSingleChart('off'); 
+            // 현재 선택된 오프라인 채널의 지리 데이터를 다시 로드하여 지도 갱신
+            const currentOffChannel = states.off.selectedChannel;
+            const d = DATA.off[currentOffChannel] || DATA.off['오프라인 전체'];
+            updateMapBubbles(d.geo);
         }
     </script>
 </body>
