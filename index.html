@@ -1,585 +1,126 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>StyleCode 매출 분석 대시보드 (Skeleton)</title>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <style>
-    :root { --bg:#0b1020; --card:#121a33; --text:#e9eefc; --muted:#a9b4d6; --line:#263158; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: linear-gradient(180deg, #070b17 0%, #0b1020 100%);
-      color: var(--text);
-    }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    h1 { margin: 0 0 10px; font-size: 22px; font-weight: 700; }
-    .sub { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-
-    .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-    @media (min-width: 980px) { .grid { grid-template-columns: 360px 1fr; } }
-
-    .card {
-      background: rgba(18,26,51,0.78);
-      border: 1px solid rgba(38,49,88,0.8);
-      border-radius: 14px;
-      padding: 16px;
-      backdrop-filter: blur(10px);
-    }
-    .card h2 { margin: 0 0 12px; font-size: 15px; }
-    .row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    select, input, button {
-      width: 100%; padding: 10px 10px; border-radius: 10px;
-      border: 1px solid rgba(38,49,88,0.9);
-      background: rgba(8,12,26,0.9); color: var(--text);
-      outline: none;
-    }
-    input::placeholder { color: rgba(169,180,214,0.6); }
-    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.4; }
-
-    .seg {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
-    }
-    .seg3 {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-    }
-    .seg button, .seg3 button {
-      padding: 10px; border-radius: 10px; border: 1px solid rgba(38,49,88,0.9);
-      background: rgba(8,12,26,0.65); color: var(--muted);
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .seg button.active, .seg3 button.active {
-      background: rgba(232,238,252,0.12);
-      color: var(--text);
-      border-color: rgba(232,238,252,0.35);
-    }
-
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .primary {
-      background: rgba(232,238,252,0.14);
-      border-color: rgba(232,238,252,0.35);
-      color: var(--text);
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .secondary { cursor: pointer; color: var(--muted); }
-
-    .kpi {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;
-    }
-    .kpi .box {
-      border: 1px solid rgba(38,49,88,0.8);
-      border-radius: 12px;
-      padding: 12px;
-      background: rgba(8,12,26,0.55);
-    }
-    .kpi .t { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .kpi .v { font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
-    .kpi .m { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-    .meta {
-      display:flex; gap:10px; flex-wrap: wrap;
-      border-top: 1px solid rgba(38,49,88,0.7);
-      margin-top: 12px; padding-top: 12px;
-      color: var(--muted); font-size: 12px;
-    }
-    .pill { padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(38,49,88,0.8); background: rgba(8,12,26,0.55); }
-    canvas { width: 100% !important; height: 420px !important; }
-    .small { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
-    .warn { color: #ffdf7d; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleCode Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
 </head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
+            <p class="text-slate-500">브랜드 및 스타일별 매출 분석</p>
+        </header>
 
-<body>
-  <div class="wrap">
-    <h1>StyleCode 매출 분석 대시보드 (Skeleton)</h1>
-    <p class="sub">
-      1) 브랜드/기간 선택 → 2) 카테고리/스타일코드(선택) → 3) 온·오프라인 추이(매출/수량, 월·주·일).<br/>
-      현재는 더미 데이터로 동작하며, 추후 Snowflake API로 `loadData()`만 교체하면 됩니다.
-    </p>
-
-    <div class="grid">
-      <!-- LEFT: Controls -->
-      <div class="card">
-        <h2>필터</h2>
-
-        <div class="row">
-          <div>
-            <label>브랜드</label>
-            <select id="brand">
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>시작일</label>
-            <input id="startDate" type="date" />
-          </div>
-          <div>
-            <label>종료일</label>
-            <input id="endDate" type="date" />
-          </div>
-        </div>
-        <div class="hint">기간은 시작일~종료일 기준으로 추이를 생성합니다.</div>
-
-        <div class="row" style="margin-top:12px;">
-          <div>
-            <label>카테고리</label>
-            <select id="category">
-              <option value="OUTER">OUTER</option>
-              <option value="TOP">TOP</option>
-              <option value="BOTTOM">BOTTOM</option>
-              <option value="SHOES">SHOES</option>
-              <option value="ACC">ACC</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>스타일코드 (선택)</label>
-            <input id="stylecode" type="text" placeholder="예: SC-12345 (미입력 시 카테고리 전체)" />
-            <div class="hint">스타일코드를 비우면 “선택 카테고리 전체” 값이 표시됩니다.</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>지표</label>
-            <div class="seg" id="metricSeg">
-              <button type="button" data-metric="sales" class="active">매출</button>
-              <button type="button" data-metric="qty">수량</button>
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+                <select id="brand" class="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="A">Brand A</option>
+                    <option value="B">Brand B</option>
+                </select>
             </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>집계 단위</label>
-            <div class="seg3" id="grainSeg">
-              <button type="button" data-grain="month" class="active">월</button>
-              <button type="button" data-grain="week">주</button>
-              <button type="button" data-grain="day">일</button>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                <select id="category" class="w-full border rounded-md p-2">
+                    <option value="ALL">전체 카테고리</option>
+                    <option value="TOP">상의</option>
+                    <option value="PANTS">하의</option>
+                </select>
             </div>
-          </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Style Code (Optional)</label>
+                <input type="text" id="styleCode" placeholder="공백 시 전체 조회" class="w-full border rounded-md p-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Period</label>
+                <input type="month" id="month" value="2025-12" class="w-full border rounded-md p-2">
+            </div>
         </div>
 
-        <div class="actions" style="margin-top:14px;">
-          <button id="apply" class="primary" type="button">적용</button>
-          <button id="reset" class="secondary" type="button">초기화</button>
+        <div class="flex justify-between items-center mb-4">
+            <div class="inline-flex rounded-md shadow-sm">
+                <button onclick="updateMetric('sales')" class="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">매출액</button>
+                <button onclick="updateMetric('qty')" class="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-r-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">판매수량</button>
+            </div>
+            <div class="flex gap-2">
+                <select id="viewType" onchange="renderChart()" class="border rounded-md px-3 py-1 text-sm">
+                    <option value="daily">일별</option>
+                    <option value="weekly">주별</option>
+                    <option value="monthly">월별</option>
+                </select>
+                <button onclick="fetchData()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">조회하기</button>
+            </div>
         </div>
 
-        <div class="small warn">
-          현재는 더미 데이터입니다. Snowflake 붙일 때는 loadData() 내부의 mockGenerateSeries()를 fetch로 교체하시면 됩니다.
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+            <canvas id="salesChart" height="100"></canvas>
         </div>
-      </div>
-
-      <!-- RIGHT: Chart + KPI -->
-      <div class="card">
-        <h2>추이</h2>
-
-        <div class="kpi">
-          <div class="box">
-            <div class="t">온라인 (합계)</div>
-            <div class="v" id="kpiOnline">-</div>
-            <div class="m" id="kpiOnlineMeta">-</div>
-          </div>
-          <div class="box">
-            <div class="t">오프라인 (합계)</div>
-            <div class="v" id="kpiOffline">-</div>
-            <div class="m" id="kpiOfflineMeta">-</div>
-          </div>
-        </div>
-
-        <canvas id="trendChart"></canvas>
-
-        <div class="meta" id="metaPills"></div>
-
-        <div class="small">
-          표시 로직: 브랜드/기간/카테고리/스타일코드(옵션) 조건에 대해, 온라인/오프라인 2개 시계열을 생성하고,
-          지표(매출/수량) 및 집계 단위(월/주/일)에 따라 레이블을 재구성합니다.
-        </div>
-      </div>
     </div>
-  </div>
 
-<script>
-  // ---------------------------
-  // State
-  // ---------------------------
-  const state = {
-    brand: 'A',
-    startDate: null,
-    endDate: null,
-    category: 'OUTER',
-    stylecode: '',
-    metric: 'sales', // 'sales' | 'qty'
-    grain: 'month'   // 'month' | 'week' | 'day'
-  };
+    <script>
+        let myChart;
+        let currentMetric = 'sales'; // 'sales' or 'qty'
 
-  // ---------------------------
-  // Utilities
-  // ---------------------------
-  function pad2(n){ return String(n).padStart(2,'0'); }
-  function formatYMD(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-  function parseDateInput(v){
-    if (!v) return null;
-    const [y,m,da] = v.split('-').map(Number);
-    if (!y || !m || !da) return null;
-    return new Date(y, m-1, da);
-  }
-  function clampDateRange(start, end){
-    if (!start || !end) return null;
-    if (start > end) return { start: end, end: start };
-    return { start, end };
-  }
-  function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
-  function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-
-  // ISO-week-ish label (간단 구현)
-  function weekLabel(d){
-    // week starts on Monday
-    const date = new Date(d.getTime());
-    const day = (date.getDay() + 6) % 7; // Mon=0..Sun=6
-    date.setDate(date.getDate() - day);
-    const y = date.getFullYear();
-    const m = pad2(date.getMonth()+1);
-    const dd = pad2(date.getDate());
-    return `${y}-${m}-${dd} (W)`;
-  }
-
-  function buildBuckets(start, end, grain){
-    const buckets = [];
-    if (grain === 'day'){
-      let cur = startOfDay(start);
-      const last = startOfDay(end);
-      while (cur <= last){
-        buckets.push(new Date(cur.getTime()));
-        cur.setDate(cur.getDate() + 1);
-      }
-      return buckets;
-    }
-    if (grain === 'week'){
-      let cur = startOfDay(start);
-      const last = startOfDay(end);
-      while (cur <= last){
-        buckets.push(new Date(cur.getTime()));
-        cur.setDate(cur.getDate() + 7);
-      }
-      return buckets;
-    }
-    // month
-    let cur = startOfMonth(start);
-    const last = startOfMonth(end);
-    while (cur <= last){
-      buckets.push(new Date(cur.getTime()));
-      cur.setMonth(cur.getMonth() + 1);
-    }
-    return buckets;
-  }
-
-  function labelForBucket(d, grain){
-    const y = d.getFullYear();
-    const m = pad2(d.getMonth()+1);
-    const da = pad2(d.getDate());
-    if (grain === 'day') return `${y}-${m}-${da}`;
-    if (grain === 'week') return weekLabel(d);
-    return `${y}-${m}`;
-  }
-
-  function hashSeed(str){
-    // deterministic seed from string
-    let h = 2166136261;
-    for (let i=0;i<str.length;i++){
-      h ^= str.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return (h >>> 0);
-  }
-  function mulberry32(a){
-    return function() {
-      let t = a += 0x6D2B79F5;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    }
-  }
-
-  function formatNumber(n){
-    return new Intl.NumberFormat('ko-KR').format(Math.round(n));
-  }
-  function metricLabel(metric){
-    return metric === 'sales' ? '매출' : '수량';
-  }
-
-  // ---------------------------
-  // Mock data generator (현재 단계용)
-  // - 브랜드/카테고리/스타일코드/지표/온오프에 따라 패턴이 다르게 나오도록 함
-  // ---------------------------
-  function mockGenerateSeries({ brand, category, stylecode, metric, grain, startDate, endDate }){
-    const range = clampDateRange(startDate, endDate);
-    if (!range) throw new Error('기간이 올바르지 않습니다.');
-    const buckets = buildBuckets(range.start, range.end, grain);
-    const labels = buckets.map(d => labelForBucket(d, grain));
-
-    const baseKey = `${brand}|${category}|${stylecode || 'ALL'}|${metric}`;
-    const seed = hashSeed(baseKey);
-    const rand = mulberry32(seed);
-
-    // 규모 스케일: 매출은 크게, 수량은 작게
-    const scale = (metric === 'sales') ? 12000000 : 900;
-    // 스타일코드 입력 시 더 좁은 모수라는 느낌
-    const scopeMultiplier = stylecode ? 0.22 : 1.0;
-
-    // 온라인/오프라인 비중
-    const onlineShare = 0.62 + (rand()*0.12 - 0.06); // 0.56~0.68 정도
-    const offlineShare = 1 - onlineShare;
-
-    // 시계열 트렌드: 완만한 증가 + 변동
-    const online = [];
-    const offline = [];
-
-    for (let i=0;i<labels.length;i++){
-      const t = i / Math.max(1, labels.length - 1);
-
-      // 기본 레벨
-      const level = (0.65 + rand()*0.7) * scale * scopeMultiplier;
-
-      // 트렌드(선형) + 계절성(사인) + 노이즈
-      const trend = (1.0 + 0.25 * t);
-      const season = 1.0 + 0.18 * Math.sin((i / Math.max(1, labels.length)) * Math.PI * 2);
-      const noise = 0.85 + rand()*0.35;
-
-      const total = level * trend * season * noise;
-
-      const o = total * onlineShare * (0.95 + rand()*0.1);
-      const f = total * offlineShare * (0.95 + rand()*0.1);
-
-      online.push(o);
-      offline.push(f);
-    }
-
-    return { labels, online, offline };
-  }
-
-  // ---------------------------
-  // Chart
-  // ---------------------------
-  let chart = null;
-
-  function renderChart(labels, online, offline, metric){
-    const ctx = document.getElementById('trendChart');
-
-    const data = {
-      labels,
-      datasets: [
-        {
-          label: `온라인 ${metricLabel(metric)}`,
-          data: online,
-          tension: 0.25,
-          pointRadius: labels.length > 60 ? 0 : 2
-        },
-        {
-          label: `오프라인 ${metricLabel(metric)}`,
-          data: offline,
-          tension: 0.25,
-          pointRadius: labels.length > 60 ? 0 : 2
+        function updateMetric(metric) {
+            currentMetric = metric;
+            renderChart();
         }
-      ]
-    };
 
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#e9eefc' } },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const v = ctx.raw ?? 0;
-              const unit = (metric === 'sales') ? '원' : '개';
-              return `${ctx.dataset.label}: ${formatNumber(v)}${unit}`;
-            }
-          }
+        function renderChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const viewType = document.getElementById('viewType').value;
+            
+            if (myChart) myChart.destroy();
+
+            // 임시 데이터 (나중에 API 연동)
+            const labels = viewType === 'daily' ? ['1일', '2일', '3일', '4일', '5일'] : ['1주', '2주', '3주', '4주'];
+            const onlineData = [120, 190, 300, 500, 200];
+            const offlineData = [90, 150, 210, 400, 180];
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `Online (${currentMetric === 'sales' ? '원' : '개'})`,
+                            data: onlineData,
+                            borderColor: '#3b82f6',
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: `Offline (${currentMetric === 'sales' ? '원' : '개'})`,
+                            data: offlineData,
+                            borderColor: '#ef4444',
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         }
-      },
-      scales: {
-        x: { ticks: { color: '#a9b4d6', maxRotation: 0, autoSkip: true }, grid: { color: 'rgba(38,49,88,0.45)' } },
-        y: {
-          ticks: {
-            color: '#a9b4d6',
-            callback: (v) => {
-              if (metric === 'sales'){
-                // 보기 좋게 단위 축약 (만원/억원)
-                const n = Number(v);
-                if (n >= 100000000) return `${Math.round(n/100000000)}억`;
-                if (n >= 10000) return `${Math.round(n/10000)}만`;
-                return `${Math.round(n)}`;
-              }
-              return `${Math.round(v)}`;
-            }
-          },
-          grid: { color: 'rgba(38,49,88,0.45)' }
+
+        // 초기 실행
+        window.onload = renderChart;
+
+        async function fetchData() {
+            // 여기에 나중에 fetch(`https://stylecode-api...`) 로직 추가
+            alert('데이터를 조회합니다. (Snowflake 연결 준비 중)');
+            renderChart();
         }
-      }
-    };
-
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, { type: 'line', data, options });
-  }
-
-  // ---------------------------
-  // KPI + meta
-  // ---------------------------
-  function renderKPI(online, offline, metric, labels){
-    const sumOnline = online.reduce((a,b)=>a+b,0);
-    const sumOffline = offline.reduce((a,b)=>a+b,0);
-    const unit = (metric === 'sales') ? '원' : '개';
-
-    document.getElementById('kpiOnline').textContent = `${formatNumber(sumOnline)}${unit}`;
-    document.getElementById('kpiOffline').textContent = `${formatNumber(sumOffline)}${unit}`;
-
-    // 전월대비는 아직 요구 범위가 아니라서, Skeleton 단계에서는 "구간/포인트 수"로 대체 표시
-    document.getElementById('kpiOnlineMeta').textContent = `포인트: ${labels.length}`;
-    document.getElementById('kpiOfflineMeta').textContent = `포인트: ${labels.length}`;
-  }
-
-  function renderMetaPills(){
-    const pills = [
-      `브랜드: ${state.brand}`,
-      `기간: ${state.startDate} ~ ${state.endDate}`,
-      `카테고리: ${state.category}`,
-      `스타일코드: ${state.stylecode ? state.stylecode : '(미입력/전체)'}`,
-      `지표: ${metricLabel(state.metric)}`,
-      `단위: ${state.grain === 'month' ? '월' : state.grain === 'week' ? '주' : '일'}`
-    ];
-    const el = document.getElementById('metaPills');
-    el.innerHTML = pills.map(p => `<span class="pill">${escapeHtml(p)}</span>`).join('');
-  }
-
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, (m) => ({
-      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-    }[m]));
-  }
-
-  // ---------------------------
-  // Data loader (추후 API로 교체)
-  // ---------------------------
-  async function loadData(){
-    // 1) 현재는 mock
-    const start = parseDateInput(state.startDate);
-    const end = parseDateInput(state.endDate);
-    const range = clampDateRange(start, end);
-    if (!range){
-      alert('시작일/종료일을 입력해 주세요.');
-      return;
-    }
-
-    const { labels, online, offline } = mockGenerateSeries({
-      brand: state.brand,
-      category: state.category,
-      stylecode: state.stylecode.trim(),
-      metric: state.metric,
-      grain: state.grain,
-      startDate: range.start,
-      endDate: range.end
-    });
-
-    renderChart(labels, online, offline, state.metric);
-    renderKPI(online, offline, state.metric, labels);
-    renderMetaPills();
-
-    // 2) 추후 Snowflake API 붙일 때 (예시)
-    // const url = `https://YOUR-API-ENDPOINT/trend?brand=${encodeURIComponent(state.brand)}&start=${state.startDate}&end=${state.endDate}&category=${encodeURIComponent(state.category)}&stylecode=${encodeURIComponent(state.stylecode)}&metric=${state.metric}&grain=${state.grain}`;
-    // const res = await fetch(url);
-    // const json = await res.json();
-    // renderChart(json.labels, json.online, json.offline, state.metric);
-  }
-
-  // ---------------------------
-  // UI wiring
-  // ---------------------------
-  function setActiveSeg(containerId, key, value){
-    const seg = document.getElementById(containerId);
-    seg.querySelectorAll('button').forEach(btn => {
-      const v = btn.dataset[key];
-      btn.classList.toggle('active', v === value);
-    });
-  }
-
-  function initDates(){
-    // 기본값: 최근 90일
-    const today = new Date();
-    const end = startOfDay(today);
-    const start = new Date(end.getTime());
-    start.setDate(start.getDate() - 89);
-
-    document.getElementById('startDate').value = formatYMD(start);
-    document.getElementById('endDate').value = formatYMD(end);
-
-    state.startDate = formatYMD(start);
-    state.endDate = formatYMD(end);
-  }
-
-  function bindEvents(){
-    document.getElementById('brand').addEventListener('change', (e) => state.brand = e.target.value);
-    document.getElementById('category').addEventListener('change', (e) => state.category = e.target.value);
-    document.getElementById('stylecode').addEventListener('input', (e) => state.stylecode = e.target.value);
-    document.getElementById('startDate').addEventListener('change', (e) => state.startDate = e.target.value);
-    document.getElementById('endDate').addEventListener('change', (e) => state.endDate = e.target.value);
-
-    document.getElementById('metricSeg').addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      state.metric = btn.dataset.metric;
-      setActiveSeg('metricSeg', 'metric', state.metric);
-    });
-
-    document.getElementById('grainSeg').addEventListener('click', (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      state.grain = btn.dataset.grain;
-      setActiveSeg('grainSeg', 'grain', state.grain);
-    });
-
-    document.getElementById('apply').addEventListener('click', () => loadData());
-
-    document.getElementById('reset').addEventListener('click', () => {
-      state.brand = 'A';
-      state.category = 'OUTER';
-      state.stylecode = '';
-      state.metric = 'sales';
-      state.grain = 'month';
-
-      document.getElementById('brand').value = state.brand;
-      document.getElementById('category').value = state.category;
-      document.getElementById('stylecode').value = '';
-      setActiveSeg('metricSeg', 'metric', state.metric);
-      setActiveSeg('grainSeg', 'grain', state.grain);
-      initDates();
-      loadData();
-    });
-  }
-
-  // Boot
-  (function(){
-    initDates();
-    bindEvents();
-    loadData();
-  })();
-</script>
+    </script>
 </body>
 </html>
