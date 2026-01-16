@@ -113,30 +113,36 @@
                     <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
                     <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Online Performance Detailed</h3>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <div>
-                        <div class="section-title"><span>온라인 채널별 실적</span></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
-                                <tbody id="on-list">
-                                    <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 전체</td><td>452,100,000</td><td>3,500</td><td>100%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-6 text-slate-500">└ 자사몰</td><td>135,630,000</td><td>1,050</td><td>30%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-6 text-slate-500">└ 무신사</td><td>113,025,000</td><td>875</td><td>25%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '네이버 스토어', this)"><td class="pl-6 text-slate-500">└ 네이버 스토어</td><td>90,420,000</td><td>700</td><td>20%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '29CM', this)"><td class="pl-6 text-slate-500">└ 29CM</td><td>67,815,000</td><td>525</td><td>15%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', 'W컨셉', this)"><td class="pl-6 text-slate-500">└ W컨셉</td><td>45,210,000</td><td>350</td><td>10%</td></tr>
-                                </tbody>
-                            </table>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>온라인 채널별 실적</span></div>
+                            <div class="table-container flex-1">
+                                <table>
+                                    <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                                    <tbody id="on-list">
+                                        <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 전체</td><td>452,100,000</td><td>3,500</td><td>100%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-6 text-slate-500">└ 자사몰</td><td>135,630,000</td><td>1,050</td><td>30%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-6 text-slate-500">└ 무신사</td><td>113,025,000</td><td>875</td><td>25%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('on', '네이버 스토어', this)"><td class="pl-6 text-slate-500">└ 네이버 스토어</td><td>90,420,000</td><td>700</td><td>20%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('on', '29CM', this)"><td class="pl-6 text-slate-500">└ 29CM</td><td>67,815,000</td><td>525</td><td>15%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('on', 'W컨셉', this)"><td class="pl-6 text-slate-500">└ W컨셉</td><td>45,210,000</td><td>350</td><td>10%</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <div class="section-title"><span>컬러별 판매 현황</span><span id="on-t-color" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
-                        <div class="table-container"><table id="on-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="on-t-color" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
+                            <div class="table-container flex-1"><table id="on-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="section-title"><span>사이즈별 판매 현황</span><span id="on-t-size" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
-                        <div class="table-container"><table id="on-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="on-t-size" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
+                            <div class="table-container flex-1"><table id="on-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -163,28 +169,34 @@
                     <div class="w-2 h-8 bg-red-600 rounded-full"></div>
                     <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Offline Performance Detailed</h3>
                 </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                    <div>
-                        <div class="section-title"><span>오프라인 채널별 실적</span></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
-                                <tbody id="off-list">
-                                    <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 전체</td><td>320,000,000</td><td>2,800</td><td>100%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-6 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-6 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-6 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td></tr>
-                                </tbody>
-                            </table>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>오프라인 채널별 실적</span></div>
+                            <div class="table-container flex-1">
+                                <table>
+                                    <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                                    <tbody id="off-list">
+                                        <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 전체</td><td>320,000,000</td><td>2,800</td><td>100%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-6 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-6 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td></tr>
+                                        <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-6 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
-                        <div class="table-container"><table id="off-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>컬러별 판매</span><span id="off-t-color" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
+                            <div class="table-container flex-1"><table id="off-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
-                        <div class="table-container"><table id="off-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>사이즈별 판매</span><span id="off-t-size" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
+                            <div class="table-container flex-1"><table id="off-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
