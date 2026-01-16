@@ -30,44 +30,6 @@
         .control-group { background-color: #f1f5f9; padding: 3px; border-radius: 6px; display: flex; gap: 2px; }
         
         .filter-label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; display: block; }
-        
-        /* [수정] 한반도 지도 배경 적용 및 스타일 최적화 */
-        #korea-map { 
-            width: 100%; 
-            height: 450px; 
-            background-color: #f8fafc;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/South_Korea_adm_location_map.svg/538px-South_Korea_adm_location_map.svg.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            border-radius: 12px; 
-            position: relative; 
-            overflow: hidden; 
-            border: 1px solid #e2e8f0; 
-        }
-        .map-bubble { 
-            position: absolute; 
-            background: rgba(239, 68, 68, 0.5); 
-            border: 1.5px solid #ef4444; 
-            border-radius: 50%; 
-            transform: translate(-50%, -50%); 
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            z-index: 5; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .map-label { 
-            position: absolute; 
-            font-size: 10px; 
-            font-weight: 800; 
-            color: #1e293b; 
-            transform: translate(-50%, 0); 
-            pointer-events: none; 
-            z-index: 10; 
-            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
-        }
-
         .select2-container--default .select2-selection--multiple { border: 1px solid #e2e8f0; border-radius: 6px; min-height: 38px; background-color: #f8fafc; }
     </style>
 </head>
@@ -75,7 +37,7 @@
     <div class="max-w-7xl mx-auto">
         
         <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.1 (Map Integrated)</span></h1>
+            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.2 (Table Focused)</span></h1>
             <button onclick="fetchAll()" class="bg-blue-600 text-white px-8 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition active:scale-95">조회하기</button>
         </header>
 
@@ -118,7 +80,6 @@
                     </div>
                 </div>
             </div>
-            <p class="mt-3 text-[11px] text-slate-400 italic font-medium">* 카테고리와 스타일코드는 복수 선택 시 데이터가 합산(Sum)되어 대시보드에 반영됩니다.</p>
         </div>
 
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
@@ -204,6 +165,7 @@
                     <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
                 </div>
             </div>
+            
             <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <span id="off-chart-title" class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND (오프라인 전체)</span>
@@ -217,39 +179,22 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="section-title"><span id="shop-rank-title">오프라인 매장 실적 TOP 10</span></div>
-                    <div class="table-container" style="height: 450px;">
+                    <div class="section-title"><span id="shop-rank-title">오프라인 매장 실적 TOP 15</span></div>
+                    <div class="table-container" style="height: 400px;">
                         <table class="w-full text-left">
                             <thead><tr><th>순위</th><th>매장명</th><th>매출액</th><th>수량</th></tr></thead>
                             <tbody id="shop-rank-body"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border text-center">
-                    <div class="section-title"><span>지역별 매출 분포 (Geo Bubble Map)</span></div>
-                    <div id="korea-map">
-                        <div id="bubble-seoul" class="map-bubble" style="top: 22%; left: 34%;"></div>
-                        <div class="map-label" style="top: 15%; left: 34%;">서울</div>
-                        
-                        <div id="bubble-gyeonggi" class="map-bubble" style="top: 25%; left: 45%;"></div>
-                        <div class="map-label" style="top: 18%; left: 45%;">경기</div>
-                        
-                        <div id="bubble-daejeon" class="map-bubble" style="top: 48%; left: 43%;"></div>
-                        <div class="map-label" style="top: 52%; left: 43%;">대전</div>
-                        
-                        <div id="bubble-daegu" class="map-bubble" style="top: 60%; left: 65%;"></div>
-                        <div class="map-label" style="top: 64%; left: 65%;">대구</div>
-                        
-                        <div id="bubble-busan" class="map-bubble" style="top: 75%; left: 75%;"></div>
-                        <div class="map-label" style="top: 80%; left: 75%;">부산</div>
-                        
-                        <div id="bubble-gwangju" class="map-bubble" style="top: 75%; left: 28%;"></div>
-                        <div class="map-label" style="top: 80%; left: 28%;">광주</div>
-                        
-                        <div id="bubble-jeju" class="map-bubble" style="top: 92%; left: 25%;"></div>
-                        <div class="map-label" style="top: 87%; left: 25%;">제주</div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="section-title"><span id="region-rank-title">지역별 매출 실적</span><span id="off-t-region" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold uppercase">오프라인 전체</span></div>
+                    <div class="table-container" style="height: 400px;">
+                        <table class="w-full text-left">
+                            <thead><tr><th>지역</th><th>매출액(원)</th><th>판매수량</th><th>비중</th></tr></thead>
+                            <tbody id="region-rank-body"></tbody>
+                        </table>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-2 font-medium italic">* 원의 지름은 채널별 지역 매출 비중에 따라 실시간으로 변화합니다.</p>
                 </div>
             </div>
         </div>
@@ -265,10 +210,10 @@
                 '카카오': { qty: 30, colors: {BLACK: 15, WHITE: 5, GREY: 10}, sizes: {'230': 5, '240': 10, '250': 15} }
             },
             off: {
-                '오프라인 전체': { qty: 200, colors: {BLACK: 140, BEIGE: 60}, sizes: {'260': 100, '270': 100}, geo: {seoul: 80, gyeonggi: 60, busan: 30, daegu: 20, gwangju: 10, daejeon: 15, jeju: 5} },
-                '백화점': { qty: 140, colors: {BLACK: 100, BEIGE: 40}, sizes: {'260': 70, '270': 70}, geo: {seoul: 100, gyeonggi: 20, busan: 10, daegu: 5, gwangju: 5, daejeon: 2, jeju: 2} },
-                '대리점': { qty: 40, colors: {BLACK: 30, BEIGE: 10}, sizes: {'260': 20, '270': 20}, geo: {seoul: 10, gyeonggi: 10, busan: 40, daegu: 20, gwangju: 20, daejeon: 15, jeju: 10} },
-                '직영점': { qty: 20, colors: {BLACK: 10, BEIGE: 10}, sizes: {'260': 10, '270': 10}, geo: {seoul: 20, gyeonggi: 40, busan: 10, daegu: 10, gwangju: 20, daejeon: 10, jeju: 10} }
+                '오프라인 전체': { qty: 200, colors: {BLACK: 140, BEIGE: 60}, sizes: {'260': 100, '270': 100}, geo: {서울: 80, 경기: 60, 부산: 30, 대구: 20, 광주: 10, 대전: 15, 제주: 5} },
+                '백화점': { qty: 140, colors: {BLACK: 100, BEIGE: 40}, sizes: {'260': 70, '270': 70}, geo: {서울: 100, 경기: 20, 부산: 10, 대구: 5, 광주: 5, 대전: 2, 제주: 2} },
+                '대리점': { qty: 40, colors: {BLACK: 30, BEIGE: 10}, sizes: {'260': 20, '270': 20}, geo: {서울: 10, 경기: 10, 부산: 40, 대구: 20, 광주: 20, 대전: 15, 제주: 10} },
+                '직영점': { qty: 20, colors: {BLACK: 10, BEIGE: 10}, sizes: {'260': 10, '270': 10}, geo: {서울: 20, 경기: 40, 부산: 10, 대구: 10, 광주: 20, 대전: 10, 제주: 10} }
             }
         };
 
@@ -320,8 +265,9 @@
             renderSingleChart(type);
 
             if(type === 'off') {
+                document.getElementById('off-t-region').innerText = name;
                 updateShopRank(name);
-                updateMapBubbles(d.geo);
+                updateRegionTable(d.geo, d.qty);
             }
         }
 
@@ -342,25 +288,26 @@
             }
         }
 
-        function updateMapBubbles(geoData) {
-            if(!geoData) return;
-            // 필터 비중에 따른 지름 계산 (Sum 멀티플라이어 적용)
+        function updateRegionTable(geoData, totalQty) {
+            const body = document.getElementById('region-rank-body');
+            body.innerHTML = '';
+            
             const catLen = $('#category').val()?.length || 1;
             const styleLen = $('#styleCode').val()?.length || 1;
             const multiplier = Math.max(catLen, styleLen);
 
-            Object.entries(geoData).forEach(([region, val]) => {
-                const bubble = document.getElementById(`bubble-${region}`);
-                if(bubble) {
-                    // 기본 비중(val)에 필터 합산(multiplier)을 반영하여 크기 조절
-                    const baseSize = Math.sqrt(val * multiplier) * 8; 
-                    const finalSize = Math.max(baseSize, 10); // 최소 크기 보장
-                    bubble.style.width = `${finalSize}px`;
-                    bubble.style.height = `${finalSize}px`;
-                    
-                    // 버블 안에 수치 표시 (선택 사항)
-                    bubble.innerHTML = `<span style="font-size: ${finalSize/3.5}px; color: white; font-weight: bold;">${val}</span>`;
-                }
+            Object.entries(geoData).forEach(([region, qty]) => {
+                const finalQty = qty * multiplier;
+                const sales = finalQty * 65000; // 평균 단가 가산
+                const ratio = ((qty / totalQty) * 100).toFixed(1);
+                
+                body.innerHTML += `
+                    <tr>
+                        <td class="font-semibold">${region}</td>
+                        <td>${sales.toLocaleString()}원</td>
+                        <td>${finalQty.toLocaleString()}</td>
+                        <td class="text-blue-600 font-bold">${ratio}%</td>
+                    </tr>`;
             });
         }
 
@@ -419,10 +366,9 @@
             renderSingleChart('main'); 
             renderSingleChart('on'); 
             renderSingleChart('off'); 
-            // 현재 선택된 오프라인 채널의 지리 데이터를 다시 로드하여 지도 갱신
             const currentOffChannel = states.off.selectedChannel;
             const d = DATA.off[currentOffChannel] || DATA.off['오프라인 전체'];
-            updateMapBubbles(d.geo);
+            updateRegionTable(d.geo, d.qty);
         }
     </script>
 </body>
