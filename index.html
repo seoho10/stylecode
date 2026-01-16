@@ -3,32 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StyleCode Analytics</title>
+    <title>StyleCode Analytics Full Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; font-size: 14px; }
         .table-container { height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
-        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; padding: 10px 8px; font-size: 0.7rem; }
+        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; padding: 10px 8px; font-size: 0.7rem; color: #64748b; }
         td { padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 0.75rem; }
         .section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
         .selected-online { background-color: #dbeafe !important; font-weight: 600; color: #1e40af; }
         .selected-offline { background-color: #fee2e2 !important; font-weight: 600; color: #991b1b; }
         .clickable-row { transition: all 0.2s; cursor: pointer; }
+        /* 제어 버튼 스타일 */
         .btn-toggle { padding: 4px 10px; font-size: 0.65rem; font-weight: 700; border-radius: 4px; transition: all 0.2s; border: 1px solid transparent; }
         .btn-active { background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #1e293b; border-color: #e2e8f0; }
         .btn-inactive { color: #94a3b8; }
+        .control-group { background-color: #f1f5f9; padding: 3px; border-radius: 6px; display: flex; gap: 2px; }
     </style>
 </head>
 <body class="p-6 text-slate-900">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-6 flex justify-between items-end">
-            <div>
-                <h1 class="text-2xl font-bold">StyleCode Dashboard</h1>
-                <p class="text-slate-500 text-xs">채널별 컬러/사이즈 연동형 대시보드</p>
-            </div>
-            <button onclick="fetchData()" class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:bg-blue-700 shadow-md">조회하기</button>
+        <header class="mb-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">StyleCode Dashboard</h1>
+            <button onclick="fetchAll()" class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:bg-blue-700 shadow-md transition active:scale-95">조회하기</button>
         </header>
 
         <div class="bg-white p-4 rounded-xl shadow-sm border mb-8 flex flex-wrap gap-4 items-end">
@@ -47,18 +46,23 @@
 
         <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-sm text-slate-700">Total Performance</h3>
-                <div class="flex gap-4">
-                    <div class="bg-slate-100 p-1 rounded flex gap-1">
-                        <button id="main-sales" onclick="setChartState('main', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
-                        <button id="main-qty" onclick="setChartState('main', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                <h3 class="font-bold text-sm text-slate-700 underline decoration-blue-500 underline-offset-4">통합 매출/수량 추이</h3>
+                <div class="flex gap-3">
+                    <div class="control-group">
+                        <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
+                        <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                    </div>
+                    <div class="control-group">
+                        <button id="main-daily" onclick="setChart('main', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                        <button id="main-weekly" onclick="setChart('main', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                        <button id="main-monthly" onclick="setChart('main', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
                     </div>
                 </div>
             </div>
             <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="mb-10">
+        <div class="mb-12">
             <div class="flex items-center gap-2 mb-4"><div class="w-1 h-5 bg-blue-600 rounded-full"></div><h2 class="text-lg font-bold">ONLINE PERFORMANCE</h2></div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <div>
@@ -67,11 +71,11 @@
                         <table class="w-full text-left">
                             <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
                             <tbody id="on-list">
-                                <tr class="clickable-row selected-online" onclick="updateDetails('on', '온라인 전체')"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('on', '자사몰')"><td class="pl-4">자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('on', '네이버')"><td class="pl-4">네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('on', '무신사')"><td class="pl-4">무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('on', '카카오')"><td class="pl-4">카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
+                                <tr class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체')"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '자사몰')"><td class="pl-4">자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '네이버')"><td class="pl-4">네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '무신사')"><td class="pl-4">무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '카카오')"><td class="pl-4">카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -86,11 +90,25 @@
                 </div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div style="height: 200px;"><canvas id="onlineDetailChart"></canvas></div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-blue-600">ONLINE CHANNEL TREND</span>
+                    <div class="flex gap-2">
+                        <div class="control-group">
+                            <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
+                            <button id="on-qty" onclick="setChart('on', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                        </div>
+                        <div class="control-group">
+                            <button id="on-daily" onclick="setChart('on', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                            <button id="on-weekly" onclick="setChart('on', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                            <button id="on-monthly" onclick="setChart('on', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 220px;"><canvas id="onChart"></canvas></div>
             </div>
         </div>
 
-        <div class="mb-10">
+        <div class="mb-12">
             <div class="flex items-center gap-2 mb-4"><div class="w-1 h-5 bg-red-600 rounded-full"></div><h2 class="text-lg font-bold">OFFLINE PERFORMANCE</h2></div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <div>
@@ -99,10 +117,10 @@
                         <table class="w-full text-left">
                             <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
                             <tbody id="off-list">
-                                <tr class="clickable-row selected-offline" onclick="updateDetails('off', '오프라인 전체')"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('off', '백화점')"><td class="pl-4">백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('off', '대리점')"><td class="pl-4">대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
-                                <tr class="clickable-row" onclick="updateDetails('off', '직영점')"><td class="pl-4">직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
+                                <tr class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체')"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '백화점')"><td class="pl-4">백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '대리점')"><td class="pl-4">대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '직영점')"><td class="pl-4">직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -117,14 +135,28 @@
                 </div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div style="height: 200px;"><canvas id="offlineDetailChart"></canvas></div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND</span>
+                    <div class="flex gap-2">
+                        <div class="control-group">
+                            <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
+                            <button id="off-qty" onclick="setChart('off', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                        </div>
+                        <div class="control-group">
+                            <button id="off-daily" onclick="setChart('off', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                            <button id="off-weekly" onclick="setChart('off', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                            <button id="off-monthly" onclick="setChart('off', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 220px;"><canvas id="offChart"></canvas></div>
             </div>
         </div>
     </div>
 
     <script>
-        // 채널별 정합성 있는 샘플 데이터 데이터베이스
-        const DB = {
+        // 데이터 베이스 (정합성 유지)
+        const DATA = {
             on: {
                 '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
                 '자사몰': { qty: 90, colors: {BLACK: 50, WHITE: 30, GREY: 10}, sizes: {'230': 10, '240': 40, '250': 40} },
@@ -140,81 +172,84 @@
             }
         };
 
-        const chartStates = {
-            main: { metric: 'sales', view: 'daily', instance: null },
-            on: { metric: 'sales', view: 'daily', instance: null },
-            off: { metric: 'sales', view: 'daily', instance: null }
+        const states = {
+            main: { metric: 'sales', view: 'daily', chart: null },
+            on: { metric: 'sales', view: 'daily', chart: null },
+            off: { metric: 'sales', view: 'daily', chart: null }
         };
 
-        // 채널 클릭 시 호출되는 함수 (음영 처리 + 지표 업데이트)
-        function updateDetails(type, channelName) {
-            // 1. 테이블 음영 처리
+        function setChart(key, type, val) {
+            states[key][type] = val;
+            // UI 버튼 상태 업데이트
+            const group = type === 'metric' ? ['sales', 'qty'] : ['daily', 'weekly', 'monthly'];
+            group.forEach(id => {
+                const el = document.getElementById(`${key}-${id}`);
+                if(el) el.className = id === val ? 'btn-toggle btn-active' : 'btn-toggle btn-inactive';
+            });
+            renderSingleChart(key);
+        }
+
+        function updateIndicator(type, name) {
             const rows = document.querySelectorAll(`#${type}-list tr`);
             rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
             event.currentTarget.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
 
-            // 2. 타이틀 뱃지 업데이트
-            document.getElementById(`${type}-t-color`).innerText = channelName;
-            document.getElementById(`${type}-t-size`).innerText = channelName;
+            document.getElementById(`${type}-t-color`).innerText = name;
+            document.getElementById(`${type}-t-size`).innerText = name;
 
-            // 3. 데이터 테이블 렌더링
-            const data = DB[type][channelName];
-            renderIndicatorTable(`${type}-color-body`, data.colors, data.qty);
-            renderIndicatorTable(`${type}-size-body`, data.sizes, data.qty);
+            const d = DATA[type][name];
+            fillTable(`${type}-color-body`, d.colors, d.qty);
+            fillTable(`${type}-size-body`, d.sizes, d.qty);
         }
 
-        function renderIndicatorTable(tbodyId, dataObj, totalQty) {
-            const tbody = document.getElementById(tbodyId);
-            tbody.innerHTML = '';
-            Object.entries(dataObj).forEach(([key, val]) => {
-                const percent = ((val / totalQty) * 100).toFixed(0) + '%';
-                tbody.innerHTML += `<tr><td>${key}</td><td>${val.toLocaleString()}</td><td>${percent}</td></tr>`;
+        function fillTable(id, obj, total) {
+            const b = document.getElementById(id); b.innerHTML = '';
+            Object.entries(obj).forEach(([k, v]) => {
+                b.innerHTML += `<tr><td>${k}</td><td>${v.toLocaleString()}</td><td>${((v/total)*100).toFixed(0)}%</td></tr>`;
             });
         }
 
-        function setChartState(key, type, val) {
-            chartStates[key][type] = val;
-            document.getElementById(`${key}-sales`).className = val === 'sales' ? 'btn-toggle btn-active' : 'btn-toggle btn-inactive';
-            document.getElementById(`${key}-qty`).className = val === 'qty' ? 'btn-toggle btn-active' : 'btn-toggle btn-inactive';
-            renderCharts();
-        }
+        function renderSingleChart(key) {
+            const ctx = document.getElementById(key === 'main' ? 'mainChart' : `${key}Chart`).getContext('2d');
+            const s = states[key];
+            if (s.chart) s.chart.destroy();
 
-        function renderCharts() {
-            // 메인 차트 렌더링 (간소화된 로직)
-            const ctxMain = document.getElementById('mainChart').getContext('2d');
-            if (chartStates.main.instance) chartStates.main.instance.destroy();
-            chartStates.main.instance = new Chart(ctxMain, {
+            const labels = s.view === 'daily' ? ['01-12', '01-13', '01-14', '01-15', '01-16'] : s.view === 'weekly' ? ['1주차', '2주차'] : ['11월', '12월'];
+            let ds = [];
+
+            if(key === 'main') {
+                ds = [
+                    { label: 'Online', data: [300, 350, 320, 400, 380].map(v => s.metric === 'sales' ? v*50000 : v), borderColor: '#2563eb' },
+                    { label: 'Offline', data: [200, 220, 210, 250, 230].map(v => s.metric === 'sales' ? v*60000 : v), borderColor: '#dc2626' }
+                ];
+            } else if (key === 'on') {
+                const names = ['자사몰', '네이버', '무신사', '카카오'];
+                ds = names.map(n => ({ label: n, data: [20, 30, 25, 40, 35].map(v => s.metric === 'sales' ? v*55000 : v), tension: 0.3 }));
+            } else {
+                const names = ['백화점', '대리점', '직영점'];
+                ds = names.map(n => ({ label: n, data: [50, 60, 55, 70, 65].map(v => s.metric === 'sales' ? v*60000 : v), tension: 0.3 }));
+            }
+
+            s.chart = new Chart(ctx, {
                 type: 'line',
-                data: { labels: ['01-12', '01-13', '01-14', '01-15', '01-16'], datasets: [
-                    { label: 'Online', data: [275, 330, 302, 385, 357], borderColor: '#2563eb' },
-                    { label: 'Offline', data: [180, 270, 240, 300, 210], borderColor: '#dc2626' }
-                ]},
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-            // 온라인/오프라인 상세 그래프는 이전과 동일하게 유지 (생략 없이 로직만 호출)
-            renderSubChart('on', 'onlineDetailChart', ['자사몰', '네이버', '무신사', '카카오'], '#3b82f6');
-            renderSubChart('off', 'offlineDetailChart', ['백화점', '대리점', '직영점'], '#ef4444');
-        }
-
-        function renderSubChart(key, canvasId, labels, color) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if (chartStates[key].instance) chartStates[key].instance.destroy();
-            chartStates[key].instance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: ['01-12', '01-13', '01-14', '01-15', '01-16'], datasets: labels.map(l => ({ label: l, data: [Math.random()*50, Math.random()*50, Math.random()*50, Math.random()*50, Math.random()*50], tension: 0.3 })) },
-                options: { responsive: true, maintainAspectRatio: false }
+                data: { labels, datasets: ds },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 10 } } } } }
             });
         }
 
-        function fetchData() { renderCharts(); }
+        function fetchAll() {
+            renderSingleChart('main');
+            renderSingleChart('on');
+            renderSingleChart('off');
+        }
 
         window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = '2026-01-12';
             document.getElementById('endDate').value = '2026-01-16';
-            renderCharts();
-            // 초기 로딩 시 '전체' 데이터 표시
-            updateDetails('on', '온라인 전체');
-            updateDetails('off', '오프라인 전체');
+            fetchAll();
+            updateIndicator('on', '온라인 전체');
+            updateIndicator('off', '오프라인 전체');
         };
     </script>
 </body>
