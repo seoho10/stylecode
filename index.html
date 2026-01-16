@@ -364,16 +364,16 @@
             const d = DATA.cust[name];
             fillTable('cust-color-body', d.colors, d.qty);
             fillTable('cust-size-body', d.sizes, d.qty);
-            fillMemberTable('cust-member-body', d.members, d.qty, d.sales);
+            fillMemberTable('cust-member-body', d.members, d.qty, d.sales, name);
         }
 
-        function fillMemberTable(id, members, totalQty, totalSales) {
+        function fillMemberTable(id, members, totalQty, totalSales, channelName) {
             const b = document.getElementById(id);
             b.innerHTML = '';
             
-            // SUM 행 추가
+            // SUM 행 추가 (선택한 채널명 표시)
             b.innerHTML += `<tr class="font-black bg-purple-50">
-                <td>SUM</td>
+                <td>${channelName}</td>
                 <td>${totalSales.toLocaleString()}</td>
                 <td>${totalQty.toLocaleString()}</td>
                 <td class="text-purple-600">100.0%</td>
