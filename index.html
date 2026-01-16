@@ -254,15 +254,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-6">
-                        <div class="section-title"><span id="cust-member-title">회원 전체</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>회원 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
-                                <tbody id="cust-member-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
                 </div>
                 <div class="lg:col-span-4">
                     <div class="section-title"><span>회원 컬러별 판매</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
@@ -275,9 +266,19 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
-                <div class="lg:col-span-4"></div>
+                <div class="lg:col-span-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
+                        <div class="section-title mb-4"><span id="cust-member-title">회원 전체</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                        <div class="table-container flex-1" style="height: calc(100% - 60px);">
+                            <table>
+                                <thead><tr><th>회원 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                                <tbody id="cust-member-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 <div class="lg:col-span-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="flex justify-between items-center mb-6">
                             <div>
                                 <h3 class="text-lg font-extrabold text-slate-800">성별/연령대 분석</h3>
@@ -288,7 +289,7 @@
                                 <button id="age-qty" onclick="setAgeChart('qty')" class="btn-toggle btn-inactive">판매량</button>
                             </div>
                         </div>
-                        <div style="height: 350px;"><canvas id="ageChart"></canvas></div>
+                        <div style="height: 350px; flex: 1;"><canvas id="ageChart"></canvas></div>
                     </div>
                 </div>
             </div>
