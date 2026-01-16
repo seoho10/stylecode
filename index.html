@@ -128,24 +128,23 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-                <div class="flex justify-between items-center mb-6">
-                    <span id="main-chart-title" class="text-sm font-black text-slate-600">TOTAL TREND ANALYSIS</span>
-                    <div class="flex gap-2">
-                        <div class="control-group">
-                            <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출</button>
-                            <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">수량</button>
-                        </div>
-                        <div class="control-group">
-                            <button id="main-daily" onclick="setChart('main', 'view', 'daily')" class="btn-toggle btn-active">일</button>
-                            <button id="main-weekly" onclick="setChart('main', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
-                            <button id="main-monthly" onclick="setChart('main', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="main-chart-title" class="text-sm font-black text-slate-600">TOTAL TREND ANALYSIS</span>
+                        <div class="flex gap-2">
+                            <div class="control-group">
+                                <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출</button>
+                                <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">수량</button>
+                            </div>
+                            <div class="control-group">
+                                <button id="main-daily" onclick="setChart('main', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                                <button id="main-weekly" onclick="setChart('main', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                                <button id="main-monthly" onclick="setChart('main', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                            </div>
                         </div>
                     </div>
+                    <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
                 </div>
-                <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
             </div>
 
             <div class="mb-16">
