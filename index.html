@@ -3,94 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StyleCode Analytics Full Dashboard</title>
+    <title>StyleCode Analytics Enterprise Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; font-size: 14px; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; font-size: 13px; color: #1e293b; }
         
-        .table-container { height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
-        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; padding: 10px 8px; font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-        td { padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 0.75rem; }
+        /* 테이블 스크롤 및 디자인 복구 */
+        .table-container { height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th { position: sticky; top: 0; background: #f8fafc; z-index: 20; border-bottom: 1px solid #e2e8f0; padding: 12px 10px; font-size: 0.75rem; color: #64748b; font-weight: 700; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
         
-        .section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        /* 섹션 타이틀 및 가독성 */
+        .section-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
         
-        .selected-online { background-color: #dbeafe !important; font-weight: 600; color: #1e40af; }
-        .selected-offline { background-color: #fee2e2 !important; font-weight: 600; color: #991b1b; }
-        .clickable-row { transition: all 0.2s; cursor: pointer; }
+        /* 선택 효과 (v2.3 스타일) */
+        .selected-online { background-color: #eff6ff !important; font-weight: 700; color: #1d4ed8; border-left: 4px solid #3b82f6; }
+        .selected-offline { background-color: #fef2f2 !important; font-weight: 700; color: #b91c1c; border-left: 4px solid #ef4444; }
+        .clickable-row { cursor: pointer; transition: background 0.2s; }
         .clickable-row:hover { background-color: #f8fafc; }
         
-        .btn-toggle { padding: 4px 10px; font-size: 0.65rem; font-weight: 700; border-radius: 4px; transition: all 0.2s; border: 1px solid transparent; }
-        .btn-active { background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #1e293b; border-color: #e2e8f0; }
-        .btn-inactive { color: #94a3b8; }
-        .control-group { background-color: #f1f5f9; padding: 3px; border-radius: 6px; display: flex; gap: 2px; }
+        /* 버튼 컨트롤 */
+        .btn-toggle { padding: 5px 12px; font-size: 0.7rem; font-weight: 700; border-radius: 6px; transition: all 0.2s; }
+        .btn-active { background-color: white; color: #1e293b; shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .btn-inactive { color: #94a3b8; border: 1px solid transparent; }
+        .control-group { background-color: #e2e8f0; padding: 3px; border-radius: 8px; display: flex; gap: 2px; }
         
-        .filter-label { text-transform: uppercase; font-size: 10px; font-weight: 800; color: #94a3b8; margin-bottom: 4px; display: block; }
-        .select2-container--default .select2-selection--multiple { border: 1px solid #e2e8f0; border-radius: 6px; min-height: 38px; background-color: #f8fafc; }
+        /* 대그룹 구분선 */
+        .group-header { border-bottom: 4px solid #0f172a; padding-bottom: 0.75rem; margin: 3rem 0 1.5rem 0; }
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 800; }
         
-        /* 스티커(Badge) 스타일 */
-        .badge-online { font-size: 10px; background-color: #dbeafe; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
-        .badge-offline { font-size: 10px; background-color: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
-        
-        /* 대그룹 헤더 스타일 */
-        .group-header { border-bottom: 3px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 2.5rem; margin-top: 1rem; }
+        .loading-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="p-6 text-slate-900">
-    <div class="max-w-7xl mx-auto">
+<body class="p-8">
+    <div class="max-w-[1600px] mx-auto">
         
-        <header class="mb-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">StyleCode Dashboard <span class="text-blue-500 text-sm font-normal ml-2">v2.5 (Full Performance)</span></h1>
-            <button onclick="fetchAll()" class="bg-blue-600 text-white px-8 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition active:scale-95">조회하기</button>
+        <header class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter text-slate-900">StyleCode Data Lab <span class="text-blue-600">v2.8</span></h1>
+                <p class="text-slate-500 font-medium">실시간 판매 성과 및 고객 분석 통합 대시보드</p>
+            </div>
+            <button onclick="fetchAll()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">DATA REFRESH</button>
         </header>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
-                    <label class="filter-label">Brand</label>
-                    <select id="brand" class="w-full border border-slate-200 rounded-md px-3 py-2 text-sm outline-none bg-slate-50 font-semibold focus:ring-2 focus:ring-blue-500">
-                        <option>Brand A</option><option>Brand B</option><option>Brand C</option>
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Brand Selection</label>
+                    <select id="brand" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option>NIKE PERFORMANCE</option><option>ADIDAS ORIGINALS</option><option>NEW BALANCE</option>
                     </select>
                 </div>
                 <div>
-                    <label class="filter-label">Category</label>
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Category</label>
                     <select id="category" class="js-example-basic-multiple" multiple="multiple">
-                        <option value="shoes" selected>신발</option><option value="hat">모자</option><option value="top">상의</option><option value="bottom">하의</option>
+                        <option value="shoes" selected>FOOTWEAR</option><option value="top">TOPS</option><option value="bottom">PANTS</option><option value="acc">ACCESSORIES</option>
                     </select>
                 </div>
                 <div>
-                    <label class="filter-label">Style Code</label>
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Style Code</label>
                     <select id="styleCode" class="js-example-basic-multiple" multiple="multiple">
-                        <option value="SC-001">SC-001</option><option value="SC-002">SC-002</option><option value="SC-003">SC-003</option>
+                        <option value="SC-001" selected>SC-AIR-01</option><option value="SC-002">SC-RUN-05</option><option value="SC-003">SC-CT-09</option>
                     </select>
                 </div>
                 <div>
-                    <label class="filter-label">Period Selection</label>
-                    <div class="flex items-center gap-2 border border-slate-200 rounded-md px-3 py-2 bg-slate-50 h-[38px]">
-                        <input type="date" id="startDate" class="bg-transparent text-xs outline-none w-full">
-                        <span class="text-slate-400">~</span>
-                        <input type="date" id="endDate" class="bg-transparent text-xs outline-none w-full">
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Analysis Period</label>
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2">
+                        <input type="date" id="startDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
+                        <span class="text-slate-300 font-bold">~</span>
+                        <input type="date" id="endDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mb-20">
-            <div class="group-header">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">1. ON,OFF PERFORMANCE</h2>
+        <div id="group-1">
+            <div class="group-header flex justify-between items-center">
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight underline decoration-blue-500 decoration-4 underline-offset-8">1. ON/OFF PERFORMANCE</h2>
+                <span class="text-slate-400 font-bold text-sm">CHANNEL & PRODUCT ANALYSIS</span>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-sm text-slate-700 underline decoration-blue-500 underline-offset-4">통합 매출/수량 추이 (ON+OFF Sum)</h3>
-                    <div class="flex gap-3">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-10">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-800">통합 매출 및 판매량 추이</h3>
+                        <p class="text-sm text-slate-400 mt-1">온라인과 오프라인의 전체 성과를 비교합니다.</p>
+                    </div>
+                    <div class="flex gap-4">
                         <div class="control-group">
                             <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
-                            <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                            <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">판매량</button>
                         </div>
                         <div class="control-group">
                             <button id="main-daily" onclick="setChart('main', 'view', 'daily')" class="btn-toggle btn-active">일</button>
@@ -99,139 +108,159 @@
                         </div>
                     </div>
                 </div>
-                <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
+                <div style="height: 350px;"><canvas id="mainChart"></canvas></div>
             </div>
 
-            <div class="mb-12">
-                <div class="flex items-center gap-2 mb-4"><div class="w-1.5 h-6 bg-blue-600 rounded-full"></div><h3 class="text-lg font-bold">ONLINE PERFORMANCE</h3></div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="mb-16">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
+                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Online Performance Detailed</h3>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     <div>
-                        <div class="section-title"><span>채널별 실적 (Online)</span></div>
+                        <div class="section-title"><span>온라인 채널별 실적</span></div>
                         <div class="table-container">
-                            <table class="w-full text-left">
-                                <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
+                            <table>
+                                <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                 <tbody id="on-list">
-                                    <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-4 text-slate-500">└ 자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '네이버', this)"><td class="pl-4 text-slate-500">└ 네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-4 text-slate-500">└ 무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('on', '카카오', this)"><td class="pl-4 text-slate-500">└ 카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
+                                    <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 전체</td><td>452,100,000</td><td>3,500</td><td>100%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-6 text-slate-500">└ 자사몰</td><td>135,630,000</td><td>1,050</td><td>30%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-6 text-slate-500">└ 무신사</td><td>113,025,000</td><td>875</td><td>25%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('on', '네이버 스토어', this)"><td class="pl-6 text-slate-500">└ 네이버 스토어</td><td>90,420,000</td><td>700</td><td>20%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('on', '29CM', this)"><td class="pl-6 text-slate-500">└ 29CM</td><td>67,815,000</td><td>525</td><td>15%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('on', 'W컨셉', this)"><td class="pl-6 text-slate-500">└ W컨셉</td><td>45,210,000</td><td>350</td><td>10%</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div>
-                        <div class="section-title"><span>컬러별 판매</span><span id="on-t-color" class="badge-online">온라인 전체</span></div>
-                        <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
+                        <div class="section-title"><span>컬러별 판매 현황</span><span id="on-t-color" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
+                        <div class="table-container"><table id="on-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
                     </div>
                     <div>
-                        <div class="section-title"><span>사이즈별 판매</span><span id="on-t-size" class="badge-online">온라인 전체</span></div>
-                        <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
+                        <div class="section-title"><span>사이즈별 판매 현황</span><span id="on-t-size" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
+                        <div class="table-container"><table id="on-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="flex justify-between items-center mb-4">
-                        <span id="on-chart-title" class="text-xs font-bold text-blue-600 uppercase tracking-tighter">ONLINE CHANNEL TREND (온라인 전체)</span>
-                        <div class="control-group">
-                            <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
-                            <button id="on-qty" onclick="setChart('on', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="on-chart-title" class="text-sm font-black text-blue-600">ONLINE TREND ANALYSIS</span>
+                        <div class="flex gap-2">
+                            <div class="control-group">
+                                <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출</button>
+                                <button id="on-qty" onclick="setChart('on', 'metric', 'qty')" class="btn-toggle btn-inactive">수량</button>
+                            </div>
+                            <div class="control-group">
+                                <button id="on-daily" onclick="setChart('on', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                                <button id="on-weekly" onclick="setChart('on', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                                <button id="on-monthly" onclick="setChart('on', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                            </div>
                         </div>
                     </div>
-                    <div style="height: 220px;"><canvas id="onChart"></canvas></div>
+                    <div style="height: 250px;"><canvas id="onChart"></canvas></div>
                 </div>
             </div>
 
-            <div class="mb-12">
-                <div class="flex items-center gap-2 mb-4"><div class="w-1.5 h-6 bg-red-600 rounded-full"></div><h3 class="text-lg font-bold">OFFLINE PERFORMANCE</h3></div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="mb-16">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-2 h-8 bg-red-600 rounded-full"></div>
+                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Offline Performance Detailed</h3>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                     <div>
-                        <div class="section-title"><span>채널별 실적 (Offline)</span></div>
+                        <div class="section-title"><span>오프라인 채널별 실적</span></div>
                         <div class="table-container">
-                            <table class="w-full text-left">
-                                <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
+                            <table>
+                                <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                 <tbody id="off-list">
-                                    <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-4 text-slate-500">└ 백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-4 text-slate-500">└ 대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
-                                    <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-4 text-slate-500">└ 직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
+                                    <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 전체</td><td>320,000,000</td><td>2,800</td><td>100%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-6 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-6 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td></tr>
+                                    <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-6 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     <div>
-                        <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="badge-offline">오프라인 전체</span></div>
-                        <div class="table-container"><table class="w-full text-left"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
+                        <div class="section-title"><span>컬러별 판매</span><span id="off-t-color" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
+                        <div class="table-container"><table id="off-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-color-body"></tbody></table></div>
                     </div>
                     <div>
-                        <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="badge-offline">오프라인 전체</span></div>
-                        <div class="table-container"><table class="w-full text-left"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
+                        <div class="section-title"><span>사이즈별 판매</span><span id="off-t-size" class="badge bg-red-100 text-red-600">오프라인 전체</span></div>
+                        <div class="table-container"><table id="off-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="off-size-body"></tbody></table></div>
                     </div>
                 </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <span id="off-chart-title" class="text-xs font-bold text-red-600 uppercase tracking-tighter">OFFLINE CHANNEL TREND (오프라인 전체)</span>
-                        <div class="control-group">
-                            <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
-                            <button id="off-qty" onclick="setChart('off', 'metric', 'qty')" class="btn-toggle btn-inactive">판매수량</button>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <span id="off-chart-title" class="text-sm font-black text-red-600">OFFLINE TREND ANALYSIS</span>
+                        <div class="flex gap-2">
+                            <div class="control-group">
+                                <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출</button>
+                                <button id="off-qty" onclick="setChart('off', 'metric', 'qty')" class="btn-toggle btn-inactive">수량</button>
+                            </div>
+                            <div class="control-group">
+                                <button id="off-daily" onclick="setChart('off', 'view', 'daily')" class="btn-toggle btn-active">일</button>
+                                <button id="off-weekly" onclick="setChart('off', 'view', 'weekly')" class="btn-toggle btn-inactive">주</button>
+                                <button id="off-monthly" onclick="setChart('off', 'view', 'monthly')" class="btn-toggle btn-inactive">월</button>
+                            </div>
                         </div>
                     </div>
-                    <div style="height: 220px;"><canvas id="offChart"></canvas></div>
+                    <div style="height: 250px;"><canvas id="offChart"></canvas></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border">
-                        <div class="section-title"><span>오프라인 매장 실적 TOP 10</span><span id="off-t-shop" class="badge-offline">오프라인 전체</span></div>
-                        <div class="table-container" style="height: 380px;">
-                            <table class="w-full text-left">
-                                <thead><tr><th>순위</th><th>매장명</th><th>매출액(원)</th><th>판매수량</th></tr></thead>
-                                <tbody id="shop-rank-body"></tbody>
-                            </table>
-                        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                        <div class="section-title"><span>오프라인 매장 실적 TOP 15</span><span id="off-t-shop" class="badge bg-slate-100 text-slate-600">오프라인 전체</span></div>
+                        <div class="table-container" style="height: 450px;"><table class="w-full text-left"><thead><tr><th>Rank</th><th>Store Name</th><th>Revenue</th><th>Qty</th></tr></thead><tbody id="shop-rank-body"></tbody></table></div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border">
-                        <div class="section-title"><span>지역별 매출 실적</span><span id="off-t-region" class="badge-offline">오프라인 전체</span></div>
-                        <div class="table-container" style="height: 380px;">
-                            <table class="w-full text-left">
-                                <thead><tr><th>지역</th><th>매출액(원)</th><th>판매수량</th><th>비중</th></tr></thead>
-                                <tbody id="region-rank-body"></tbody>
-                            </table>
-                        </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                        <div class="section-title"><span>전국 지역별 매출 분포</span><span id="off-t-region" class="badge bg-slate-100 text-slate-600">오프라인 전체</span></div>
+                        <div class="table-container" style="height: 450px;"><table class="w-full text-left"><thead><tr><th>Region</th><th>Revenue</th><th>Qty</th><th>Ratio</th></tr></thead><tbody id="region-rank-body"></tbody></table></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mb-20">
+        <div id="group-2" class="pb-20">
             <div class="group-header">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">2. CUSTOMER</h2>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight underline decoration-purple-500 decoration-4 underline-offset-8">2. CUSTOMER ANALYSIS</h2>
             </div>
-            <div class="bg-white p-12 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center flex flex-col items-center justify-center">
+                    <div class="text-purple-600 mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
+                    <p class="font-bold text-slate-800">성별/연령대 분포</p>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Coming Soon in Next Module</p>
                 </div>
-                <h3 class="text-lg font-bold text-slate-600 mb-1">고객 분석 섹션 대기 중</h3>
-                <p class="text-sm">성별 비중, 연령대 분포, 멤버십 현황 등 추가할 분석 항목을 말씀해 주세요.</p>
+                <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center flex flex-col items-center justify-center">
+                    <div class="text-purple-600 mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path></svg></div>
+                    <p class="font-bold text-slate-800">구매 유입 경로</p>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Coming Soon in Next Module</p>
+                </div>
+                <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center flex flex-col items-center justify-center">
+                    <div class="text-purple-600 mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                    <p class="font-bold text-slate-800">신규 vs 재구매 분석</p>
+                    <p class="text-xs text-slate-400 mt-2 font-medium">Coming Soon in Next Module</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // v2.3의 방대한 샘플 데이터 복구
         const DATA = {
             on: {
-                '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
-                '자사몰': { qty: 90, colors: {BLACK: 50, WHITE: 30, GREY: 10}, sizes: {'230': 10, '240': 40, '250': 40} },
-                '네이버': { qty: 75, colors: {BLACK: 45, WHITE: 25, GREY: 5}, sizes: {'230': 20, '240': 30, '250': 25} },
-                '무신사': { qty: 105, colors: {BLACK: 70, WHITE: 30, GREY: 5}, sizes: {'230': 25, '240': 40, '250': 40} },
-                '카카오': { qty: 30, colors: {BLACK: 15, WHITE: 5, GREY: 10}, sizes: {'230': 5, '240': 10, '250': 15} }
+                '온라인 전체': { qty: 3500, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
+                '자사몰': { qty: 1050, colors: {BLACK: 450, WHITE: 350, GREY: 150, NAVY: 100}, sizes: {'230': 100, '240': 300, '250': 350, '260': 200, '270': 100} },
+                '무신사': { qty: 875, colors: {BLACK: 400, WHITE: 200, GREY: 175, NAVY: 100}, sizes: {'240': 275, '250': 300, '260': 200, '270': 100} },
+                '네이버 스토어': { qty: 700, colors: {BLACK: 300, WHITE: 250, GREY: 100, NAVY: 50}, sizes: {'230': 150, '240': 250, '250': 200, '260': 100} },
+                '29CM': { qty: 525, colors: {BLACK: 200, WHITE: 150, GREY: 100, NAVY: 75}, sizes: {'230': 100, '240': 200, '250': 150, '260': 75} },
+                'W컨셉': { qty: 350, colors: {BLACK: 150, WHITE: 50, GREY: 75, NAVY: 75}, sizes: {'230': 50, '240': 100, '250': 150, '260': 50} }
             },
             off: {
-                '오프라인 전체': { qty: 200, colors: {BLACK: 140, BEIGE: 60}, sizes: {'260': 100, '270': 100}, geo: {서울: 80, 경기: 60, 부산: 30, 대구: 20, 광주: 10, 대전: 15, 제주: 5} },
-                '백화점': { qty: 140, colors: {BLACK: 100, BEIGE: 40}, sizes: {'260': 70, '270': 70}, geo: {서울: 100, 경기: 20, 부산: 10, 대구: 5, 광주: 5, 대전: 2, 제주: 2} },
-                '대리점': { qty: 40, colors: {BLACK: 30, BEIGE: 10}, sizes: {'260': 20, '270': 20}, geo: {서울: 10, 경기: 10, 부산: 40, 대구: 20, 광주: 20, 대전: 15, 제주: 10} },
-                '직영점': { qty: 20, colors: {BLACK: 10, BEIGE: 10}, sizes: {'260': 10, '270': 10}, geo: {서울: 20, 경기: 40, 부산: 10, 대구: 10, 광주: 20, 대전: 10, 제주: 10} }
+                '오프라인 전체': { qty: 2800, colors: {BLACK: 1800, BEIGE: 600, WHITE: 400}, sizes: {'250': 800, '260': 1000, '270': 1000}, geo: {서울: 1200, 경기: 800, 부산: 300, 대구: 200, 광주: 100, 대전: 100, 제주: 100} },
+                '백화점': { qty: 1960, colors: {BLACK: 1300, BEIGE: 400, WHITE: 260}, sizes: {'250': 500, '260': 700, '270': 760}, geo: {서울: 1000, 경기: 500, 부산: 200, 대구: 100, 기타: 160} },
+                '대리점': { qty: 560, colors: {BLACK: 300, BEIGE: 160, WHITE: 100}, sizes: {'250': 200, '260': 200, '270': 160}, geo: {서울: 100, 경기: 200, 부산: 100, 대구: 100, 광주: 60} },
+                '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 40, WHITE: 40}, sizes: {'250': 100, '260': 100, '270': 80}, geo: {서울: 100, 경기: 100, 부산: 80} }
             }
         };
 
@@ -242,26 +271,21 @@
         };
 
         $(document).ready(function() {
-            $('.js-example-basic-multiple').select2({ placeholder: "선택" });
-            const today = new Date();
-            document.getElementById('startDate').value = new Date(today.setDate(today.getDate()-7)).toISOString().split('T')[0];
-            document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
+            $('.js-example-basic-multiple').select2();
             fetchAll();
         });
 
         function setChart(key, type, val) {
             states[key][type] = val;
-            const group = type === 'metric' ? ['sales', 'qty'] : ['daily', 'weekly', 'monthly'];
-            group.forEach(id => { $(`#${key}-${id}`).removeClass('btn-active').addClass('btn-inactive'); });
+            $(`[id^="${key}-${type === 'metric' ? 'sales' : 'daily'}"]`).parent().find('button').removeClass('btn-active').addClass('btn-inactive');
             $(`#${key}-${val}`).addClass('btn-active').removeClass('btn-inactive');
             renderSingleChart(key);
         }
 
         function updateIndicator(type, name, rowElement) {
-            const rows = document.querySelectorAll(`#${type}-list tr`);
-            rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
+            const container = document.getElementById(`${type}-list`);
+            Array.from(container.querySelectorAll('tr')).forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
             if(rowElement) rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
-            else document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
 
             document.getElementById(`${type}-t-color`).innerText = name;
             document.getElementById(`${type}-t-size`).innerText = name;
@@ -271,76 +295,87 @@
             fillTable(`${type}-size-body`, d.sizes, d.qty);
             
             states[type].selectedChannel = name;
+            document.getElementById(`${type}-chart-title`).innerText = `${type.toUpperCase()} TREND: ${name}`;
             renderSingleChart(type);
 
             if(type === 'off') {
                 document.getElementById('off-t-region').innerText = name;
                 document.getElementById('off-t-shop').innerText = name;
-                document.getElementById('off-chart-title').innerText = `OFFLINE CHANNEL TREND (${name})`;
                 updateShopRank(name);
                 updateRegionTable(d.geo, d.qty);
-            } else {
-                document.getElementById('on-chart-title').innerText = `ONLINE CHANNEL TREND (${name})`;
             }
         }
 
         function fillTable(id, obj, total) {
             const b = document.getElementById(id); b.innerHTML = '';
             Object.entries(obj).forEach(([k, v]) => {
-                b.innerHTML += `<tr><td>${k}</td><td>${v.toLocaleString()}</td><td>${((v/total)*100).toFixed(0)}%</td></tr>`;
+                b.innerHTML += `<tr><td>${k}</td><td class="font-bold">${v.toLocaleString()}</td><td class="text-slate-400">${((v/total)*100).toFixed(1)}%</td></tr>`;
             });
         }
 
         function updateShopRank(channel) {
-            const body = document.getElementById('shop-rank-body');
-            body.innerHTML = '';
-            const prefix = channel.includes('전체') ? '우수' : channel;
-            for(let i=1; i<=10; i++) {
-                const sales = Math.floor(Math.random() * 2000000) + 3000000;
-                body.innerHTML += `<tr><td class="font-bold text-slate-400">${i}</td><td>${prefix} ${i}호점</td><td>${sales.toLocaleString()}원</td><td>${Math.floor(sales/70000)}</td></tr>`;
+            const body = document.getElementById('shop-rank-body'); body.innerHTML = '';
+            const isTotal = channel.includes('전체');
+            for(let i=1; i<=15; i++) {
+                const sales = Math.floor(Math.random() * 5000000) + 2000000;
+                body.innerHTML += `<tr><td class="font-black text-slate-300">${i}</td><td class="font-semibold text-slate-700">${isTotal ? '베스트' : channel} 매장 ${i}호점</td><td>${sales.toLocaleString()}원</td><td>${Math.floor(sales/80000)}</td></tr>`;
             }
         }
 
         function updateRegionTable(geoData, totalQty) {
-            const body = document.getElementById('region-rank-body');
-            body.innerHTML = '';
+            const body = document.getElementById('region-rank-body'); body.innerHTML = '';
             Object.entries(geoData).forEach(([region, qty]) => {
-                const sales = qty * 65000;
-                body.innerHTML += `<tr><td class="font-semibold">${region}</td><td>${sales.toLocaleString()}원</td><td>${qty.toLocaleString()}</td><td class="text-red-600 font-bold">${((qty/totalQty)*100).toFixed(1)}%</td></tr>`;
+                const sales = qty * 75000;
+                body.innerHTML += `<tr><td class="font-bold">${region}</td><td>${sales.toLocaleString()}원</td><td>${qty.toLocaleString()}</td><td class="text-blue-600 font-black">${((qty/totalQty)*100).toFixed(1)}%</td></tr>`;
             });
         }
 
         function renderSingleChart(key) {
-            const canvasEl = document.getElementById(key === 'main' ? 'mainChart' : `${key}Chart`);
+            const canvasEl = document.getElementById(`${key}Chart`);
             if(!canvasEl) return;
-            const ctx = canvasEl.getContext('2d');
             const s = states[key];
             if (s.chart) s.chart.destroy();
 
-            const labels = s.view === 'daily' ? ['01-12', '01-13', '01-14', '01-15', '01-16'] : ['W1', 'W2', 'W3', 'W4'];
+            // 시간 단위별 라벨 설정
+            let labels = ['01-12', '01-13', '01-14', '01-15', '01-16'];
+            if(s.view === 'weekly') labels = ['Jan W1', 'Jan W2', 'Jan W3', 'Jan W4'];
+            if(s.view === 'monthly') labels = ['Oct', 'Nov', 'Dec', 'Jan'];
+
             let ds = [];
-            const multiplier = Math.max($('#category').val()?.length || 1, $('#styleCode').val()?.length || 1);
+            const multiplier = s.view === 'daily' ? 1 : (s.view === 'weekly' ? 5.5 : 22);
 
             if(key === 'main') {
                 ds = [
-                    { label: 'Online Total', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*50000 : v)*multiplier), borderColor: '#2563eb', fill: true, tension: 0.4 },
-                    { label: 'Offline Total', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#dc2626', fill: true, tension: 0.4 }
+                    { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 },
+                    { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
                 ];
             } else {
                 const isOn = key === 'on';
-                const targets = s.selectedChannel.includes('전체') ? (isOn ? ['자사몰','무신사'] : ['백화점','대리점']) : [s.selectedChannel];
+                const targets = s.selectedChannel.includes('전체') ? (isOn ? ['자사몰','무신사','네이버'] : ['백화점','대리점','직영점']) : [s.selectedChannel];
+                const colors = isOn ? ['#3b82f6', '#10b981', '#f59e0b'] : ['#ef4444', '#f97316', '#6366f1'];
+                
                 ds = targets.map((name, i) => ({
                     label: name,
-                    data: [40, 60, 55, 80, 70].map(v => (s.metric === 'sales' ? v*55000 : v) * multiplier * (0.8 + Math.random()*0.4)),
-                    borderColor: isOn ? ['#3b82f6', '#000000'][i%2] : ['#ef4444', '#f97316'][i%2],
-                    tension: 0.3
+                    data: [100, 150, 130, 180, 160].map(v => (s.metric === 'sales' ? v*55000 : v)*multiplier*(0.8 + Math.random()*0.4)),
+                    borderColor: colors[i % colors.length],
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 2
                 }));
             }
 
-            s.chart = new Chart(ctx, {
+            s.chart = new Chart(canvasEl.getContext('2d'), {
                 type: 'line',
                 data: { labels, datasets: ds },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
             });
         }
 
