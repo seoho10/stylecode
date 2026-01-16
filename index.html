@@ -42,16 +42,15 @@
 <body class="p-8">
     <div class="max-w-[1600px] mx-auto">
         
-        <header class="flex justify-between items-end mb-8">
+        <header class="mb-8">
             <div>
                 <h1 class="text-3xl font-black tracking-tighter text-slate-900">StyleCode Data Lab <span class="text-blue-600">v2.9</span></h1>
                 <p class="text-slate-500 font-medium">실시간 판매 성과 및 고객 분석 통합 대시보드</p>
             </div>
-            <button onclick="fetchAll()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">DATA REFRESH</button>
         </header>
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
                 <div class="md:col-span-2">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Brand Selection</label>
                     <select id="brand" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
@@ -79,6 +78,9 @@
                         <input type="date" id="endDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
                     </div>
                 </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="fetchAll()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">조회하기</button>
             </div>
         </div>
 
