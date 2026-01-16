@@ -130,16 +130,13 @@
                 </div>
             </div>
 
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-10">
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <h3 class="text-lg font-extrabold text-slate-800">통합 매출 및 판매량 추이</h3>
-                        <p class="text-sm text-slate-400 mt-1">온라인과 오프라인의 전체 성과를 비교합니다.</p>
-                    </div>
-                    <div class="flex gap-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <span id="main-chart-title" class="text-sm font-black text-slate-600">TOTAL TREND ANALYSIS</span>
+                    <div class="flex gap-2">
                         <div class="control-group">
-                            <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
-                            <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">판매량</button>
+                            <button id="main-sales" onclick="setChart('main', 'metric', 'sales')" class="btn-toggle btn-active">매출</button>
+                            <button id="main-qty" onclick="setChart('main', 'metric', 'qty')" class="btn-toggle btn-inactive">수량</button>
                         </div>
                         <div class="control-group">
                             <button id="main-daily" onclick="setChart('main', 'view', 'daily')" class="btn-toggle btn-active">일</button>
@@ -148,7 +145,7 @@
                         </div>
                     </div>
                 </div>
-                <div style="height: 350px;"><canvas id="mainChart"></canvas></div>
+                <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
             </div>
 
             <div class="mb-16">
@@ -390,7 +387,7 @@
         };
 
         const states = {
-            main: { metric: 'sales', view: 'daily', chart: null },
+            main: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '전체' },
             on: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '온라인 전체' },
             off: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '오프라인 전체' },
             age: { metric: 'sales', chart: null, selectedChannel: '회원 전체' }
@@ -443,6 +440,11 @@
             const d = DATA.total[name] || DATA.total['전체'];
             fillTable('total-color-body', d.colors, d.qty);
             fillTable('total-size-body', d.sizes, d.qty);
+            
+            // 통합 매출 그래프 업데이트
+            states.main.selectedChannel = name;
+            document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${name}`;
+            renderSingleChart('main');
         }
 
         function updateCustomerDetail(name, rowElement) {
@@ -531,10 +533,21 @@
             const multiplier = s.view === 'daily' ? 1 : (s.view === 'weekly' ? 5.5 : 22);
 
             if(key === 'main') {
-                ds = [
-                    { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 },
-                    { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
-                ];
+                const channel = s.selectedChannel || '전체';
+                if(channel === '전체') {
+                    ds = [
+                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 },
+                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                    ];
+                } else if(channel === '온라인') {
+                    ds = [
+                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                    ];
+                } else if(channel === '오프라인') {
+                    ds = [
+                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                    ];
+                }
             } else {
                 const isOn = key === 'on';
                 const targets = s.selectedChannel.includes('전체') ? (isOn ? ['자사몰','무신사','네이버'] : ['백화점','대리점','직영점']) : [s.selectedChannel];
@@ -654,6 +667,7 @@
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
             renderAgeChart();
+            document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${states.main.selectedChannel || '전체'}`;
         }
     </script>
 </body>
