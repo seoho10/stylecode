@@ -13,33 +13,30 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; font-size: 13px; color: #1e293b; }
         
-        /* 테이블 스크롤 및 디자인 복구 */
         .table-container { height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th { position: sticky; top: 0; background: #f8fafc; z-index: 20; border-bottom: 1px solid #e2e8f0; padding: 12px 10px; font-size: 0.75rem; color: #64748b; font-weight: 700; text-align: left; }
         td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
         
-        /* 섹션 타이틀 및 가독성 */
         .section-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: #0f172a; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 선택 효과 (v2.3 스타일) */
         .selected-online { background-color: #eff6ff !important; font-weight: 700; color: #1d4ed8; border-left: 4px solid #3b82f6; }
         .selected-offline { background-color: #fef2f2 !important; font-weight: 700; color: #b91c1c; border-left: 4px solid #ef4444; }
         .clickable-row { cursor: pointer; transition: background 0.2s; }
         .clickable-row:hover { background-color: #f8fafc; }
         
-        /* 버튼 컨트롤 */
         .btn-toggle { padding: 5px 12px; font-size: 0.7rem; font-weight: 700; border-radius: 6px; transition: all 0.2s; }
         .btn-active { background-color: white; color: #1e293b; shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         .btn-inactive { color: #94a3b8; border: 1px solid transparent; }
         .control-group { background-color: #e2e8f0; padding: 3px; border-radius: 8px; display: flex; gap: 2px; }
         
-        /* 대그룹 구분선 */
+        /* 대그룹 구분선 - 요청대로 밑줄 속성 제거 */
         .group-header { border-bottom: 4px solid #0f172a; padding-bottom: 0.75rem; margin: 3rem 0 1.5rem 0; }
         .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 800; }
-        
-        .loading-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Select2 커스텀 너비 보정 */
+        .select2-container { width: 100% !important; }
+        .select2-selection--multiple { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 2px 6px !important; background-color: #f8fafc !important; }
     </style>
 </head>
 <body class="p-8">
@@ -47,33 +44,34 @@
         
         <header class="flex justify-between items-end mb-8">
             <div>
-                <h1 class="text-3xl font-black tracking-tighter text-slate-900">StyleCode Data Lab <span class="text-blue-600">v2.8</span></h1>
+                <h1 class="text-3xl font-black tracking-tighter text-slate-900">StyleCode Data Lab <span class="text-blue-600">v2.9</span></h1>
                 <p class="text-slate-500 font-medium">실시간 판매 성과 및 고객 분석 통합 대시보드</p>
             </div>
             <button onclick="fetchAll()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">DATA REFRESH</button>
         </header>
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="md:col-span-2">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Brand Selection</label>
                     <select id="brand" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                         <option>NIKE PERFORMANCE</option><option>ADIDAS ORIGINALS</option><option>NEW BALANCE</option>
                     </select>
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Category</label>
                     <select id="category" class="js-example-basic-multiple" multiple="multiple">
                         <option value="shoes" selected>FOOTWEAR</option><option value="top">TOPS</option><option value="bottom">PANTS</option><option value="acc">ACCESSORIES</option>
                     </select>
                 </div>
-                <div>
+                <div class="md:col-span-4">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Style Code</label>
                     <select id="styleCode" class="js-example-basic-multiple" multiple="multiple">
                         <option value="SC-001" selected>SC-AIR-01</option><option value="SC-002">SC-RUN-05</option><option value="SC-003">SC-CT-09</option>
+                        <option value="SC-004">SC-LIFESTYLE-X</option><option value="SC-005">SC-PRO-CHAMP</option>
                     </select>
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Analysis Period</label>
                     <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2">
                         <input type="date" id="startDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
@@ -86,7 +84,7 @@
 
         <div id="group-1">
             <div class="group-header flex justify-between items-center">
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight underline decoration-blue-500 decoration-4 underline-offset-8">1. ON/OFF PERFORMANCE</h2>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">1. ON/OFF PERFORMANCE</h2>
                 <span class="text-slate-400 font-bold text-sm">CHANNEL & PRODUCT ANALYSIS</span>
             </div>
 
@@ -223,7 +221,7 @@
 
         <div id="group-2" class="pb-20">
             <div class="group-header">
-                <h2 class="text-2xl font-black text-slate-900 tracking-tight underline decoration-purple-500 decoration-4 underline-offset-8">2. CUSTOMER ANALYSIS</h2>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">2. CUSTOMER ANALYSIS</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center flex flex-col items-center justify-center">
@@ -246,7 +244,7 @@
     </div>
 
     <script>
-        // v2.3의 방대한 샘플 데이터 복구
+        // DATA 시뮬레이션 로직 100% 복구
         const DATA = {
             on: {
                 '온라인 전체': { qty: 3500, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
@@ -271,7 +269,7 @@
         };
 
         $(document).ready(function() {
-            $('.js-example-basic-multiple').select2();
+            $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
             fetchAll();
         });
 
@@ -336,7 +334,6 @@
             const s = states[key];
             if (s.chart) s.chart.destroy();
 
-            // 시간 단위별 라벨 설정
             let labels = ['01-12', '01-13', '01-14', '01-15', '01-16'];
             if(s.view === 'weekly') labels = ['Jan W1', 'Jan W2', 'Jan W3', 'Jan W4'];
             if(s.view === 'monthly') labels = ['Oct', 'Nov', 'Dec', 'Jan'];
