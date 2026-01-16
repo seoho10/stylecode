@@ -22,19 +22,18 @@
         
         .selected-online { background-color: #eff6ff !important; font-weight: 700; color: #1d4ed8; border-left: 4px solid #3b82f6; }
         .selected-offline { background-color: #fef2f2 !important; font-weight: 700; color: #b91c1c; border-left: 4px solid #ef4444; }
+        .selected-customer { background-color: #f5f3ff !important; font-weight: 700; color: #7c3aed; border-left: 4px solid #8b5cf6; }
         .clickable-row { cursor: pointer; transition: background 0.2s; }
         .clickable-row:hover { background-color: #f8fafc; }
         
         .btn-toggle { padding: 5px 12px; font-size: 0.7rem; font-weight: 700; border-radius: 6px; transition: all 0.2s; }
-        .btn-active { background-color: white; color: #1e293b; shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .btn-active { background-color: white; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         .btn-inactive { color: #94a3b8; border: 1px solid transparent; }
         .control-group { background-color: #e2e8f0; padding: 3px; border-radius: 8px; display: flex; gap: 2px; }
         
-        /* 대그룹 구분선 - 요청대로 밑줄 속성 제거 */
         .group-header { border-bottom: 4px solid #0f172a; padding-bottom: 0.75rem; margin: 3rem 0 1.5rem 0; }
         .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 800; }
 
-        /* Select2 커스텀 너비 보정 */
         .select2-container { width: 100% !important; }
         .select2-selection--multiple { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 2px 6px !important; background-color: #f8fafc !important; }
     </style>
@@ -223,6 +222,49 @@
             <div class="group-header">
                 <h2 class="text-2xl font-black text-slate-900 tracking-tight">2. CUSTOMER ANALYSIS</h2>
             </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <div class="section-title"><span>회원 채널별 실적 (3-Depth)</span></div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>채널 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                            <tbody id="cust-list">
+                                <tr id="cust-total-row" class="clickable-row selected-customer" onclick="updateCustomerDetail('회원 전체', this)">
+                                    <td class="font-bold">회원 전체</td><td>772,100,000</td><td>6,300</td><td>100%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('온라인', this)">
+                                    <td class="pl-5 font-semibold text-blue-600">└ 온라인</td><td>452,100,000</td><td>3,500</td><td>58.5%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('자사몰', this)">
+                                    <td class="pl-10 text-slate-500">└ 자사몰</td><td>452,100,000</td><td>3,500</td><td>100%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('오프라인', this)">
+                                    <td class="pl-5 font-semibold text-red-600">└ 오프라인</td><td>320,000,000</td><td>2,800</td><td>41.5%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('백화점', this)">
+                                    <td class="pl-10 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('대리점', this)">
+                                    <td class="pl-10 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td>
+                                </tr>
+                                <tr class="clickable-row" onclick="updateCustomerDetail('직영점', this)">
+                                    <td class="pl-10 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>회원 컬러별 판매</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                    <div class="table-container"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
+                </div>
+                <div>
+                    <div class="section-title"><span>회원 사이즈별 판매</span><span id="cust-t-size" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                    <div class="table-container"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-300 text-center flex flex-col items-center justify-center">
                     <div class="text-purple-600 mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
@@ -244,7 +286,7 @@
     </div>
 
     <script>
-        // DATA 시뮬레이션 로직 100% 복구
+        // DATA 시뮬레이션 로직
         const DATA = {
             on: {
                 '온라인 전체': { qty: 3500, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
@@ -259,6 +301,15 @@
                 '백화점': { qty: 1960, colors: {BLACK: 1300, BEIGE: 400, WHITE: 260}, sizes: {'250': 500, '260': 700, '270': 760}, geo: {서울: 1000, 경기: 500, 부산: 200, 대구: 100, 기타: 160} },
                 '대리점': { qty: 560, colors: {BLACK: 300, BEIGE: 160, WHITE: 100}, sizes: {'250': 200, '260': 200, '270': 160}, geo: {서울: 100, 경기: 200, 부산: 100, 대구: 100, 광주: 60} },
                 '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 40, WHITE: 40}, sizes: {'250': 100, '260': 100, '270': 80}, geo: {서울: 100, 경기: 100, 부산: 80} }
+            },
+            cust: {
+                '회원 전체': { qty: 6300, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300} },
+                '온라인': { qty: 3500, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000} },
+                '자사몰': { qty: 3500, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000} }, // 온라인과 동일
+                '오프라인': { qty: 2800, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500} },
+                '백화점': { qty: 1960, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360} },
+                '대리점': { qty: 560, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100} },
+                '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40} }
             }
         };
 
@@ -271,6 +322,7 @@
         $(document).ready(function() {
             $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
             fetchAll();
+            updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
         });
 
         function setChart(key, type, val) {
@@ -302,6 +354,16 @@
                 updateShopRank(name);
                 updateRegionTable(d.geo, d.qty);
             }
+        }
+
+        function updateCustomerDetail(name, rowElement) {
+            $('#cust-list tr').removeClass('selected-customer');
+            $(rowElement).addClass('selected-customer');
+            $('#cust-t-color').text(name);
+            $('#cust-t-size').text(name);
+            const d = DATA.cust[name];
+            fillTable('cust-color-body', d.colors, d.qty);
+            fillTable('cust-size-body', d.sizes, d.qty);
         }
 
         function fillTable(id, obj, total) {
