@@ -23,6 +23,7 @@
         .selected-online { background-color: #eff6ff !important; font-weight: 700; color: #1d4ed8; border-left: 4px solid #3b82f6; }
         .selected-offline { background-color: #fef2f2 !important; font-weight: 700; color: #b91c1c; border-left: 4px solid #ef4444; }
         .selected-customer { background-color: #f5f3ff !important; font-weight: 700; color: #7c3aed; border-left: 4px solid #8b5cf6; }
+        .selected-total { background-color: #f1f5f9 !important; font-weight: 700; color: #0f172a; border-left: 4px solid #475569; }
         .clickable-row { cursor: pointer; transition: background 0.2s; }
         .clickable-row:hover { background-color: #f8fafc; }
         
@@ -85,6 +86,48 @@
             <div class="group-header flex justify-between items-center">
                 <h2 class="text-2xl font-black text-slate-900 tracking-tight">1. ON/OFF PERFORMANCE</h2>
                 <span class="text-slate-400 font-bold text-sm">CHANNEL & PRODUCT ANALYSIS</span>
+            </div>
+
+            <div class="mb-16">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-2 h-8 bg-slate-600 rounded-full"></div>
+                    <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">TOTAL Performance Detailed</h3>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>전체 실적</span></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);">
+                                <table>
+                                    <thead><tr><th>채널 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
+                                    <tbody id="total-list">
+                                        <tr id="total-total-row" class="clickable-row selected-total" onclick="updateTotalDetail('전체', this)">
+                                            <td class="font-bold">전체</td><td>772,100,000</td><td>6,300</td><td>100%</td>
+                                        </tr>
+                                        <tr class="clickable-row" onclick="updateTotalDetail('온라인', this)">
+                                            <td class="pl-5 font-semibold text-blue-600">온라인</td><td>452,100,000</td><td>3,500</td><td>58.5%</td>
+                                        </tr>
+                                        <tr class="clickable-row" onclick="updateTotalDetail('오프라인', this)">
+                                            <td class="pl-5 font-semibold text-red-600">오프라인</td><td>320,000,000</td><td>2,800</td><td>41.5%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="total-t-color" class="badge bg-slate-100 text-slate-600">전체</span></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="total-color-body"></tbody></table></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
+                            <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="total-t-size" class="badge bg-slate-100 text-slate-600">전체</span></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="total-size-body"></tbody></table></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-10">
@@ -316,6 +359,11 @@
     <script>
         // DATA 시뮬레이션 로직
         const DATA = {
+            total: {
+                '전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3300, WHITE: 1400, GREY: 600, BEIGE: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 2000, '260': 2000, '270': 1000} },
+                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
+                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1800, BEIGE: 600, WHITE: 400}, sizes: {'250': 800, '260': 1000, '270': 1000} }
+            },
             on: {
                 '온라인 전체': { qty: 3500, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
                 '자사몰': { qty: 1050, colors: {BLACK: 450, WHITE: 350, GREY: 150, NAVY: 100}, sizes: {'230': 100, '240': 300, '250': 350, '260': 200, '270': 100} },
@@ -352,6 +400,7 @@
             $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
             fetchAll();
             updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
+            updateTotalDetail('전체', $('#total-total-row')[0]);
         });
 
         function setChart(key, type, val) {
@@ -383,6 +432,17 @@
                 updateShopRank(name);
                 updateRegionTable(d.geo, d.qty);
             }
+        }
+
+        function updateTotalDetail(name, rowElement) {
+            $('#total-list tr').removeClass('selected-total');
+            $(rowElement).addClass('selected-total');
+            $('#total-t-color').text(name);
+            $('#total-t-size').text(name);
+            
+            const d = DATA.total[name] || DATA.total['전체'];
+            fillTable('total-color-body', d.colors, d.qty);
+            fillTable('total-size-body', d.sizes, d.qty);
         }
 
         function updateCustomerDetail(name, rowElement) {
