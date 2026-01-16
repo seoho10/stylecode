@@ -13,173 +13,125 @@
         th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; padding: 12px 8px; }
         td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; }
         .section-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* 클릭 시 음영 효과 스타일 */
         .selected-online { background-color: #dbeafe !important; font-weight: 600; color: #1e40af; }
         .selected-offline { background-color: #fee2e2 !important; font-weight: 600; color: #991b1b; }
         .clickable-row { transition: all 0.2s; cursor: pointer; }
-        .clickable-row:hover { background-color: #f8fafc; }
     </style>
 </head>
 <body class="p-8">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
-                <p class="text-slate-500">브랜드 및 스타일별 매출 분석</p>
-            </div>
-            <div class="flex flex-wrap gap-3 bg-white p-4 rounded-xl shadow-sm border">
-                <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase">Brand</label>
-                    <select id="brand" class="outline-none text-sm font-semibold"><option>Brand A</option><option>Brand B</option></select>
-                </div>
-                <div class="w-[1px] h-8 bg-slate-200 self-center"></div>
-                <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase">Category</label>
-                    <select id="category" class="outline-none text-sm font-semibold"><option value="ALL">전체 카테고리</option><option>TOP</option><option>PANTS</option></select>
-                </div>
-                <div class="w-[1px] h-8 bg-slate-200 self-center"></div>
-                <div class="flex flex-col"><label class="text-[10px] font-bold text-slate-400 uppercase">Style Code</label>
-                    <input type="text" id="styleCode" placeholder="전체" class="outline-none text-sm font-semibold w-24">
-                </div>
-            </div>
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
+            <p class="text-slate-500 text-sm">브랜드 및 스타일별 통합 매출 분석 시스템</p>
         </header>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex gap-4 items-center">
-                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                        <button onclick="updateMetric('sales')" class="px-3 py-1 text-xs font-bold rounded-md bg-white shadow-sm">매출액</button>
-                        <button onclick="updateMetric('qty')" class="px-3 py-1 text-xs font-bold text-slate-500">판매수량</button>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <input type="date" id="startDate" class="border rounded-md px-2 py-1 text-xs">
+        <div class="bg-white p-4 rounded-xl shadow-sm border mb-8 flex flex-wrap items-end gap-4">
+            <div class="flex flex-col">
+                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">Brand</label>
+                <select id="brand" class="border rounded-md px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                    <option>Brand A</option>
+                    <option>Brand B</option>
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">Category</label>
+                <select id="category" class="border rounded-md px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ALL">전체 카테고리</option>
+                    <option>TOP</option>
+                    <option>PANTS</option>
+                </select>
+            </div>
+            <div class="flex flex-col">
+                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">Style Code</label>
+                <input type="text" id="styleCode" placeholder="전체 입력" class="border rounded-md px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 w-32">
+            </div>
+            
+            <div class="flex flex-col flex-1 min-w-[300px]">
+                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">Period & View Option</label>
+                <div class="flex items-center gap-2 border rounded-md px-2 py-1 bg-slate-50">
+                    <input type="date" id="startDate" class="bg-transparent text-sm outline-none">
                     <span class="text-slate-400">~</span>
-                    <input type="date" id="endDate" class="border rounded-md px-2 py-1 text-xs">
-                    <button onclick="fetchData()" class="bg-slate-800 text-white px-4 py-1 rounded-md text-xs font-bold hover:bg-black transition">조회하기</button>
+                    <input type="date" id="endDate" class="bg-transparent text-sm outline-none">
+                    <div class="w-[1px] h-6 bg-slate-300 mx-2"></div>
+                    <select id="viewType" onchange="renderChart()" class="bg-transparent text-xs font-bold outline-none text-blue-600">
+                        <option value="daily">일별</option>
+                        <option value="weekly">주별</option>
+                        <option value="monthly">월별</option>
+                    </select>
                 </div>
             </div>
-            <div style="height: 300px;"><canvas id="salesChart"></canvas></div>
+
+            <button onclick="fetchData()" class="bg-blue-600 text-white px-8 py-2.5 rounded-md text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">
+                조회하기
+            </button>
         </div>
 
-        <div class="mb-12">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-1 h-5 bg-blue-600 rounded-full"></div>
-                <h2 class="text-lg font-bold text-slate-800">ONLINE PERFORMANCE</h2>
+        <div class="bg-white p-6 rounded-xl shadow-sm border mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                    <button id="btn-sales" onclick="updateMetric('sales')" class="px-4 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm transition-all">매출액</button>
+                    <button id="btn-qty" onclick="updateMetric('qty')" class="px-4 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">판매수량</button>
+                </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <div class="section-title"><span>채널별 실적</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left border-collapse">
-                            <thead><tr><th>구분</th><th>매출</th><th>수량</th><th>비중</th></tr></thead>
-                            <tbody id="online-channel-list">
-                                <tr class="clickable-row selected-online" onclick="selectChannel(this, '온라인 전체', 'on')"><td>온라인 합계</td><td>-</td><td>-</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '자사몰', 'on')"><td class="pl-4">자사몰</td><td>-</td><td>-</td><td>-</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '네이버', 'on')"><td class="pl-4">네이버</td><td>-</td><td>-</td><td>-</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '카카오', 'on')"><td class="pl-4">카카오</td><td>-</td><td>-</td><td>-</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '무신사', 'on')"><td class="pl-4">무신사</td><td>-</td><td>-</td><td>-</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div>
-                    <div class="section-title"><span>컬러 지표</span><span id="on-target-color" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold">온라인 전체</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left">
-                            <thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead>
-                            <tbody id="online-color-data"><tr><td>블랙</td><td>-</td><td>70%</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div>
-                    <div class="section-title"><span>사이즈 지표</span><span id="on-target-size" class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-bold">온라인 전체</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left">
-                            <thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead>
-                            <tbody id="online-size-data"><tr><td>240</td><td>-</td><td>50%</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
+            <div style="height: 350px;">
+                <canvas id="salesChart"></canvas>
             </div>
         </div>
 
-        <div class="mb-12">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-1 h-5 bg-red-600 rounded-full"></div>
-                <h2 class="text-lg font-bold text-slate-800">OFFLINE PERFORMANCE</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <div class="section-title"><span>채널별 실적</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left border-collapse">
-                            <thead><tr><th>구분</th><th>매출</th><th>수량</th><th>비중</th></tr></thead>
-                            <tbody id="offline-channel-list">
-                                <tr class="clickable-row selected-offline" onclick="selectChannel(this, '오프라인 전체', 'off')"><td>오프라인 합계</td><td>-</td><td>-</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '백화점', 'off')"><td class="pl-4">백화점</td><td>-</td><td>-</td><td>-</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '대리점', 'off')"><td class="pl-4">대리점</td><td>-</td><td>-</td><td>-</td></tr>
-                                <tr class="clickable-row" onclick="selectChannel(this, '직영점', 'off')"><td class="pl-4">직영점</td><td>-</td><td>-</td><td>-</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div>
-                    <div class="section-title"><span>컬러 지표</span><span id="off-target-color" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">오프라인 전체</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left">
-                            <thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead>
-                            <tbody id="offline-color-data"><tr><td>블랙</td><td>-</td><td>60%</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div>
-                    <div class="section-title"><span>사이즈 지표</span><span id="off-target-size" class="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">오프라인 전체</span></div>
-                    <div class="table-container text-xs">
-                        <table class="w-full text-left">
-                            <thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead>
-                            <tbody id="offline-size-data"><tr><td>270</td><td>-</td><td>100%</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
-    </div>
 
     <script>
         let myChart;
+        let currentMetric = 'sales';
 
-        // 채널 선택 함수 (음영 및 지표 동시 반영)
-        function selectChannel(row, name, type) {
-            // 1. 모든 행에서 선택 표시 제거
-            const rows = document.querySelectorAll(`#${type === 'on' ? 'online' : 'offline'}-channel-list .clickable-row`);
-            rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
-
-            // 2. 클릭한 행에 음영 추가
-            row.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
-
-            // 3. 컬러 및 사이즈 지표 뱃지 업데이트
-            document.getElementById(`${type}-target-color`).innerText = name;
-            document.getElementById(`${type}-target-size`).innerText = name;
-
-            // 4. (추후 구현) 여기에 API 재조회 로직 삽입 가능
-            console.log(`${type.toUpperCase()} 채널 [${name}] 선택됨 - 데이터 로딩 예정`);
+        function updateMetric(metric) {
+            currentMetric = metric;
+            // 버튼 스타일 제어
+            const salesBtn = document.getElementById('btn-sales');
+            const qtyBtn = document.getElementById('btn-qty');
+            if(metric === 'sales') {
+                salesBtn.classList.add('bg-white', 'shadow-sm'); salesBtn.classList.remove('text-slate-500');
+                qtyBtn.classList.remove('bg-white', 'shadow-sm'); qtyBtn.classList.add('text-slate-500');
+            } else {
+                qtyBtn.classList.add('bg-white', 'shadow-sm'); qtyBtn.classList.remove('text-slate-500');
+                salesBtn.classList.remove('bg-white', 'shadow-sm'); salesBtn.classList.add('text-slate-500');
+            }
+            renderChart();
         }
 
-        // 그래프 렌더링 (동일)
         function renderChart() {
             const ctx = document.getElementById('salesChart').getContext('2d');
+            const viewType = document.getElementById('viewType').value;
             if (myChart) myChart.destroy();
+
+            // 보기 옵션(일/주/월)에 따른 임시 라벨 생성
+            const labels = viewType === 'daily' ? ['01/10', '01/11', '01/12', '01/13', '01/14'] : 
+                           viewType === 'weekly' ? ['1주차', '2주차', '3주차', '4주차'] : ['10월', '11월', '12월', '01월'];
+
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['01-10', '01-11', '01-12', '01-13', '01-14', '01-15', '01-16'],
+                    labels: labels,
                     datasets: [
-                        { label: 'Online', data: [30, 45, 60, 55, 70, 85, 90], borderColor: '#2563eb', tension: 0.4 },
-                        { label: 'Offline', data: [20, 35, 40, 45, 50, 45, 60], borderColor: '#dc2626', tension: 0.4 }
+                        { label: 'Online', data: [40, 55, 70, 65, 80], borderColor: '#2563eb', backgroundColor: '#2563eb11', fill: true, tension: 0.4 },
+                        { label: 'Offline', data: [30, 40, 35, 50, 45], borderColor: '#dc2626', backgroundColor: '#dc262611', fill: true, tension: 0.4 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
             });
+        }
+
+        function fetchData() {
+            const brand = document.getElementById('brand').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const view = document.getElementById('viewType').value;
+            alert(`[조회] 브랜드: ${brand} / 기간: ${start}~${end} / 보기: ${view}`);
+            renderChart();
         }
 
         window.onload = () => {
@@ -188,8 +140,6 @@
             document.getElementById('endDate').value = today;
             renderChart();
         };
-
-        function fetchData() { alert('조회 시작'); renderChart(); }
     </script>
 </body>
 </html>
