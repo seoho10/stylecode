@@ -536,16 +536,16 @@
                 const channel = s.selectedChannel || '전체';
                 if(channel === '전체') {
                     ds = [
-                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 },
-                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
                     ];
                 } else if(channel === '온라인') {
                     ds = [
-                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 }
                     ];
                 } else if(channel === '오프라인') {
                     ds = [
-                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.05)', fill: true, tension: 0.4, borderWidth: 3 }
+                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
                     ];
                 }
             } else {
