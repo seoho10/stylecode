@@ -71,11 +71,11 @@
                         <table class="w-full text-left">
                             <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
                             <tbody id="on-list">
-                                <tr class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체')"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('on', '자사몰')"><td class="pl-4">자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('on', '네이버')"><td class="pl-4">네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('on', '무신사')"><td class="pl-4">무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('on', '카카오')"><td class="pl-4">카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
+                                <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 합계</td><td>16,500,000</td><td>300</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-4">자사몰</td><td>4,950,000</td><td>90</td><td>30%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '네이버', this)"><td class="pl-4">네이버</td><td>4,125,000</td><td>75</td><td>25%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-4">무신사</td><td>5,775,000</td><td>105</td><td>35%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('on', '카카오', this)"><td class="pl-4">카카오</td><td>1,650,000</td><td>30</td><td>10%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -117,10 +117,10 @@
                         <table class="w-full text-left">
                             <thead><tr><th>구분</th><th>매출(원)</th><th>수량(건)</th><th>비중</th></tr></thead>
                             <tbody id="off-list">
-                                <tr class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체')"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('off', '백화점')"><td class="pl-4">백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('off', '대리점')"><td class="pl-4">대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
-                                <tr class="clickable-row" onclick="updateIndicator('off', '직영점')"><td class="pl-4">직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
+                                <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 합계</td><td>12,000,000</td><td>200</td><td>100%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-4">백화점</td><td>8,400,000</td><td>140</td><td>70%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-4">대리점</td><td>2,400,000</td><td>40</td><td>20%</td></tr>
+                                <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-4">직영점</td><td>1,200,000</td><td>20</td><td>10%</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -155,7 +155,7 @@
     </div>
 
     <script>
-        // 데이터 베이스 (정합성 유지)
+        // 데이터 베이스
         const DATA = {
             on: {
                 '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
@@ -180,7 +180,6 @@
 
         function setChart(key, type, val) {
             states[key][type] = val;
-            // UI 버튼 상태 업데이트
             const group = type === 'metric' ? ['sales', 'qty'] : ['daily', 'weekly', 'monthly'];
             group.forEach(id => {
                 const el = document.getElementById(`${key}-${id}`);
@@ -189,10 +188,17 @@
             renderSingleChart(key);
         }
 
-        function updateIndicator(type, name) {
+        // 지표 업데이트 (초기화 및 클릭 이벤트 대응)
+        function updateIndicator(type, name, rowElement) {
+            // 테이블 하이라이트 처리
             const rows = document.querySelectorAll(`#${type}-list tr`);
             rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
-            event.currentTarget.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+            if(rowElement) {
+                rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+            } else {
+                // 초기 로딩 시 ID로 찾아 강조
+                document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+            }
 
             document.getElementById(`${type}-t-color`).innerText = name;
             document.getElementById(`${type}-t-size`).innerText = name;
@@ -210,7 +216,9 @@
         }
 
         function renderSingleChart(key) {
-            const ctx = document.getElementById(key === 'main' ? 'mainChart' : `${key}Chart`).getContext('2d');
+            const canvasEl = document.getElementById(key === 'main' ? 'mainChart' : `${key}Chart`);
+            if(!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
             const s = states[key];
             if (s.chart) s.chart.destroy();
 
@@ -244,12 +252,16 @@
         }
 
         window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
+            // 초기 날짜 설정
             document.getElementById('startDate').value = '2026-01-12';
             document.getElementById('endDate').value = '2026-01-16';
+            
+            // 1. 모든 차트 렌더링
             fetchAll();
-            updateIndicator('on', '온라인 전체');
-            updateIndicator('off', '오프라인 전체');
+            
+            // 2. 초기 지표 데이터 (온라인 합계 / 오프라인 합계) 세팅
+            updateIndicator('on', '온라인 전체', null);
+            updateIndicator('off', '오프라인 전체', null);
         };
     </script>
 </body>
