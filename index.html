@@ -16,7 +16,6 @@
         .selected-online { background-color: #dbeafe !important; font-weight: 600; color: #1e40af; }
         .selected-offline { background-color: #fee2e2 !important; font-weight: 600; color: #991b1b; }
         .clickable-row { transition: all 0.2s; cursor: pointer; }
-        /* 제어 버튼 스타일 */
         .btn-toggle { padding: 4px 10px; font-size: 0.65rem; font-weight: 700; border-radius: 4px; transition: all 0.2s; border: 1px solid transparent; }
         .btn-active { background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #1e293b; border-color: #e2e8f0; }
         .btn-inactive { color: #94a3b8; }
@@ -91,7 +90,7 @@
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-xs font-bold text-blue-600">ONLINE CHANNEL TREND</span>
+                    <span id="on-chart-title" class="text-xs font-bold text-blue-600">ONLINE CHANNEL TREND (전체)</span>
                     <div class="flex gap-2">
                         <div class="control-group">
                             <button id="on-sales" onclick="setChart('on', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
@@ -136,7 +135,7 @@
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND</span>
+                    <span id="off-chart-title" class="text-xs font-bold text-red-600">OFFLINE CHANNEL TREND (전체)</span>
                     <div class="flex gap-2">
                         <div class="control-group">
                             <button id="off-sales" onclick="setChart('off', 'metric', 'sales')" class="btn-toggle btn-active">매출액</button>
@@ -155,7 +154,6 @@
     </div>
 
     <script>
-        // 데이터 베이스
         const DATA = {
             on: {
                 '온라인 전체': { qty: 300, colors: {BLACK: 180, WHITE: 90, GREY: 30}, sizes: {'230': 60, '240': 120, '250': 120} },
@@ -174,8 +172,8 @@
 
         const states = {
             main: { metric: 'sales', view: 'daily', chart: null },
-            on: { metric: 'sales', view: 'daily', chart: null },
-            off: { metric: 'sales', view: 'daily', chart: null }
+            on: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '온라인 전체' },
+            off: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '오프라인 전체' }
         };
 
         function setChart(key, type, val) {
@@ -188,24 +186,24 @@
             renderSingleChart(key);
         }
 
-        // 지표 업데이트 (초기화 및 클릭 이벤트 대응)
         function updateIndicator(type, name, rowElement) {
-            // 테이블 하이라이트 처리
             const rows = document.querySelectorAll(`#${type}-list tr`);
             rows.forEach(r => r.classList.remove(type === 'on' ? 'selected-online' : 'selected-offline'));
-            if(rowElement) {
-                rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
-            } else {
-                // 초기 로딩 시 ID로 찾아 강조
-                document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
-            }
+            
+            if(rowElement) rowElement.classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
+            else document.getElementById(`${type}-total-row`).classList.add(type === 'on' ? 'selected-online' : 'selected-offline');
 
             document.getElementById(`${type}-t-color`).innerText = name;
             document.getElementById(`${type}-t-size`).innerText = name;
+            document.getElementById(`${type}-chart-title`).innerText = `${type.toUpperCase()} TREND (${name})`;
 
             const d = DATA[type][name];
             fillTable(`${type}-color-body`, d.colors, d.qty);
             fillTable(`${type}-size-body`, d.sizes, d.qty);
+
+            // 그래프 필터 연동
+            states[type].selectedChannel = name;
+            renderSingleChart(type);
         }
 
         function fillTable(id, obj, total) {
@@ -230,12 +228,21 @@
                     { label: 'Online', data: [300, 350, 320, 400, 380].map(v => s.metric === 'sales' ? v*50000 : v), borderColor: '#2563eb' },
                     { label: 'Offline', data: [200, 220, 210, 250, 230].map(v => s.metric === 'sales' ? v*60000 : v), borderColor: '#dc2626' }
                 ];
-            } else if (key === 'on') {
-                const names = ['자사몰', '네이버', '무신사', '카카오'];
-                ds = names.map(n => ({ label: n, data: [20, 30, 25, 40, 35].map(v => s.metric === 'sales' ? v*55000 : v), tension: 0.3 }));
             } else {
-                const names = ['백화점', '대리점', '직영점'];
-                ds = names.map(n => ({ label: n, data: [50, 60, 55, 70, 65].map(v => s.metric === 'sales' ? v*60000 : v), tension: 0.3 }));
+                // 채널별 상세 로직 (합계 선택 vs 개별 채널 선택)
+                const isOnline = key === 'on';
+                const allChannels = isOnline ? ['자사몰', '네이버', '무신사', '카카오'] : ['백화점', '대리점', '직영점'];
+                const colors = ['#3b82f6', '#10b981', '#000000', '#facc15', '#ef4444', '#f97316', '#8b5cf6'];
+                
+                const filter = s.selectedChannel;
+                const targets = (filter.includes('전체')) ? allChannels : [filter];
+
+                ds = targets.map((name, idx) => ({
+                    label: name,
+                    data: [20, 30, 25, 40, 35].map(v => (s.metric === 'sales' ? v*(isOnline?55000:60000) : v) * (0.8 + Math.random()*0.4)),
+                    borderColor: colors[idx % colors.length],
+                    tension: 0.3
+                }));
             }
 
             s.chart = new Chart(ctx, {
@@ -245,21 +252,12 @@
             });
         }
 
-        function fetchAll() {
-            renderSingleChart('main');
-            renderSingleChart('on');
-            renderSingleChart('off');
-        }
+        function fetchAll() { renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); }
 
         window.onload = () => {
-            // 초기 날짜 설정
             document.getElementById('startDate').value = '2026-01-12';
             document.getElementById('endDate').value = '2026-01-16';
-            
-            // 1. 모든 차트 렌더링
             fetchAll();
-            
-            // 2. 초기 지표 데이터 (온라인 합계 / 오프라인 합계) 세팅
             updateIndicator('on', '온라인 전체', null);
             updateIndicator('off', '오프라인 전체', null);
         };
