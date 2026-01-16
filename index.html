@@ -9,118 +9,153 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* 모든 표의 세로 길이를 동일하게 고정 */
+        .table-container { height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        th { position: sticky; top: 0; background: #f8fafc; z-index: 10; border-bottom: 1px solid #e2e8f0; }
+        .clickable-row:hover { background-color: #f1f5f9; cursor: pointer; }
+        .section-title { font-size: 0.875 font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body class="p-8">
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
-            <p class="text-slate-500">브랜드 및 스타일별 매출 분석</p>
-        </header>
-
-        <div class="bg-white p-6 rounded-xl shadow-sm mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex justify-between items-end">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Brand</label>
-                <select id="brand" class="w-full border rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="A">Brand A</option>
-                    <option value="B">Brand B</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                <select id="category" class="w-full border rounded-md p-2">
-                    <option value="ALL">전체 카테고리</option>
-                    <option value="TOP">상의</option>
-                    <option value="PANTS">하의</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Style Code (Optional)</label>
-                <input type="text" id="styleCode" placeholder="공백 시 전체 조회" class="w-full border rounded-md p-2">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Period</label>
-                <input type="month" id="month" value="2025-12" class="w-full border rounded-md p-2">
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-4">
-            <div class="inline-flex rounded-md shadow-sm">
-                <button onclick="updateMetric('sales')" class="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">매출액</button>
-                <button onclick="updateMetric('qty')" class="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-r-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700">판매수량</button>
+                <h1 class="text-3xl font-bold text-slate-800">StyleCode Dashboard</h1>
+                <p class="text-slate-500">브랜드 및 스타일별 매출 분석</p>
             </div>
             <div class="flex gap-2">
-                <select id="viewType" onchange="renderChart()" class="border rounded-md px-3 py-1 text-sm">
-                    <option value="daily">일별</option>
-                    <option value="weekly">주별</option>
-                    <option value="monthly">월별</option>
-                </select>
-                <button onclick="fetchData()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">조회하기</button>
+                <input type="date" id="startDate" class="border rounded-md p-2 text-sm">
+                <span class="self-center">~</span>
+                <input type="date" id="endDate" class="border rounded-md p-2 text-sm">
+                <button onclick="fetchData()" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">조회</button>
+            </div>
+        </header>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm mb-10">
+            <canvas id="salesChart" height="80"></canvas>
+        </div>
+
+        <div class="mb-12">
+            <h2 class="text-lg font-bold mb-4 text-blue-700 flex items-center">
+                <span class="w-2 h-6 bg-blue-700 mr-2 rounded"></span> ONLINE ANALYSIS
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="section-title"><span>채널별 실적 (온라인)</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">구분</th><th class="p-3">매출</th><th class="p-3">수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr class="clickable-row bg-blue-50/50 font-bold" onclick="updateDetail('온라인 전체')"><td class="p-3">온라인 합계</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">100%</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('자사몰')"><td class="p-3 pl-6 text-slate-600 text-xs">자사몰</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('네이버')"><td class="p-3 pl-6 text-slate-600 text-xs">네이버</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('카카오')"><td class="p-3 pl-6 text-slate-600 text-xs">카카오</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('무신사')"><td class="p-3 pl-6 text-slate-600 text-xs">무신사</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>컬러 비중</span> <span id="on-color-target" class="text-blue-500 text-xs">Target: 전체</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">컬러</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody id="onlineColorBody">
+                                <tr><td class="p-3">블랙</td><td class="p-3">-</td><td class="p-3">70%</td></tr>
+                                <tr><td class="p-3">화이트</td><td class="p-3">-</td><td class="p-3">20%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>사이즈 비중</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">사이즈</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="p-3">230</td><td class="p-3">-</td><td class="p-3">50%</td></tr>
+                                <tr><td class="p-3">240</td><td class="p-3">-</td><td class="p-3">30%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm">
-            <canvas id="salesChart" height="100"></canvas>
+        <div class="mb-12">
+            <h2 class="text-lg font-bold mb-4 text-red-700 flex items-center">
+                <span class="w-2 h-6 bg-red-700 mr-2 rounded"></span> OFFLINE ANALYSIS
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="section-title"><span>채널별 실적 (오프라인)</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">구분</th><th class="p-3">매출</th><th class="p-3">수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr class="clickable-row bg-red-50/50 font-bold" onclick="updateDetail('오프라인 전체')"><td class="p-3">오프라인 합계</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">100%</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('백화점')"><td class="p-3 pl-6 text-slate-600 text-xs">백화점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('대리점')"><td class="p-3 pl-6 text-slate-600 text-xs">대리점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                                <tr class="clickable-row" onclick="updateDetail('직영점')"><td class="p-3 pl-6 text-slate-600 text-xs">직영점</td><td class="p-3">-</td><td class="p-3">-</td><td class="p-3">-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>컬러 비중</span> <span id="off-color-target" class="text-red-500 text-xs">Target: 전체</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">컬러</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="p-3">블랙</td><td class="p-3">-</td><td class="p-3">60%</td></tr>
+                                <tr><td class="p-3">네이비</td><td class="p-3">-</td><td class="p-3">40%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>사이즈 비중</span></div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr><th class="p-3">사이즈</th><th class="p-3">판매수량</th><th class="p-3">비중</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="p-3">260</td><td class="p-3">-</td><td class="p-3">40%</td></tr>
+                                <tr><td class="p-3">270</td><td class="p-3">-</td><td class="p-3">60%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        let myChart;
-        let currentMetric = 'sales'; // 'sales' or 'qty'
-
-        function updateMetric(metric) {
-            currentMetric = metric;
-            renderChart();
+        // 클릭 시 타겟 텍스트 변경 예시
+        function updateDetail(name) {
+            const isOnline = ["온라인 전체", "자사몰", "네이버", "카카오", "무신사"].includes(name);
+            const targetId = isOnline ? 'on-color-target' : 'off-color-target';
+            document.getElementById(targetId).innerText = `Target: ${name}`;
+            // 여기서 향후 API 호출 로직 추가
         }
 
-        function renderChart() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            const viewType = document.getElementById('viewType').value;
-            
-            if (myChart) myChart.destroy();
-
-            // 임시 데이터 (나중에 API 연동)
-            const labels = viewType === 'daily' ? ['1일', '2일', '3일', '4일', '5일'] : ['1주', '2주', '3주', '4주'];
-            const onlineData = [120, 190, 300, 500, 200];
-            const offlineData = [90, 150, 210, 400, 180];
-
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: `Online (${currentMetric === 'sales' ? '원' : '개'})`,
-                            data: onlineData,
-                            borderColor: '#3b82f6',
-                            tension: 0.3,
-                            fill: false
-                        },
-                        {
-                            label: `Offline (${currentMetric === 'sales' ? '원' : '개'})`,
-                            data: offlineData,
-                            borderColor: '#ef4444',
-                            tension: 0.3,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'top' } },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        // 초기 실행
-        window.onload = renderChart;
-
-        async function fetchData() {
-            // 여기에 나중에 fetch(`https://stylecode-api...`) 로직 추가
-            alert('데이터를 조회합니다. (Snowflake 연결 준비 중)');
-            renderChart();
-        }
+        // 초기 날짜 설정
+        window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = today;
+            document.getElementById('endDate').value = today;
+        };
     </script>
 </body>
 </html>
