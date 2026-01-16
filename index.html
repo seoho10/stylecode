@@ -255,7 +255,7 @@
                         </table>
                     </div>
                     <div class="mt-6">
-                        <div class="section-title"><span>회원 구분</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
+                        <div class="section-title"><span id="cust-member-title">회원 전체</span><span id="cust-t-member" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                         <div class="table-container">
                             <table>
                                 <thead><tr><th>회원 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
@@ -352,7 +352,15 @@
             $(rowElement).addClass('selected-customer');
             $('#cust-t-color').text(name);
             $('#cust-t-size').text(name);
-            $('#cust-t-member').text(name);
+            
+            // 회원 구분 제목 업데이트
+            let displayName = name;
+            if (!name.includes('전체') && name !== '자사몰') {
+                displayName = name + ' 전체';
+            }
+            $('#cust-member-title').text(displayName);
+            $('#cust-t-member').text(displayName);
+            
             const d = DATA.cust[name];
             fillTable('cust-color-body', d.colors, d.qty);
             fillTable('cust-size-body', d.sizes, d.qty);
@@ -362,9 +370,18 @@
         function fillMemberTable(id, members, totalQty, totalSales) {
             const b = document.getElementById(id);
             b.innerHTML = '';
+            
+            // SUM 행 추가
+            b.innerHTML += `<tr class="font-black bg-purple-50">
+                <td>SUM</td>
+                <td>${totalSales.toLocaleString()}</td>
+                <td>${totalQty.toLocaleString()}</td>
+                <td class="text-purple-600">100.0%</td>
+            </tr>`;
+            
+            // 기존회원, 신규회원 행 추가
             Object.entries(members).forEach(([memberType, data]) => {
                 const qtyRatio = ((data.qty / totalQty) * 100).toFixed(1);
-                const salesRatio = ((data.sales / totalSales) * 100).toFixed(1);
                 b.innerHTML += `<tr>
                     <td class="font-bold">${memberType}</td>
                     <td>${data.sales.toLocaleString()}</td>
