@@ -118,13 +118,13 @@
                     <div class="lg:col-span-4">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                             <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="total-t-color" class="badge bg-slate-100 text-slate-600">전체</span></div>
-                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="total-color-body"></tbody></table></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="total-color-body"></tbody></table></div>
                         </div>
                     </div>
                     <div class="lg:col-span-4">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                             <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="total-t-size" class="badge bg-slate-100 text-slate-600">전체</span></div>
-                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="total-size-body"></tbody></table></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="total-size-body"></tbody></table></div>
                         </div>
                     </div>
                 </div>
@@ -174,13 +174,13 @@
                     <div class="lg:col-span-4">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                             <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="on-t-color" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
-                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table id="on-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table id="on-color-table"><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-color-body"></tbody></table></div>
                         </div>
                     </div>
                     <div class="lg:col-span-4">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                             <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="on-t-size" class="badge bg-blue-100 text-blue-600">온라인 전체</span></div>
-                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table id="on-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
+                            <div class="table-container flex-1" style="height: calc(100% - 60px);"><table id="on-size-table"><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="on-size-body"></tbody></table></div>
                         </div>
                     </div>
                 </div>
@@ -259,11 +259,11 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>오프라인 매장 실적 TOP 15</span><span id="off-t-shop" class="badge bg-slate-100 text-slate-600">오프라인 전체</span></div>
-                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table class="w-full text-left"><thead><tr><th>Rank</th><th>Store Name</th><th>Revenue</th><th>Qty</th></tr></thead><tbody id="shop-rank-body"></tbody></table></div>
+                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table class="w-full text-left"><thead><tr><th>순위</th><th>매장명</th><th>매출액</th><th>수량</th></tr></thead><tbody id="shop-rank-body"></tbody></table></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>전국 지역별 매출 분포</span><span id="off-t-region" class="badge bg-slate-100 text-slate-600">오프라인 전체</span></div>
-                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table class="w-full text-left"><thead><tr><th>Region</th><th>Revenue</th><th>Qty</th><th>Ratio</th></tr></thead><tbody id="region-rank-body"></tbody></table></div>
+                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table class="w-full text-left"><thead><tr><th>Region</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead><tbody id="region-rank-body"></tbody></table></div>
                     </div>
                 </div>
             </div>
@@ -311,13 +311,13 @@
                 <div class="lg:col-span-4">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
-                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
+                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
                     </div>
                 </div>
                 <div class="lg:col-span-4">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="cust-t-size" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
-                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>점유율</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
+                        <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
                     </div>
                 </div>
             </div>
