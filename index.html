@@ -407,13 +407,13 @@
             age: { metric: 'sales', chart: null, selectedChannel: '회원 전체' }
         };
 
-        // Streamlit API URL
-        const STREAMLIT_API_URL = 'https://stylecode-api-dpqrqczbz89gpmn2hnxx34.streamlit.app/';
+        // API URL
+        const API_URL = "https://stylecode-api-dpqrqczbz89gpmn2hnxx34.streamlit.app/";
 
         // 브랜드 목록 API 호출
-        async function fetchBrands() {
+        async function loadBrands() {
             try {
-                const url = `${STREAMLIT_API_URL}?type=brands`;
+                const url = `${API_URL}?type=brands`;
                 console.log('브랜드 목록 API 호출:', url);
                 
                 const response = await fetch(url, {
@@ -425,34 +425,29 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                // Streamlit은 HTML로 감싸서 반환하므로 텍스트로 받아서 JSON 추출
+                // 텍스트로 받아서 JSON 추출
                 const text = await response.text();
-                console.log('브랜드 API 응답 텍스트 (일부):', text.substring(0, 500));
                 
-                let data;
-                try {
-                    // JSON 부분만 추출 - 여러 패턴 시도
-                    let jsonMatch = text.match(/\{[\s\S]*"brands"[\s\S]*?\}/);
-                    if (!jsonMatch) {
-                        jsonMatch = text.match(/\{[\s\S]*?\}/);
-                    }
-                    
-                    if (jsonMatch) {
-                        data = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error('JSON을 찾을 수 없음');
-                    }
-                } catch (parseError) {
-                    console.error('JSON 파싱 실패:', parseError);
-                    console.error('원본 텍스트 (일부):', text.substring(0, 1000));
-                    throw new Error('JSON 파싱 실패: ' + parseError.message);
+                // 첫 '{'와 마지막 '}' 위치로 JSON 문자열만 추출
+                const firstBrace = text.indexOf('{');
+                const lastBrace = text.lastIndexOf('}');
+                
+                if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+                    throw new Error('JSON을 찾을 수 없음: 첫 { 또는 마지막 } 위치를 찾을 수 없음');
                 }
+                
+                const jsonString = text.substring(firstBrace, lastBrace + 1);
+                const data = JSON.parse(jsonString);
                 
                 console.log('파싱된 브랜드 데이터:', data);
                 
                 // 브랜드 select 옵션 채우기
                 const brandSelect = document.getElementById('brand');
                 const errorElement = document.getElementById('brand-error');
+                
+                if (!brandSelect || !errorElement) {
+                    throw new Error('DOM 요소를 찾을 수 없음: brand 또는 brand-error');
+                }
                 
                 if (data && data.brands && Array.isArray(data.brands) && data.brands.length > 0) {
                     // 기존 옵션 제거
@@ -472,28 +467,31 @@
                     // 에러 메시지 숨기기
                     errorElement.style.display = 'none';
                     
-                    // 첫 번째 브랜드로 매출액 조회
-                    fetchSalesAmount();
+                    // loadBrands 성공 후에만 loadSales 호출
+                    loadSales();
                 } else {
                     throw new Error('brands 배열이 없거나 비어있음');
                 }
                 
             } catch (error) {
-                // 콘솔에 에러 출력
+                // 콘솔에 실제 에러 출력
                 console.error('브랜드 목록 로드 실패:', error);
-                console.error('에러 상세:', error.message, error.stack);
                 
                 // 화면에 에러 메시지 표시
                 const brandSelect = document.getElementById('brand');
                 const errorElement = document.getElementById('brand-error');
                 
-                brandSelect.innerHTML = '<option value="">브랜드 로드 실패</option>';
-                errorElement.style.display = 'block';
+                if (brandSelect) {
+                    brandSelect.innerHTML = '<option value="">브랜드 로드 실패</option>';
+                }
+                if (errorElement) {
+                    errorElement.style.display = 'block';
+                }
             }
         }
 
         // 매출액 API 호출
-        async function fetchSalesAmount() {
+        async function loadSales() {
             // 브랜드가 선택되지 않았으면 호출하지 않음
             const brand = document.getElementById('brand').value;
             if (!brand || brand.trim() === '') {
@@ -510,7 +508,7 @@
                     month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                 }
                 
-                const url = `${STREAMLIT_API_URL}?brand=${encodeURIComponent(brand)}&month=${encodeURIComponent(month)}`;
+                const url = `${API_URL}?brand=${encodeURIComponent(brand)}&month=${encodeURIComponent(month)}`;
                 console.log('매출액 API 호출:', url);
                 
                 const response = await fetch(url, {
@@ -577,7 +575,8 @@
             }
         }
 
-        $(document).ready(function() {
+        // DOMContentLoaded 이후에 실행
+        document.addEventListener('DOMContentLoaded', function() {
             $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
             
             // 날짜 기본값 설정 (현재 월)
@@ -591,19 +590,19 @@
             
             // 브랜드 선택 변경 시 매출액 재호출
             document.getElementById('brand').addEventListener('change', function() {
-                fetchSalesAmount();
+                loadSales();
             });
-            
-            // 브랜드 목록 로드
-            fetchBrands();
             
             // 날짜 변경 시 매출액 재호출
             document.getElementById('startDate').addEventListener('change', function() {
-                fetchSalesAmount();
+                loadSales();
             });
             document.getElementById('endDate').addEventListener('change', function() {
-                fetchSalesAmount();
+                loadSales();
             });
+            
+            // 브랜드 목록 로드 (성공 후 loadSales 자동 호출)
+            loadBrands();
             
             fetchAll();
             updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
@@ -873,7 +872,7 @@
 
         function fetchAll() { 
             // 매출액도 함께 갱신
-            fetchSalesAmount();
+            loadSales();
             
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
