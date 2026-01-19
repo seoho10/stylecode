@@ -52,6 +52,15 @@
             </div>
         </header>
 
+        <!-- KPI 카드 영역 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Total Sales Amount</div>
+                <div id="kpi-sales-amt" class="text-3xl font-black text-slate-900">-</div>
+                <div class="text-xs text-slate-500 mt-1" id="kpi-error" style="display: none; color: #ef4444;">데이터 로드 실패</div>
+            </div>
+        </div>
+
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
                 <div class="md:col-span-2">
@@ -59,6 +68,7 @@
                     <select id="brand" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="">로딩 중...</option>
                     </select>
+                    <div id="brand-error" class="text-xs text-red-500 mt-1" style="display: none;">브랜드 목록 로드 실패</div>
                 </div>
                 <div class="md:col-span-3">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Category</label>
@@ -397,39 +407,204 @@
             age: { metric: 'sales', chart: null, selectedChannel: '회원 전체' }
         };
 
-        // 브랜드 목록 로드
-        async function loadBrands() {
+        // Streamlit API URL
+        const STREAMLIT_API_URL = 'https://stylecode-api-dpqrqczbz89gpmn2hnxx34.streamlit.app/';
+
+        // 브랜드 목록 API 호출
+        async function fetchBrands() {
             try {
-                // 백엔드 API URL (실제 배포 URL로 변경 필요)
-                const apiUrl = window.location.origin.includes('localhost') 
-                    ? 'http://localhost:8501' 
-                    : window.location.origin;
-                const response = await fetch(`${apiUrl}/?type=brands&token=${encodeURIComponent('')}`);
-                const data = await response.json();
+                const url = `${STREAMLIT_API_URL}?type=brands`;
+                console.log('브랜드 목록 API 호출:', url);
                 
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Streamlit은 HTML로 감싸서 반환하므로 텍스트로 받아서 JSON 추출
+                const text = await response.text();
+                console.log('브랜드 API 응답 텍스트 (일부):', text.substring(0, 500));
+                
+                let data;
+                try {
+                    // JSON 부분만 추출 - 여러 패턴 시도
+                    let jsonMatch = text.match(/\{[\s\S]*"brands"[\s\S]*?\}/);
+                    if (!jsonMatch) {
+                        jsonMatch = text.match(/\{[\s\S]*?\}/);
+                    }
+                    
+                    if (jsonMatch) {
+                        data = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error('JSON을 찾을 수 없음');
+                    }
+                } catch (parseError) {
+                    console.error('JSON 파싱 실패:', parseError);
+                    console.error('원본 텍스트 (일부):', text.substring(0, 1000));
+                    throw new Error('JSON 파싱 실패: ' + parseError.message);
+                }
+                
+                console.log('파싱된 브랜드 데이터:', data);
+                
+                // 브랜드 select 옵션 채우기
                 const brandSelect = document.getElementById('brand');
-                brandSelect.innerHTML = '';
+                const errorElement = document.getElementById('brand-error');
                 
-                if (data.brands && data.brands.length > 0) {
-                    data.brands.forEach(brand => {
+                if (data && data.brands && Array.isArray(data.brands) && data.brands.length > 0) {
+                    // 기존 옵션 제거
+                    brandSelect.innerHTML = '';
+                    
+                    // 브랜드 옵션 추가
+                    data.brands.forEach((brand, index) => {
                         const option = document.createElement('option');
                         option.value = brand;
                         option.textContent = brand;
+                        if (index === 0) {
+                            option.selected = true; // 첫 번째 옵션을 기본 선택
+                        }
                         brandSelect.appendChild(option);
                     });
+                    
+                    // 에러 메시지 숨기기
+                    errorElement.style.display = 'none';
+                    
+                    // 첫 번째 브랜드로 매출액 조회
+                    fetchSalesAmount();
                 } else {
-                    brandSelect.innerHTML = '<option value="">브랜드 없음</option>';
+                    throw new Error('brands 배열이 없거나 비어있음');
                 }
+                
             } catch (error) {
+                // 콘솔에 에러 출력
                 console.error('브랜드 목록 로드 실패:', error);
+                console.error('에러 상세:', error.message, error.stack);
+                
+                // 화면에 에러 메시지 표시
                 const brandSelect = document.getElementById('brand');
-                brandSelect.innerHTML = '<option value="">로드 실패</option>';
+                const errorElement = document.getElementById('brand-error');
+                
+                brandSelect.innerHTML = '<option value="">브랜드 로드 실패</option>';
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // 매출액 API 호출
+        async function fetchSalesAmount() {
+            // 브랜드가 선택되지 않았으면 호출하지 않음
+            const brand = document.getElementById('brand').value;
+            if (!brand || brand.trim() === '') {
+                return;
+            }
+            
+            try {
+                const startDate = document.getElementById('startDate').value;
+                
+                // 월 계산 (startDate가 있으면 사용, 없으면 현재 월)
+                let month = '2025-12';
+                if (startDate) {
+                    const date = new Date(startDate);
+                    month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+                
+                const url = `${STREAMLIT_API_URL}?brand=${encodeURIComponent(brand)}&month=${encodeURIComponent(month)}`;
+                console.log('매출액 API 호출:', url);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Streamlit은 HTML로 감싸서 반환하므로 텍스트로 받아서 JSON 추출
+                const text = await response.text();
+                console.log('응답 텍스트 (일부):', text.substring(0, 500));
+                
+                let data;
+                try {
+                    // JSON 부분만 추출 - 여러 패턴 시도
+                    let jsonMatch = text.match(/\{[\s\S]*"sales_amt"[\s\S]*"generated_at"[\s\S]*?\}/);
+                    if (!jsonMatch) {
+                        jsonMatch = text.match(/\{[\s\S]*"sales_amt"[\s\S]*?\}/);
+                    }
+                    if (!jsonMatch) {
+                        jsonMatch = text.match(/\{[\s\S]*?\}/);
+                    }
+                    
+                    if (jsonMatch) {
+                        data = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error('JSON을 찾을 수 없음');
+                    }
+                } catch (parseError) {
+                    console.error('JSON 파싱 실패:', parseError);
+                    console.error('원본 텍스트 (일부):', text.substring(0, 1000));
+                    throw new Error('JSON 파싱 실패: ' + parseError.message);
+                }
+                
+                console.log('파싱된 데이터:', data);
+                
+                // KPI 카드 업데이트
+                const salesAmtElement = document.getElementById('kpi-sales-amt');
+                const errorElement = document.getElementById('kpi-error');
+                
+                if (data && data.sales_amt !== undefined) {
+                    // 숫자 포맷팅 (천 단위 구분)
+                    const formattedAmount = new Intl.NumberFormat('ko-KR').format(data.sales_amt);
+                    salesAmtElement.textContent = formattedAmount + '원';
+                    errorElement.style.display = 'none';
+                } else {
+                    throw new Error('sales_amt 필드가 없음');
+                }
+                
+            } catch (error) {
+                // 콘솔에만 상세 에러 로그 출력
+                console.error('매출액 로드 실패:', error);
+                console.error('에러 상세:', error.message, error.stack);
+                
+                // 화면에는 간단한 메시지만 표시
+                const salesAmtElement = document.getElementById('kpi-sales-amt');
+                const errorElement = document.getElementById('kpi-error');
+                
+                salesAmtElement.textContent = '-';
+                errorElement.style.display = 'block';
             }
         }
 
         $(document).ready(function() {
             $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
-            loadBrands();
+            
+            // 날짜 기본값 설정 (현재 월)
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const firstDay = `${year}-${month}-01`;
+            const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+            document.getElementById('startDate').value = firstDay;
+            document.getElementById('endDate').value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+            
+            // 브랜드 선택 변경 시 매출액 재호출
+            document.getElementById('brand').addEventListener('change', function() {
+                fetchSalesAmount();
+            });
+            
+            // 브랜드 목록 로드
+            fetchBrands();
+            
+            // 날짜 변경 시 매출액 재호출
+            document.getElementById('startDate').addEventListener('change', function() {
+                fetchSalesAmount();
+            });
+            document.getElementById('endDate').addEventListener('change', function() {
+                fetchSalesAmount();
+            });
+            
             fetchAll();
             updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
             updateTotalDetail('전체', $('#total-total-row')[0]);
@@ -697,6 +872,9 @@
         }
 
         function fetchAll() { 
+            // 매출액도 함께 갱신
+            fetchSalesAmount();
+            
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
