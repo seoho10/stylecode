@@ -19,7 +19,7 @@ def update_dashboard():
 
         # 2. 실행할 쿼리를 작성합니다.
         # ★중요: 'YOUR_TABLE_NAME' 부분을 실제 Snowflake 테이블 이름으로 바꾸셔야 합니다!
-        sql = "SELECT * FROM PRCS.DW_SALE LIMIT 100" 
+        sql = "SELECT * FROM YOUR_TABLE_NAME LIMIT 100" 
         
         # 3. 데이터를 가져와서 분석하기 좋게 만듭니다.
         df = pd.read_sql(sql, conn)
