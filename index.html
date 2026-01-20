@@ -881,5 +881,29 @@
             document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${states.main.selectedChannel || '전체'}`;
         }
     </script>
+    <script>
+        async function updateDashboard() {
+            try {
+                // 1. 로봇이 만든 데이터 파일을 가져옵니다
+                const response = await fetch('./data.json');
+                if (!response.ok) return; // 파일이 아직 없으면 중단
+                
+                const snowflakeData = await response.json();
+                console.log("연동 성공:", snowflakeData);
+        
+                // 2. 데이터를 넣을 장소를 찾습니다 (id가 'dashboard-content'인 곳)
+                const displayArea = document.getElementById('dashboard-content');
+                if (displayArea) {
+                    // 데이터를 글자로 우선 보여줍니다 (나중에 표나 그래프로 바꿀 예정)
+                    displayArea.innerHTML = `<pre>${JSON.stringify(snowflakeData.slice(0, 5), null, 2)}</pre>`;
+                }
+            } catch (e) {
+                console.log("데이터 로딩 중...", e);
+            }
+        }
+        
+        // 페이지가 뜨자마자 실행
+        window.onload = updateDashboard;
+        </script>
 </body>
 </html>

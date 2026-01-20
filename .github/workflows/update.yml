@@ -1,0 +1,43 @@
+name: Snowflake Auto Update
+
+on:
+  push:
+    branches: [ main ]  # main 브랜치에 코드를 올릴 때마다 실행
+  schedule:
+    - cron: '0 0 * * *' # 매일 자정(한국시간 오전 9시경)에 자동으로 실행
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          pip install snowflake-connector-python pandas
+          
+      - name: Run Update Script
+        env:
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+        # 수정됨: frontend/ 를 제거하여 메인에 있는 app.py를 실행합니다.
+        run: python app.py
+        
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          # 수정됨: frontend/ 를 제거하여 메인 위치에 data.json을 저장합니다.
+          git add data.json
+          git commit -m "Automated data update from Snowflake" || exit 0
+          git push
