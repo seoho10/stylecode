@@ -10,41 +10,29 @@ def must_env(name: str) -> str:
     return v
 
 def main():
-    # Required
+    account = must_env("SF_ACCOUNT")        # 중요: cixxjbf-wp67697
     user = must_env("SF_USER")
     password = must_env("SF_PASSWORD")
     warehouse = must_env("SF_WAREHOUSE")
     database = must_env("SF_DATABASE")
     schema = must_env("SF_SCHEMA")
 
-    # Optional
     role = os.getenv("SF_ROLE")
     brd_cd = os.getenv("BRD_CD", "X")
-
-    # Prefer SF_HOST for app.snowflake.com style accounts
-    host = os.getenv("SF_HOST")
-    account = os.getenv("SF_ACCOUNT")
 
     end_dt = datetime.utcnow().date()
     start_dt = end_dt - timedelta(days=7)
 
     conn_args = {
+        "account": account,
         "user": user,
         "password": password,
         "warehouse": warehouse,
         "database": database,
         "schema": schema,
     }
-
     if role:
         conn_args["role"] = role
-
-    if host:
-        conn_args["host"] = host
-    elif account:
-        conn_args["account"] = account
-    else:
-        raise RuntimeError("Missing env: SF_HOST (recommended) or SF_ACCOUNT")
 
     conn = snowflake.connector.connect(**conn_args)
     cur = conn.cursor()
