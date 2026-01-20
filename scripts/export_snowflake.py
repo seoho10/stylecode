@@ -10,7 +10,7 @@ def must_env(name: str) -> str:
     return v
 
 def main():
-    account = must_env("SF_ACCOUNT")        # 중요: cixxjbf-wp67697
+    account = must_env("SF_ACCOUNT")
     user = must_env("SF_USER")
     password = must_env("SF_PASSWORD")
     warehouse = must_env("SF_WAREHOUSE")
@@ -51,6 +51,12 @@ def main():
         rows = cur.fetchall()
         cols = [c[0] for c in cur.description]
         data = [dict(zip(cols, r)) for r in rows]
+
+        # JSON 직렬화용 변환 (date/datetime -> string)
+        for item in data:
+            v = item.get("SALE_DT")
+            if hasattr(v, "isoformat"):
+                item["SALE_DT"] = v.isoformat()
 
         os.makedirs("data", exist_ok=True)
         out_path = os.path.join("data", "sales_daily.json")
