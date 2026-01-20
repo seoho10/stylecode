@@ -10,24 +10,20 @@ def must_env(name: str) -> str:
     return v
 
 def main():
-    # 필수
+    # Required
     user = must_env("SF_USER")
     password = must_env("SF_PASSWORD")
     warehouse = must_env("SF_WAREHOUSE")
     database = must_env("SF_DATABASE")
     schema = must_env("SF_SCHEMA")
 
-    # 선택: role
+    # Optional
     role = os.getenv("SF_ROLE")
-
-    # 핵심: app.snowflake.com 계정은 host를 직접 지정하는 게 안전
-    # 예: cixxjbf.snowflake.com
-    host = os.getenv("SF_HOST")
-
-    # account는 환경마다 다르게 필요할 수 있어 optional로 둡니다
-    account = os.getenv("SF_ACCOUNT")
-
     brd_cd = os.getenv("BRD_CD", "X")
+
+    # Prefer SF_HOST for app.snowflake.com style accounts
+    host = os.getenv("SF_HOST")
+    account = os.getenv("SF_ACCOUNT")
 
     end_dt = datetime.utcnow().date()
     start_dt = end_dt - timedelta(days=7)
@@ -43,7 +39,6 @@ def main():
     if role:
         conn_args["role"] = role
 
-    # host 또는 account 중 하나는 반드시 세팅
     if host:
         conn_args["host"] = host
     elif account:
