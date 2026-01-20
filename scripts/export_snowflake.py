@@ -73,6 +73,28 @@ def main():
 
         print(f"OK: wrote {out_path} rows={len(data)}")
 
+        # 브랜드 목록 조회 및 저장
+        brand_sql = """
+        SELECT DISTINCT BRD_CD
+        FROM PRCS.DB_SHOP
+        WHERE BRD_CD IN ('M','I','ST','V','X')
+        ORDER BY BRD_CD
+        """
+        cur.execute(brand_sql)
+        brand_rows = cur.fetchall()
+        brands = [r[0] for r in brand_rows]
+
+        brand_out_path = os.path.join("data", "brands.json")
+        brand_payload = {
+            "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+            "brands": brands
+        }
+
+        with open(brand_out_path, "w", encoding="utf-8") as f:
+            json.dump(brand_payload, f, ensure_ascii=False, indent=2)
+
+        print(f"OK: wrote {brand_out_path} brands={len(brands)}")
+
     finally:
         cur.close()
         conn.close()

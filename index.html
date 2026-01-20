@@ -410,36 +410,17 @@
         // API URL
         const API_URL = "https://stylecode-api-dpqrqczbz89gpmn2hnxx34.streamlit.app/";
 
-        // 브랜드 목록 API 호출
+        // 브랜드 목록 로드 (Snowflake 연동)
         async function loadBrands() {
             try {
-                const url = `${API_URL}?type=brands`;
-                console.log('브랜드 목록 API 호출:', url);
+                const res = await fetch('./data/brands.json', { cache: 'no-store' });
                 
-                const response = await fetch(url, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
                 }
                 
-                // 텍스트로 받아서 JSON 추출
-                const text = await response.text();
-                
-                // 첫 '{'와 마지막 '}' 위치로 JSON 문자열만 추출
-                const firstBrace = text.indexOf('{');
-                const lastBrace = text.lastIndexOf('}');
-                
-                if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-                    throw new Error('JSON을 찾을 수 없음: 첫 { 또는 마지막 } 위치를 찾을 수 없음');
-                }
-                
-                const jsonString = text.substring(firstBrace, lastBrace + 1);
-                const data = JSON.parse(jsonString);
-                
-                console.log('파싱된 브랜드 데이터:', data);
+                const { brands } = await res.json();
+                console.log('브랜드 목록 로드 성공:', brands);
                 
                 // 브랜드 select 옵션 채우기
                 const brandSelect = document.getElementById('brand');
@@ -449,20 +430,21 @@
                     throw new Error('DOM 요소를 찾을 수 없음: brand 또는 brand-error');
                 }
                 
-                if (data && data.brands && Array.isArray(data.brands) && data.brands.length > 0) {
+                if (brands && Array.isArray(brands) && brands.length > 0) {
                     // 기존 옵션 제거
                     brandSelect.innerHTML = '';
                     
                     // 브랜드 옵션 추가
-                    data.brands.forEach((brand, index) => {
+                    brands.forEach((brand) => {
                         const option = document.createElement('option');
                         option.value = brand;
                         option.textContent = brand;
-                        if (index === 0) {
-                            option.selected = true; // 첫 번째 옵션을 기본 선택
-                        }
                         brandSelect.appendChild(option);
                     });
+                    
+                    // 기본값 "X" 선택 (없으면 첫 번째 옵션 선택)
+                    const defaultBrand = brands.includes('X') ? 'X' : brands[0];
+                    brandSelect.value = defaultBrand;
                     
                     // 에러 메시지 숨기기
                     errorElement.style.display = 'none';
@@ -884,26 +866,31 @@
     <script>
         async function updateDashboard() {
             try {
-                // 1. 로봇이 만든 데이터 파일을 가져옵니다
-                const response = await fetch('./data.json');
-                if (!response.ok) return; // 파일이 아직 없으면 중단
-                
+                const response = await fetch('./data/sales_daily.json', { cache: 'no-store' });
+
+                if (!response.ok) {
+                    console.log("JSON not ready");
+                    return;
+                }
+
                 const snowflakeData = await response.json();
-                console.log("연동 성공:", snowflakeData);
-        
-                // 2. 데이터를 넣을 장소를 찾습니다 (id가 'dashboard-content'인 곳)
+                console.log("Snowflake JSON loaded:", snowflakeData);
+
                 const displayArea = document.getElementById('dashboard-content');
+
                 if (displayArea) {
-                    // 데이터를 글자로 우선 보여줍니다 (나중에 표나 그래프로 바꿀 예정)
-                    displayArea.innerHTML = `<pre>${JSON.stringify(snowflakeData.slice(0, 5), null, 2)}</pre>`;
+                    const preview = snowflakeData.data.slice(0, 5);
+                    displayArea.innerHTML = `
+                        <h3>Snowflake 연동 테스트</h3>
+                        <pre>${JSON.stringify(preview, null, 2)}</pre>
+                    `;
                 }
             } catch (e) {
-                console.log("데이터 로딩 중...", e);
+                console.error("JSON load error:", e);
             }
         }
-        
-        // 페이지가 뜨자마자 실행
+
         window.onload = updateDashboard;
-        </script>
+    </script>
 </body>
 </html>
