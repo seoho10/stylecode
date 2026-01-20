@@ -1,40 +1,61 @@
 name: Snowflake Auto Update
 
 on:
-  push:
-    branches: [ main ]  # main 브랜치에 코드를 올릴 때마다 실행
-  workflow_dispatch:     # 깃허브 웹사이트에서 수동으로 버튼 눌러 실행 가능하게 함
+  workflow_dispatch: {}
+  schedule:
+    - cron: "20 * * * *"   # 매시간 20분 실행
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  export:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          
-      - name: Install dependencies
+          python-version: "3.11"
+
+      - name: Install packages
         run: |
-          pip install snowflake-connector-python pandas
-          
-      - name: Run Update Script
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run export script
         env:
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
-          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-        run: python app.py
-        
-      - name: Commit and Push changes
+          SF_ACCOUNT: ${{ vars.SF_ACCOUNT }}
+          SF_WAREHOUSE: ${{ vars.SF_WAREHOUSE }}
+          SF_DATABASE: ${{ vars.SF_DATABASE }}
+          SF_SCHEMA: ${{ vars.SF_SCHEMA }}
+          SF_ROLE: ${{ vars.SF_ROLE }}
+          SF_USER: ${{ secrets.SF_USER }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+          BRD_CD: "X"
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data.json
-          git commit -m "Automated data update from Snowflake" || exit 0
-          git push
+          python scripts/export_snowflake.py
+          echo "---- data folder ----"
+          ls -la data
+          echo "---- head of json ----"
+          test -f data/sales_daily.json
+          head -n 30 data/sales_daily.json
+
+      - name: Commit and push json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add data/sales_daily.json
+
+          # 변경 없으면 종료
+          git diff --cached --quiet && echo "no change" && exit 0
+
+          git commit -m "auto: update snowflake json"
+
+          # 원격이 앞서있을 때 대비
+          git pull --rebase origin main
+          git push origin main
