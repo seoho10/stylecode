@@ -37,6 +37,13 @@
 
         .select2-container { width: 100% !important; }
         .select2-selection--multiple { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 2px 6px !important; background-color: #f8fafc !important; }
+        .select2-selection--single { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; background-color: #f8fafc !important; height: 42px !important; display: flex !important; align-items: center !important; }
+        .select2-selection__rendered { font-weight: 800 !important; color: #0f172a !important; }
+        .select2-selection__arrow { height: 40px !important; }
+
+        .brand-btn { padding: 10px 14px; border-radius: 12px; font-weight: 900; font-size: 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #334155; transition: all 0.15s; }
+        .brand-btn:hover { background: #eef2ff; border-color: #c7d2fe; }
+        .brand-btn-active { background: #0f172a; color: white; border-color: #0f172a; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15); }
     </style>
 </head>
 <body class="p-8">
@@ -54,31 +61,23 @@
 
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Brand Selection</label>
-                    <select id="brand" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="">로딩 중...</option>
-                    </select>
-                    <div id="brand-error" class="text-xs text-red-500 mt-1" style="display: none;">브랜드 목록 로드 실패</div>
-                </div>
-                <div class="md:col-span-7">
-                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Style Code</label>
-                    <select id="styleCode" class="js-example-basic-multiple" multiple="multiple">
-                        <option value="SC-001" selected>SC-AIR-01</option><option value="SC-002">SC-RUN-05</option><option value="SC-003">SC-CT-09</option>
-                        <option value="SC-004">SC-LIFESTYLE-X</option><option value="SC-005">SC-PRO-CHAMP</option>
-                    </select>
-                </div>
                 <div class="md:col-span-3">
-                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Analysis Period</label>
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2">
-                        <input type="date" id="startDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
-                        <span class="text-slate-300 font-bold">~</span>
-                        <input type="date" id="endDate" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Brand</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="brand-btn brand-btn-active" data-brand="X">X</button>
+                        <button type="button" class="brand-btn" data-brand="M">M</button>
+                        <button type="button" class="brand-btn" data-brand="I">I</button>
                     </div>
+                </div>
+                <div class="md:col-span-9">
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">품번 (PART_CD)</label>
+                    <select id="part-filter" class="js-part-filter">
+                        <option value="전체">전체</option>
+                    </select>
                 </div>
             </div>
             <div class="flex justify-end">
-                <button onclick="fetchAll()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">조회하기</button>
+                <button onclick="updateDashboard()" class="bg-slate-900 text-white px-10 py-3 rounded-xl font-bold hover:bg-slate-800 transition transform active:scale-95 shadow-xl">조회하기</button>
             </div>
         </div>
 
@@ -356,6 +355,7 @@
         // 전역 변수: 로드된 데이터 저장
         let dashboardData = null;
         let DATA = null;
+        let currentBrand = 'X';
         
         // 데이터 로드 함수
         async function loadData() {
@@ -384,17 +384,99 @@
             }
         }
         
-        // 데이터 변환 및 필터링 함수
-        function transformAndFilterData(brandFilter = null) {
-            if (!dashboardData || !Array.isArray(dashboardData)) {
-                return null;
+        function parseSaleDate(raw) {
+            if (!raw) return null;
+            if (raw instanceof Date) return raw;
+            const s = String(raw);
+            // YYYYMMDD
+            if (/^\d{8}$/.test(s)) {
+                const y = Number(s.slice(0, 4));
+                const m = Number(s.slice(4, 6)) - 1;
+                const d = Number(s.slice(6, 8));
+                return new Date(y, m, d);
             }
-            
-            // 브랜드 필터링
-            let filteredData = dashboardData;
-            if (brandFilter && brandFilter !== '') {
-                filteredData = filteredData.filter(item => item.BRD_CD === brandFilter);
+            // YYYY-MM-DD or ISO
+            const dt = new Date(s);
+            return Number.isNaN(dt.getTime()) ? null : dt;
+        }
+
+        function formatDateLabel(d) {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${mm}-${dd}`;
+        }
+
+        function getWeekKey(d) {
+            // ISO week key: YYYY-Wxx
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+        }
+
+        function getMonthKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function getSelectedPartCd() {
+            const el = document.getElementById('part-filter');
+            return el ? el.value : '전체';
+        }
+
+        function updateBrandButtonsUI() {
+            document.querySelectorAll('button[data-brand]').forEach(btn => {
+                const brand = btn.getAttribute('data-brand');
+                btn.classList.toggle('brand-btn-active', brand === currentBrand);
+            });
+        }
+
+        function updatePartCdDropdown(brand = currentBrand) {
+            const select = document.getElementById('part-filter');
+            if (!select) return;
+
+            const prev = select.value || '전체';
+            select.innerHTML = `<option value="전체">전체</option>`;
+
+            if (!dashboardData || !Array.isArray(dashboardData)) return;
+            const partCodes = [...new Set(
+                dashboardData
+                    .filter(row => !brand || row.BRD_CD === brand)
+                    .map(row => row.PART_CD)
+                    .filter(v => v != null && String(v).trim() !== '')
+                    .map(v => String(v))
+            )].sort();
+
+            partCodes.forEach(cd => {
+                const opt = document.createElement('option');
+                opt.value = cd;
+                opt.textContent = cd;
+                select.appendChild(opt);
+            });
+
+            // selection 유지 (없으면 전체)
+            const exists = [...select.options].some(o => o.value === prev);
+            select.value = exists ? prev : '전체';
+
+            // select2 렌더 동기화
+            if (window.jQuery && jQuery(select).data('select2')) {
+                jQuery(select).trigger('change.select2');
             }
+        }
+
+        function filterRows(brand, partCd) {
+            if (!dashboardData || !Array.isArray(dashboardData)) return [];
+            return dashboardData.filter(row => {
+                const okBrand = !brand || row.BRD_CD === brand;
+                const okPart = !partCd || partCd === '전체' ? true : String(row.PART_CD) === String(partCd);
+                return okBrand && okPart;
+            });
+        }
+
+        // filteredData 기반으로 DATA 재계산
+        function buildDATA(filteredData) {
+            if (!filteredData || !Array.isArray(filteredData)) return null;
             
             // 날짜별로 그룹화하고 데이터 집계
             const dateGroups = {};
@@ -486,6 +568,112 @@
             return DATA;
         }
 
+        function renderSummaryTables() {
+            if (!DATA) return;
+
+            const formatAmt = (v) => Number(v || 0).toLocaleString();
+            const formatQty = (v) => Number(v || 0).toLocaleString();
+            const ratio = (v, total) => (total > 0 ? ((v / total) * 100).toFixed(1) : '0.0');
+
+            // TOTAL
+            const totalBody = document.getElementById('total-list');
+            if (totalBody) {
+                const tAll = DATA.total['전체'];
+                const tOn = DATA.total['온라인'];
+                const tOff = DATA.total['오프라인'];
+                totalBody.innerHTML = `
+                    <tr id="total-total-row" class="clickable-row selected-total" onclick="updateTotalDetail('전체', this)">
+                        <td class="font-bold">전체</td><td>${formatAmt(tAll.sales)}</td><td>${formatQty(tAll.qty)}</td><td>100%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('온라인', this)">
+                        <td class="pl-5 font-semibold text-blue-600">온라인</td><td>${formatAmt(tOn.sales)}</td><td>${formatQty(tOn.qty)}</td><td>${ratio(tOn.sales, tAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('오프라인', this)">
+                        <td class="pl-5 font-semibold text-red-600">오프라인</td><td>${formatAmt(tOff.sales)}</td><td>${formatQty(tOff.qty)}</td><td>${ratio(tOff.sales, tAll.sales)}%</td>
+                    </tr>
+                `;
+            }
+
+            // ON
+            const onBody = document.getElementById('on-list');
+            if (onBody) {
+                const onAll = DATA.on['온라인 전체'] || { sales: 0, qty: 0 };
+                onBody.innerHTML = `
+                    <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)">
+                        <td>온라인 전체</td><td>${formatAmt(onAll.sales)}</td><td>${formatQty(onAll.qty)}</td><td>100%</td>
+                    </tr>
+                `;
+            }
+
+            // OFF
+            const offBody = document.getElementById('off-list');
+            if (offBody) {
+                const offAll = DATA.off['오프라인 전체'] || { sales: 0, qty: 0 };
+                offBody.innerHTML = `
+                    <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)">
+                        <td>오프라인 전체</td><td>${formatAmt(offAll.sales)}</td><td>${formatQty(offAll.qty)}</td><td>100%</td>
+                    </tr>
+                `;
+            }
+
+            // CUSTOMER
+            const custBody = document.getElementById('cust-list');
+            if (custBody) {
+                const cAll = DATA.cust['회원 전체'];
+                const cOn = DATA.cust['온라인'];
+                const cOff = DATA.cust['오프라인'];
+                custBody.innerHTML = `
+                    <tr id="cust-total-row" class="clickable-row selected-customer" onclick="updateCustomerDetail('회원 전체', this)">
+                        <td class="font-bold">회원 전체</td><td>${formatAmt(cAll.sales)}</td><td>${formatQty(cAll.qty)}</td><td>100%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateCustomerDetail('온라인', this)">
+                        <td class="pl-5 font-semibold text-blue-600">온라인</td><td>${formatAmt(cOn.sales)}</td><td>${formatQty(cOn.qty)}</td><td>${ratio(cOn.sales, cAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateCustomerDetail('오프라인', this)">
+                        <td class="pl-5 font-semibold text-red-600">오프라인</td><td>${formatAmt(cOff.sales)}</td><td>${formatQty(cOff.qty)}</td><td>${ratio(cOff.sales, cAll.sales)}%</td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function updateDashboard() {
+            // 데이터가 아직 없으면 로드
+            if (!dashboardData) {
+                await loadData();
+            }
+            if (!dashboardData) {
+                console.warn('dashboardData가 없어 대시보드를 그릴 수 없습니다. data/sales_daily.json 생성/배치가 필요합니다.');
+                return;
+            }
+
+            // 브랜드 버튼이 없거나 X가 없을 경우를 대비해 보정
+            const availableBrands = [...new Set(dashboardData.map(r => r.BRD_CD).filter(v => v != null && String(v).trim() !== '').map(v => String(v)))];
+            if (!availableBrands.includes(currentBrand) && availableBrands.length > 0) {
+                currentBrand = availableBrands.includes('X') ? 'X' : availableBrands[0];
+            }
+            updateBrandButtonsUI();
+
+            const partCd = getSelectedPartCd();
+            const filteredData = filterRows(currentBrand, partCd);
+
+            buildDATA(filteredData);
+            renderSummaryTables();
+
+            // 기본 선택 상태/배지 갱신
+            states.main.selectedChannel = '전체';
+            states.on.selectedChannel = '온라인 전체';
+            states.off.selectedChannel = '오프라인 전체';
+            states.age.selectedChannel = '회원 전체';
+
+            if (DATA) {
+                fetchAll();
+                const custRow = document.getElementById('cust-total-row');
+                const totalRow = document.getElementById('total-total-row');
+                if (custRow) updateCustomerDetail('회원 전체', custRow);
+                if (totalRow) updateTotalDetail('전체', totalRow);
+            }
+        }
+
         const states = {
             main: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '전체' },
             on: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '온라인 전체' },
@@ -511,9 +699,14 @@
                 // 브랜드 select 옵션 채우기
                 const brandSelect = document.getElementById('brand');
                 const errorElement = document.getElementById('brand-error');
-                
-                if (!brandSelect || !errorElement) {
-                    throw new Error('DOM 요소를 찾을 수 없음: brand 또는 brand-error');
+
+                // 현재 UI에서는 브랜드 셀렉트를 사용하지 않음
+                if (!brandSelect) {
+                    return;
+                }
+                if (!errorElement) {
+                    // error 영역이 없으면 조용히 종료
+                    return;
                 }
                 
                 if (brands && Array.isArray(brands) && brands.length > 0) {
@@ -560,14 +753,22 @@
 
         // 매출액 API 호출
         async function loadSales() {
+            const brandEl = document.getElementById('brand');
+            const startDateEl = document.getElementById('startDate');
+
+            // 현재 UI에서는 브랜드/기간을 사용하지 않음
+            if (!brandEl || !startDateEl) {
+                return;
+            }
+
             // 브랜드가 선택되지 않았으면 호출하지 않음
-            const brand = document.getElementById('brand').value;
+            const brand = brandEl.value;
             if (!brand || brand.trim() === '') {
                 return;
             }
             
             try {
-                const startDate = document.getElementById('startDate').value;
+                const startDate = startDateEl.value;
                 
                 // 월 계산 (startDate가 있으면 사용, 없으면 현재 월)
                 let month = '2025-12';
@@ -653,57 +854,38 @@
 
         // DOMContentLoaded 이후에 실행
         document.addEventListener('DOMContentLoaded', async function() {
-            $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
-            
-            // 날짜 기본값 설정 (현재 월)
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const firstDay = `${year}-${month}-01`;
-            const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
-            document.getElementById('startDate').value = firstDay;
-            document.getElementById('endDate').value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
-            
-            // 데이터 로드
-            await loadData();
-            
-            // 초기 데이터 변환 (전체 데이터)
-            if (dashboardData) {
-                transformAndFilterData(null);
+            // PART_CD 드롭다운 select2 초기화
+            if (window.jQuery) {
+                $('.js-part-filter').select2({ placeholder: "품번 선택", allowClear: false });
             }
-            
-            // 브랜드 선택 변경 시
-            document.getElementById('brand').addEventListener('change', function() {
-                const selectedBrand = this.value;
-                loadSales();
 
-                // 데이터 필터링 및 변환
-                transformAndFilterData(selectedBrand);
-                
-                // 차트 다시 그리기
-                if (DATA) {
-                    fetchAll();
-                    updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
-                    updateTotalDetail('전체', $('#total-total-row')[0]);
-                }
+            // 브랜드 버튼 클릭 이벤트 연결
+            document.querySelectorAll('button[data-brand]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const b = btn.getAttribute('data-brand');
+                    currentBrand = b;
+                    updateBrandButtonsUI();
+                    updatePartCdDropdown(currentBrand);
+                    // 브랜드 변경 시 PART_CD는 전체로 리셋
+                    const sel = document.getElementById('part-filter');
+                    if (sel) sel.value = '전체';
+                    if (window.jQuery && sel && jQuery(sel).data('select2')) jQuery(sel).trigger('change.select2');
+                    await updateDashboard();
+                });
             });
-            
-            // 날짜 변경 시 매출액 재호출
-            document.getElementById('startDate').addEventListener('change', function() {
-                loadSales();
-            });
-            document.getElementById('endDate').addEventListener('change', function() {
-                loadSales();
-            });
-            
-            // 브랜드 목록 로드 (성공 후 loadSales 자동 호출)
-            loadBrands();
-            
-            if (DATA) {
-                fetchAll();
-                updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
-                updateTotalDetail('전체', $('#total-total-row')[0]);
+
+            // PART_CD 변경 시 드릴다운 필터링
+            const partSelect = document.getElementById('part-filter');
+            if (partSelect) {
+                partSelect.addEventListener('change', async () => {
+                    await updateDashboard();
+                });
             }
+
+            // 데이터 로드 후 기본 브랜드(X) 기준으로 최초 1회 렌더
+            await loadData();
+            updatePartCdDropdown(currentBrand);
+            await updateDashboard();
         });
 
         function setChart(key, type, val) {
@@ -830,42 +1012,76 @@
             const s = states[key];
             if (s.chart) s.chart.destroy();
 
-            let labels = ['01-12', '01-13', '01-14', '01-15', '01-16'];
-            if(s.view === 'weekly') labels = ['Jan W1', 'Jan W2', 'Jan W3', 'Jan W4'];
-            if(s.view === 'monthly') labels = ['Oct', 'Nov', 'Dec', 'Jan'];
+            // trendData 기반 시계열 생성
+            const trend = (DATA && DATA.trendData) ? DATA.trendData : {};
+            const entries = Object.entries(trend)
+                .map(([rawDate, v]) => ({ rawDate, date: parseSaleDate(rawDate) || parseSaleDate(v?.date) }))
+                .filter(x => x.date != null)
+                .sort((a, b) => a.date - b.date);
 
-            let ds = [];
-            const multiplier = s.view === 'daily' ? 1 : (s.view === 'weekly' ? 5.5 : 22);
+            const metricKey = s.metric === 'sales' ? 'amt' : 'qty';
 
-            if(key === 'main') {
-                const channel = s.selectedChannel || '전체';
-                if(channel === '전체') {
-                    ds = [
-                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
-                    ];
-                } else if(channel === '온라인') {
-                    ds = [
-                        { label: 'ONLINE TOTAL', data: [320, 450, 380, 520, 480].map(v => (s.metric === 'sales' ? v*60000 : v)*multiplier), borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 }
-                    ];
-                } else if(channel === '오프라인') {
-                    ds = [
-                        { label: 'OFFLINE TOTAL', data: [280, 310, 290, 410, 390].map(v => (s.metric === 'sales' ? v*70000 : v)*multiplier), borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
-                    ];
+            function pickChannelVal(group, onOff) {
+                if (!group || !group[onOff]) return 0;
+                return Number(group[onOff][metricKey] || 0);
+            }
+
+            function buildSeries(onOff) {
+                if (s.view === 'daily') {
+                    const sliced = entries.slice(-14);
+                    const labels = sliced.map(e => formatDateLabel(e.date));
+                    const data = sliced.map(e => pickChannelVal(trend[e.rawDate], onOff));
+                    return { labels, data };
                 }
-            } else {
-                const isOn = key === 'on';
-                const targets = s.selectedChannel.includes('전체') ? (isOn ? ['자사몰','무신사','네이버'] : ['백화점','대리점','직영점']) : [s.selectedChannel];
-                const colors = isOn ? ['#3b82f6', '#10b981', '#f59e0b'] : ['#ef4444', '#f97316', '#6366f1'];
-                
-                ds = targets.map((name, i) => ({
-                    label: name,
-                    data: [100, 150, 130, 180, 160].map(v => (s.metric === 'sales' ? v*55000 : v)*multiplier*(0.8 + Math.random()*0.4)),
-                    borderColor: colors[i % colors.length],
-                    tension: 0.4,
-                    borderWidth: 2,
-                    pointRadius: 2
-                }));
+                if (s.view === 'weekly') {
+                    const bucket = new Map();
+                    entries.forEach(e => {
+                        const key = getWeekKey(e.date);
+                        bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate], onOff));
+                    });
+                    const keys = [...bucket.keys()].sort();
+                    return { labels: keys.slice(-12), data: keys.slice(-12).map(k => bucket.get(k) || 0) };
+                }
+                // monthly
+                const bucket = new Map();
+                entries.forEach(e => {
+                    const key = getMonthKey(e.date);
+                    bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate], onOff));
+                });
+                const keys = [...bucket.keys()].sort();
+                return { labels: keys.slice(-12), data: keys.slice(-12).map(k => bucket.get(k) || 0) };
+            }
+
+            let labels = [];
+            let ds = [];
+
+            if (key === 'main') {
+                const channel = s.selectedChannel || '전체';
+                if (channel === '전체') {
+                    const onSeries = buildSeries('온라인');
+                    const offSeries = buildSeries('오프라인');
+                    labels = onSeries.labels.length ? onSeries.labels : offSeries.labels;
+                    ds = [
+                        { label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
+                    ];
+                } else if (channel === '온라인') {
+                    const onSeries = buildSeries('온라인');
+                    labels = onSeries.labels;
+                    ds = [{ label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                } else if (channel === '오프라인') {
+                    const offSeries = buildSeries('오프라인');
+                    labels = offSeries.labels;
+                    ds = [{ label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                }
+            } else if (key === 'on') {
+                const onSeries = buildSeries('온라인');
+                labels = onSeries.labels;
+                ds = [{ label: 'ONLINE', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+            } else if (key === 'off') {
+                const offSeries = buildSeries('오프라인');
+                labels = offSeries.labels;
+                ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
             }
 
             s.chart = new Chart(canvasEl.getContext('2d'), {
@@ -968,44 +1184,12 @@
         }
 
         function fetchAll() { 
-            // 매출액도 함께 갱신
-            loadSales();
-            
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
             renderAgeChart();
             document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${states.main.selectedChannel || '전체'}`;
         }
-    </script>
-    <script>
-        async function updateDashboard() {
-            try {
-                const response = await fetch('./data/sales_daily.json', { cache: 'no-store' });
-
-                if (!response.ok) {
-                    console.log("JSON not ready");
-                    return;
-                }
-
-                const snowflakeData = await response.json();
-                console.log("Snowflake JSON loaded:", snowflakeData);
-
-                const displayArea = document.getElementById('dashboard-content');
-
-                if (displayArea) {
-                    const preview = snowflakeData.data.slice(0, 5);
-                    displayArea.innerHTML = `
-                        <h3>Snowflake 연동 테스트</h3>
-                        <pre>${JSON.stringify(preview, null, 2)}</pre>
-                    `;
-                }
-            } catch (e) {
-                console.error("JSON load error:", e);
-            }
-        }
-
-        window.onload = updateDashboard;
     </script>
 </body>
 </html>
