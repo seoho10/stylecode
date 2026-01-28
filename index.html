@@ -506,39 +506,51 @@
         function buildDATA(filteredData) {
             if (!filteredData || !Array.isArray(filteredData)) return null;
             
-            // 날짜별로 그룹화하고 데이터 집계 (ANLYS_ON_OFF_CLS_NM 컬럼이 없으므로 전체로만 집계)
+            // 날짜별로 그룹화하고 데이터 집계 (ANLYS_ON_OFF_CLS_NM 기준으로 온라인/오프라인 구분)
             const dateGroups = {};
             filteredData.forEach(item => {
                 const date = item.SALE_DT;
+                const channel = item.ANLYS_ON_OFF_CLS_NM || '전체';
                 
                 if (!dateGroups[date]) {
-                    dateGroups[date] = { 전체: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 } };
+                    dateGroups[date] = { 
+                        온라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }, 
+                        오프라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 } 
+                    };
                 }
                 
-                dateGroups[date].전체.amt += item.ALL_AMT || 0;
-                dateGroups[date].전체.qty += item.ALL_QTY || 0;
-                dateGroups[date].전체.cidAmt += item.CID_AMT || 0;
-                dateGroups[date].전체.cidQty += item.CID_QTY || 0;
-                dateGroups[date].전체.cidCnt += item.CID_CNT || 0;
+                // 채널별로 집계
+                if (channel === '온라인' && dateGroups[date].온라인) {
+                    dateGroups[date].온라인.amt += item.ALL_AMT || 0;
+                    dateGroups[date].온라인.qty += item.ALL_QTY || 0;
+                    dateGroups[date].온라인.cidAmt += item.CID_AMT || 0;
+                    dateGroups[date].온라인.cidQty += item.CID_QTY || 0;
+                    dateGroups[date].온라인.cidCnt += item.CID_CNT || 0;
+                } else if (channel === '오프라인' && dateGroups[date].오프라인) {
+                    dateGroups[date].오프라인.amt += item.ALL_AMT || 0;
+                    dateGroups[date].오프라인.qty += item.ALL_QTY || 0;
+                    dateGroups[date].오프라인.cidAmt += item.CID_AMT || 0;
+                    dateGroups[date].오프라인.cidQty += item.CID_QTY || 0;
+                    dateGroups[date].오프라인.cidCnt += item.CID_CNT || 0;
+                }
             });
             
             // 전체 집계
-            let totalAmt = 0, totalQty = 0;
+            let totalOnlineAmt = 0, totalOnlineQty = 0, totalOfflineAmt = 0, totalOfflineQty = 0;
             let totalCidAmt = 0, totalCidQty = 0, totalCidCnt = 0;
             
             Object.values(dateGroups).forEach(group => {
-                totalAmt += group.전체.amt;
-                totalQty += group.전체.qty;
-                totalCidAmt += group.전체.cidAmt;
-                totalCidQty += group.전체.cidQty;
-                totalCidCnt += group.전체.cidCnt;
+                totalOnlineAmt += group.온라인.amt;
+                totalOnlineQty += group.온라인.qty;
+                totalOfflineAmt += group.오프라인.amt;
+                totalOfflineQty += group.오프라인.qty;
+                totalCidAmt += group.온라인.cidAmt + group.오프라인.cidAmt;
+                totalCidQty += group.온라인.cidQty + group.오프라인.cidQty;
+                totalCidCnt += group.온라인.cidCnt + group.오프라인.cidCnt;
             });
             
-            // 온라인/오프라인 구분이 없으므로 전체 데이터를 50:50으로 분배 (임시 처리)
-            const totalOnlineAmt = Math.floor(totalAmt * 0.5);
-            const totalOnlineQty = Math.floor(totalQty * 0.5);
-            const totalOfflineAmt = totalAmt - totalOnlineAmt;
-            const totalOfflineQty = totalQty - totalOnlineQty;
+            const totalAmt = totalOnlineAmt + totalOfflineAmt;
+            const totalQty = totalOnlineQty + totalOfflineQty;
             
             // DATA 구조 생성
             DATA = {
@@ -1090,23 +1102,23 @@
 
             const metricKey = s.metric === 'sales' ? 'amt' : 'qty';
 
-            function pickChannelVal(group) {
-                if (!group || !group.전체) return 0;
-                return Number(group.전체[metricKey] || 0);
+            function pickChannelVal(group, channelType) {
+                if (!group || !group[channelType]) return 0;
+                return Number(group[channelType][metricKey] || 0);
             }
 
-            function buildSeries() {
+            function buildSeries(channelType) {
                 if (s.view === 'daily') {
                     const sliced = entries.slice(-14);
                     const labels = sliced.map(e => formatDateLabel(e.date));
-                    const data = sliced.map(e => pickChannelVal(trend[e.rawDate]));
+                    const data = sliced.map(e => pickChannelVal(trend[e.rawDate], channelType));
                     return { labels, data };
                 }
                 if (s.view === 'weekly') {
                     const bucket = new Map();
                     entries.forEach(e => {
                         const key = getWeekKey(e.date);
-                        bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate]));
+                        bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate], channelType));
                     });
                     const keys = [...bucket.keys()].sort();
                     return { labels: keys.slice(-12), data: keys.slice(-12).map(k => bucket.get(k) || 0) };
@@ -1115,7 +1127,7 @@
                 const bucket = new Map();
                 entries.forEach(e => {
                     const key = getMonthKey(e.date);
-                    bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate]));
+                    bucket.set(key, (bucket.get(key) || 0) + pickChannelVal(trend[e.rawDate], channelType));
                 });
                 const keys = [...bucket.keys()].sort();
                 return { labels: keys.slice(-12), data: keys.slice(-12).map(k => bucket.get(k) || 0) };
@@ -1123,36 +1135,34 @@
 
             let labels = [];
             let ds = [];
-            const totalSeries = buildSeries();
 
             if (key === 'main') {
                 const channel = s.selectedChannel || '전체';
                 if (channel === '전체') {
-                    // 전체 데이터를 50:50으로 분배하여 온라인/오프라인처럼 표시
-                    const onData = totalSeries.data.map(v => Math.floor(v * 0.5));
-                    const offData = totalSeries.data.map((v, i) => v - onData[i]);
-                    labels = totalSeries.labels;
+                    const onSeries = buildSeries('온라인');
+                    const offSeries = buildSeries('오프라인');
+                    labels = onSeries.labels.length ? onSeries.labels : offSeries.labels;
                     ds = [
-                        { label: 'ONLINE TOTAL', data: onData, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: 'OFFLINE TOTAL', data: offData, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
+                        { label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }
                     ];
                 } else if (channel === '온라인') {
-                    const onData = totalSeries.data.map(v => Math.floor(v * 0.5));
-                    labels = totalSeries.labels;
-                    ds = [{ label: 'ONLINE TOTAL', data: onData, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    const onSeries = buildSeries('온라인');
+                    labels = onSeries.labels;
+                    ds = [{ label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#2563eb', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 } else if (channel === '오프라인') {
-                    const offData = totalSeries.data.map(v => Math.floor(v * 0.5));
-                    labels = totalSeries.labels;
-                    ds = [{ label: 'OFFLINE TOTAL', data: offData, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    const offSeries = buildSeries('오프라인');
+                    labels = offSeries.labels;
+                    ds = [{ label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 }
             } else if (key === 'on') {
-                const onData = totalSeries.data.map(v => Math.floor(v * 0.5));
-                labels = totalSeries.labels;
-                ds = [{ label: 'ONLINE', data: onData, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                const onSeries = buildSeries('온라인');
+                labels = onSeries.labels;
+                ds = [{ label: 'ONLINE', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
             } else if (key === 'off') {
-                const offData = totalSeries.data.map(v => Math.floor(v * 0.5));
-                labels = totalSeries.labels;
-                ds = [{ label: 'OFFLINE', data: offData, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                const offSeries = buildSeries('오프라인');
+                labels = offSeries.labels;
+                ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
             }
 
             s.chart = new Chart(canvasEl.getContext('2d'), {

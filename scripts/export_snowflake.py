@@ -48,32 +48,56 @@ def main():
     cur = conn.cursor()
 
     try:
-        # 1. 판매 데이터 추출 쿼리
+        # 1. 판매 데이터 추출 쿼리 (JOIN 및 필터 조건 적용)
         sql = """
         SELECT 
-            SALE_DT,
-            BRD_CD,
-            PART_CD,
-            SUM(ALL_AMT) AS ALL_AMT,
-            SUM(ALL_QTY) AS ALL_QTY,
-            SUM(COALESCE(CID_AMT, 0)) AS CID_AMT,
-            SUM(COALESCE(CID_QTY, 0)) AS CID_QTY,
-            SUM(COALESCE(CID_CNT, 0)) AS CID_CNT
-        FROM PRCS.DW_SALE
-        WHERE BRD_CD = %s
-          AND SALE_DT BETWEEN %s AND %s
-          AND PART_CD IS NOT NULL
-        GROUP BY SALE_DT, BRD_CD, PART_CD
-        ORDER BY SALE_DT, BRD_CD, PART_CD
+            A.SALE_DT,
+            A.BRD_CD,
+            A.PART_CD,
+            CASE 
+                WHEN B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점') THEN '오프라인'
+                WHEN B.ANAL_DIST_TYPE_NM = '온라인' THEN '온라인'
+                ELSE '기타'
+            END AS ANLYS_ON_OFF_CLS_NM,
+            SUM(A.SALE_AMT) AS ALL_AMT,
+            SUM(A.QTY) AS ALL_QTY,
+            SUM(COALESCE(A.CID_AMT, 0)) AS CID_AMT,
+            SUM(COALESCE(A.CID_QTY, 0)) AS CID_QTY,
+            SUM(COALESCE(A.CID_CNT, 0)) AS CID_CNT
+        FROM PRCS.DW_SALE A
+        INNER JOIN PRCS.DB_SHOP B
+            ON A.SHOP_ID = B.SHOP_ID
+            AND A.BRD_CD = B.BRD_CD
+        WHERE A.BRD_CD = %s
+          AND A.SALE_DT BETWEEN %s AND %s
+          AND A.PART_CD IS NOT NULL
+          AND B.ANAL_CNTRY_NM = '한국'
+          AND B.MNG_TYPE_NM = '위탁'
+          AND B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점', '온라인')
+        GROUP BY 
+            A.SALE_DT, 
+            A.BRD_CD, 
+            A.PART_CD,
+            CASE 
+                WHEN B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점') THEN '오프라인'
+                WHEN B.ANAL_DIST_TYPE_NM = '온라인' THEN '온라인'
+                ELSE '기타'
+            END
+        ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
         """
         cur.execute(sql, (brd_cd, str(start_dt), str(end_dt)))
 
         rows = cur.fetchall()
         cols = [c[0] for c in cur.description]
-        data = [dict(zip(cols, r)) for r in rows]
+        raw_data = [dict(zip(cols, r)) for r in rows]
 
-        # 데이터 전처리 (날짜 형식 및 Null 처리)
-        for item in data:
+        # 데이터 전처리 (날짜 형식 및 Null 처리, '기타' 제외)
+        data = []
+        for item in raw_data:
+            # ANLYS_ON_OFF_CLS_NM이 '기타'인 경우 제외
+            if item.get("ANLYS_ON_OFF_CLS_NM") == '기타':
+                continue
+            
             v = item.get("SALE_DT")
             if hasattr(v, "isoformat"):
                 item["SALE_DT"] = v.isoformat()
@@ -81,6 +105,8 @@ def main():
             for num_field in ["ALL_AMT", "ALL_QTY", "CID_AMT", "CID_QTY", "CID_CNT"]:
                 if item.get(num_field) is None:
                     item[num_field] = 0
+            
+            data.append(item)
 
         # 데이터 저장 폴더 생성 (scripts와 같은 레벨의 data 폴더)
         data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
