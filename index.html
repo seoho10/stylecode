@@ -52,15 +52,6 @@
             </div>
         </header>
 
-        <!-- KPI 카드 영역 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Total Sales Amount</div>
-                <div id="kpi-sales-amt" class="text-3xl font-black text-slate-900">-</div>
-                <div class="text-xs text-slate-500 mt-1" id="kpi-error" style="display: none; color: #ef4444;">데이터 로드 실패</div>
-            </div>
-        </div>
-
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
                 <div class="md:col-span-2">
@@ -70,13 +61,14 @@
                     </select>
                     <div id="brand-error" class="text-xs text-red-500 mt-1" style="display: none;">브랜드 목록 로드 실패</div>
                 </div>
-                <div class="md:col-span-3">
-                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Category</label>
-                    <select id="category" class="js-example-basic-multiple" multiple="multiple">
-                        <option value="shoes" selected>FOOTWEAR</option><option value="top">TOPS</option><option value="bottom">PANTS</option><option value="acc">ACCESSORIES</option>
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Part Code (PART_CD)</label>
+                    <select id="part-filter" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="ALL">전체 품번</option>
                     </select>
+                    <div id="partcd-error" class="text-xs text-red-500 mt-1" style="display: none;">품번 목록 로드 실패</div>
                 </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-5">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Style Code</label>
                     <select id="styleCode" class="js-example-basic-multiple" multiple="multiple">
                         <option value="SC-001" selected>SC-AIR-01</option><option value="SC-002">SC-RUN-05</option><option value="SC-003">SC-CT-09</option>
@@ -368,37 +360,176 @@
     </div>
 
     <script>
-        // DATA 시뮬레이션 로직
-        const DATA = {
-            total: {
-                '전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3300, WHITE: 1400, GREY: 600, BEIGE: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 2000, '260': 2000, '270': 1000} },
-                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
-                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1800, BEIGE: 600, WHITE: 400}, sizes: {'250': 800, '260': 1000, '270': 1000} }
-            },
-            on: {
-                '온라인 전체': { qty: 3500, colors: {BLACK: 1500, WHITE: 1000, GREY: 600, NAVY: 400}, sizes: {'230': 400, '240': 900, '250': 1200, '260': 700, '270': 300} },
-                '자사몰': { qty: 1050, colors: {BLACK: 450, WHITE: 350, GREY: 150, NAVY: 100}, sizes: {'230': 100, '240': 300, '250': 350, '260': 200, '270': 100} },
-                '무신사': { qty: 875, colors: {BLACK: 400, WHITE: 200, GREY: 175, NAVY: 100}, sizes: {'240': 275, '250': 300, '260': 200, '270': 100} },
-                '네이버 스토어': { qty: 700, colors: {BLACK: 300, WHITE: 250, GREY: 100, NAVY: 50}, sizes: {'230': 150, '240': 250, '250': 200, '260': 100} },
-                '29CM': { qty: 525, colors: {BLACK: 200, WHITE: 150, GREY: 100, NAVY: 75}, sizes: {'230': 100, '240': 200, '250': 150, '260': 75} },
-                'W컨셉': { qty: 350, colors: {BLACK: 150, WHITE: 50, GREY: 75, NAVY: 75}, sizes: {'230': 50, '240': 100, '250': 150, '260': 50} }
-            },
-            off: {
-                '오프라인 전체': { qty: 2800, colors: {BLACK: 1800, BEIGE: 600, WHITE: 400}, sizes: {'250': 800, '260': 1000, '270': 1000}, geo: {서울: 1200, 경기: 800, 부산: 300, 대구: 200, 광주: 100, 대전: 100, 제주: 100} },
-                '백화점': { qty: 1960, colors: {BLACK: 1300, BEIGE: 400, WHITE: 260}, sizes: {'250': 500, '260': 700, '270': 760}, geo: {서울: 1000, 경기: 500, 부산: 200, 대구: 100, 기타: 160} },
-                '대리점': { qty: 560, colors: {BLACK: 300, BEIGE: 160, WHITE: 100}, sizes: {'250': 200, '260': 200, '270': 160}, geo: {서울: 100, 경기: 200, 부산: 100, 대구: 100, 광주: 60} },
-                '직영점': { qty: 280, colors: {BLACK: 200, BEIGE: 40, WHITE: 40}, sizes: {'250': 100, '260': 100, '270': 80}, geo: {서울: 100, 경기: 100, 부산: 80} }
-            },
-            cust: {
-                '회원 전체': { qty: 6300, sales: 772100000, colors: {BLACK: 3000, WHITE: 2000, GREY: 1300}, sizes: {'240': 1500, '250': 2500, '260': 2300}, members: {기존회원: {qty: 4410, sales: 540470000}, 신규회원: {qty: 1890, sales: 231630000}}, ageGender: {male: {'15-19': {qty: 180, sales: 22000000}, '20-24': {qty: 520, sales: 64000000}, '25-29': {qty: 850, sales: 104000000}, '30-34': {qty: 920, sales: 112000000}, '35-39': {qty: 680, sales: 83000000}, '40-44': {qty: 450, sales: 55000000}, '45-49': {qty: 320, sales: 39000000}, '50-54': {qty: 220, sales: 27000000}, '55-59': {qty: 150, sales: 18000000}, '60~': {qty: 120, sales: 15000000}}, female: {'15-19': {qty: 200, sales: 24000000}, '20-24': {qty: 680, sales: 83000000}, '25-29': {qty: 950, sales: 116000000}, '30-34': {qty: 780, sales: 95000000}, '35-39': {qty: 520, sales: 64000000}, '40-44': {qty: 380, sales: 46000000}, '45-49': {qty: 280, sales: 34000000}, '50-54': {qty: 200, sales: 24000000}, '55-59': {qty: 130, sales: 16000000}, '60~': {qty: 100, sales: 12000000}}} },
-                '온라인': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}}, ageGender: {male: {'15-19': {qty: 100, sales: 12000000}, '20-24': {qty: 290, sales: 36000000}, '25-29': {qty: 470, sales: 58000000}, '30-34': {qty: 510, sales: 62000000}, '35-39': {qty: 380, sales: 46000000}, '40-44': {qty: 250, sales: 30000000}, '45-49': {qty: 180, sales: 22000000}, '50-54': {qty: 120, sales: 15000000}, '55-59': {qty: 80, sales: 10000000}, '60~': {qty: 70, sales: 8000000}}, female: {'15-19': {qty: 110, sales: 13000000}, '20-24': {qty: 380, sales: 46000000}, '25-29': {qty: 530, sales: 65000000}, '30-34': {qty: 430, sales: 52000000}, '35-39': {qty: 290, sales: 35000000}, '40-44': {qty: 210, sales: 25000000}, '45-49': {qty: 150, sales: 18000000}, '50-54': {qty: 110, sales: 13000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 60, sales: 7000000}}} },
-                '자사몰': { qty: 3500, sales: 452100000, colors: {BLACK: 1500, WHITE: 1200, GREY: 800}, sizes: {'240': 1000, '250': 1500, '260': 1000}, members: {기존회원: {qty: 2450, sales: 316470000}, 신규회원: {qty: 1050, sales: 135630000}}, ageGender: {male: {'15-19': {qty: 100, sales: 12000000}, '20-24': {qty: 290, sales: 36000000}, '25-29': {qty: 470, sales: 58000000}, '30-34': {qty: 510, sales: 62000000}, '35-39': {qty: 380, sales: 46000000}, '40-44': {qty: 250, sales: 30000000}, '45-49': {qty: 180, sales: 22000000}, '50-54': {qty: 120, sales: 15000000}, '55-59': {qty: 80, sales: 10000000}, '60~': {qty: 70, sales: 8000000}}, female: {'15-19': {qty: 110, sales: 13000000}, '20-24': {qty: 380, sales: 46000000}, '25-29': {qty: 530, sales: 65000000}, '30-34': {qty: 430, sales: 52000000}, '35-39': {qty: 290, sales: 35000000}, '40-44': {qty: 210, sales: 25000000}, '45-49': {qty: 150, sales: 18000000}, '50-54': {qty: 110, sales: 13000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 60, sales: 7000000}}} },
-                '오프라인': { qty: 2800, sales: 320000000, colors: {BLACK: 1500, BEIGE: 800, WHITE: 500}, sizes: {'250': 1000, '260': 1300, '270': 500}, members: {기존회원: {qty: 1960, sales: 224000000}, 신규회원: {qty: 840, sales: 96000000}}, ageGender: {male: {'15-19': {qty: 80, sales: 10000000}, '20-24': {qty: 230, sales: 28000000}, '25-29': {qty: 380, sales: 46000000}, '30-34': {qty: 410, sales: 50000000}, '35-39': {qty: 300, sales: 37000000}, '40-44': {qty: 200, sales: 25000000}, '45-49': {qty: 140, sales: 17000000}, '50-54': {qty: 100, sales: 12000000}, '55-59': {qty: 70, sales: 8000000}, '60~': {qty: 50, sales: 6000000}}, female: {'15-19': {qty: 90, sales: 11000000}, '20-24': {qty: 300, sales: 37000000}, '25-29': {qty: 420, sales: 51000000}, '30-34': {qty: 350, sales: 43000000}, '35-39': {qty: 230, sales: 29000000}, '40-44': {qty: 170, sales: 21000000}, '45-49': {qty: 130, sales: 16000000}, '50-54': {qty: 90, sales: 11000000}, '55-59': {qty: 60, sales: 8000000}, '60~': {qty: 40, sales: 5000000}}} },
-                '백화점': { qty: 1960, sales: 224000000, colors: {BLACK: 1000, BEIGE: 600, WHITE: 360}, sizes: {'250': 700, '260': 900, '270': 360}, members: {기존회원: {qty: 1372, sales: 156800000}, 신규회원: {qty: 588, sales: 67200000}}, ageGender: {male: {'15-19': {qty: 56, sales: 7000000}, '20-24': {qty: 161, sales: 19600000}, '25-29': {qty: 266, sales: 32200000}, '30-34': {qty: 287, sales: 35000000}, '35-39': {qty: 210, sales: 25900000}, '40-44': {qty: 140, sales: 17500000}, '45-49': {qty: 98, sales: 11900000}, '50-54': {qty: 70, sales: 8400000}, '55-59': {qty: 49, sales: 5600000}, '60~': {qty: 35, sales: 4200000}}, female: {'15-19': {qty: 63, sales: 7700000}, '20-24': {qty: 210, sales: 25900000}, '25-29': {qty: 294, sales: 35700000}, '30-34': {qty: 245, sales: 30100000}, '35-39': {qty: 161, sales: 24500000}, '40-44': {qty: 119, sales: 17500000}, '45-49': {qty: 91, sales: 11200000}, '50-54': {qty: 63, sales: 9100000}, '55-59': {qty: 42, sales: 5600000}, '60~': {qty: 28, sales: 3500000}}} },
-                '대리점': { qty: 560, sales: 64000000, colors: {BLACK: 300, BEIGE: 150, WHITE: 110}, sizes: {'250': 200, '260': 260, '270': 100}, members: {기존회원: {qty: 392, sales: 44800000}, 신규회원: {qty: 168, sales: 19200000}}, ageGender: {male: {'15-19': {qty: 16, sales: 2000000}, '20-24': {qty: 46, sales: 5600000}, '25-29': {qty: 76, sales: 9200000}, '30-34': {qty: 82, sales: 10000000}, '35-39': {qty: 60, sales: 7400000}, '40-44': {qty: 40, sales: 5000000}, '45-49': {qty: 28, sales: 3400000}, '50-54': {qty: 20, sales: 2400000}, '55-59': {qty: 14, sales: 1600000}, '60~': {qty: 10, sales: 1200000}}, female: {'15-19': {qty: 18, sales: 2200000}, '20-24': {qty: 60, sales: 7400000}, '25-29': {qty: 84, sales: 10200000}, '30-34': {qty: 70, sales: 8600000}, '35-39': {qty: 46, sales: 7000000}, '40-44': {qty: 34, sales: 5000000}, '45-49': {qty: 26, sales: 3200000}, '50-54': {qty: 18, sales: 2200000}, '55-59': {qty: 12, sales: 1600000}, '60~': {qty: 8, sales: 1000000}}} },
-                '직영점': { qty: 280, sales: 32000000, colors: {BLACK: 200, BEIGE: 50, WHITE: 30}, sizes: {'250': 100, '260': 140, '270': 40}, members: {기존회원: {qty: 196, sales: 22400000}, 신규회원: {qty: 84, sales: 9600000}}, ageGender: {male: {'15-19': {qty: 8, sales: 1000000}, '20-24': {qty: 23, sales: 2800000}, '25-29': {qty: 38, sales: 4600000}, '30-34': {qty: 41, sales: 5000000}, '35-39': {qty: 30, sales: 3700000}, '40-44': {qty: 20, sales: 2500000}, '45-49': {qty: 14, sales: 1700000}, '50-54': {qty: 10, sales: 1200000}, '55-59': {qty: 7, sales: 800000}, '60~': {qty: 5, sales: 600000}}, female: {'15-19': {qty: 9, sales: 1100000}, '20-24': {qty: 30, sales: 3700000}, '25-29': {qty: 42, sales: 5100000}, '30-34': {qty: 35, sales: 4300000}, '35-39': {qty: 23, sales: 2900000}, '40-44': {qty: 17, sales: 2100000}, '45-49': {qty: 13, sales: 1600000}, '50-54': {qty: 9, sales: 1100000}, '55-59': {qty: 6, sales: 800000}, '60~': {qty: 4, sales: 500000}}} }
+        // 전역 변수: 로드된 데이터 저장
+        let dashboardData = null;
+        let DATA = null;
+        
+        // 데이터 로드 함수
+        async function loadData() {
+            try {
+                const response = await fetch('data/sales_daily.json', { cache: 'no-store' });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result || !result.data) {
+                    throw new Error('데이터 형식이 올바르지 않습니다.');
+                }
+                
+                // 전역 변수에 데이터 할당
+                dashboardData = result.data;
+                
+                console.log('데이터 로드 성공:', dashboardData.length, '건');
+                
+                // PART_CD 목록 추출 및 드롭다운 채우기
+                updatePartCdDropdown();
+                
+                return dashboardData;
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                return null;
             }
-        };
+        }
+        
+        // PART_CD 드롭다운 업데이트 함수
+        function updatePartCdDropdown(brandFilter = null) {
+            if (!dashboardData || !Array.isArray(dashboardData)) {
+                return;
+            }
+            
+            // 브랜드 필터링
+            let filteredData = dashboardData;
+            if (brandFilter && brandFilter !== '') {
+                filteredData = dashboardData.filter(item => item.BRD_CD === brandFilter);
+            }
+            
+            // 고유한 PART_CD 추출
+            const uniquePartCds = [...new Set(filteredData.map(item => item.PART_CD).filter(cd => cd != null && cd !== ''))].sort();
+            
+            const partFilterSelect = document.getElementById('part-filter');
+            if (!partFilterSelect) return;
+            
+            // 기존 옵션 제거 (전체 품번 옵션 제외)
+            partFilterSelect.innerHTML = '<option value="ALL">전체 품번</option>';
+            
+            // PART_CD 옵션 추가
+            uniquePartCds.forEach(partCd => {
+                const option = document.createElement('option');
+                option.value = partCd;
+                option.textContent = partCd;
+                partFilterSelect.appendChild(option);
+            });
+            
+            console.log(`PART_CD 드롭다운 업데이트 완료: ${uniquePartCds.length}개 (브랜드: ${brandFilter || '전체'})`);
+        }
+        
+        // 데이터 변환 및 필터링 함수
+        function transformAndFilterData(brandFilter = null, partCdFilter = null) {
+            if (!dashboardData || !Array.isArray(dashboardData)) {
+                return null;
+            }
+            
+            // 브랜드 및 PART_CD 필터링
+            let filteredData = dashboardData;
+            if (brandFilter && brandFilter !== '') {
+                filteredData = filteredData.filter(item => item.BRD_CD === brandFilter);
+            }
+            if (partCdFilter && partCdFilter !== 'ALL') {
+                filteredData = filteredData.filter(item => item.PART_CD === partCdFilter);
+            }
+            
+            // 날짜별로 그룹화하고 데이터 집계
+            const dateGroups = {};
+            filteredData.forEach(item => {
+                const date = item.SALE_DT;
+                const channel = item.ANLYS_ON_OFF_CLS_NM;
+                
+                if (!dateGroups[date]) {
+                    dateGroups[date] = { 온라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }, 오프라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 } };
+                }
+                
+                if (dateGroups[date][channel]) {
+                    dateGroups[date][channel].amt += item.ALL_AMT || 0;
+                    dateGroups[date][channel].qty += item.ALL_QTY || 0;
+                    dateGroups[date][channel].cidAmt += item.CID_AMT || 0;
+                    dateGroups[date][channel].cidQty += item.CID_QTY || 0;
+                    dateGroups[date][channel].cidCnt += item.CID_CNT || 0;
+                }
+            });
+            
+            // 전체 집계
+            let totalOnlineAmt = 0, totalOnlineQty = 0, totalOfflineAmt = 0, totalOfflineQty = 0;
+            let totalCidAmt = 0, totalCidQty = 0, totalCidCnt = 0;
+            
+            Object.values(dateGroups).forEach(group => {
+                totalOnlineAmt += group.온라인.amt;
+                totalOnlineQty += group.온라인.qty;
+                totalOfflineAmt += group.오프라인.amt;
+                totalOfflineQty += group.오프라인.qty;
+                totalCidAmt += group.온라인.cidAmt + group.오프라인.cidAmt;
+                totalCidQty += group.온라인.cidQty + group.오프라인.cidQty;
+                totalCidCnt += group.온라인.cidCnt + group.오프라인.cidCnt;
+            });
+            
+            const totalAmt = totalOnlineAmt + totalOfflineAmt;
+            const totalQty = totalOnlineQty + totalOfflineQty;
+            
+            // DATA 구조 생성
+            DATA = {
+                total: {
+                    '전체': { qty: totalQty, sales: totalAmt, colors: {}, sizes: {} },
+                    '온라인': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} },
+                    '오프라인': { qty: totalOfflineQty, sales: totalOfflineAmt, colors: {}, sizes: {} }
+                },
+                on: {
+                    '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} }
+                },
+                off: {
+                    '오프라인 전체': { qty: totalOfflineQty, sales: totalOfflineAmt, colors: {}, sizes: {}, geo: {} }
+                },
+                cust: {
+                    '회원 전체': { 
+                        qty: totalQty, 
+                        sales: totalAmt, 
+                        colors: {}, 
+                        sizes: {},
+                        members: {
+                            기존회원: { qty: Math.floor(totalCidQty * 0.7), sales: Math.floor(totalCidAmt * 0.7) },
+                            신규회원: { qty: Math.floor(totalCidQty * 0.3), sales: Math.floor(totalCidAmt * 0.3) }
+                        },
+                        ageGender: { male: {}, female: {} }
+                    },
+                    '온라인': { 
+                        qty: totalOnlineQty, 
+                        sales: totalOnlineAmt, 
+                        colors: {}, 
+                        sizes: {},
+                        members: {
+                            기존회원: { qty: Math.floor(totalOnlineQty * 0.7), sales: Math.floor(totalOnlineAmt * 0.7) },
+                            신규회원: { qty: Math.floor(totalOnlineQty * 0.3), sales: Math.floor(totalOnlineAmt * 0.3) }
+                        },
+                        ageGender: { male: {}, female: {} }
+                    },
+                    '오프라인': { 
+                        qty: totalOfflineQty, 
+                        sales: totalOfflineAmt, 
+                        colors: {}, 
+                        sizes: {},
+                        members: {
+                            기존회원: { qty: Math.floor(totalOfflineQty * 0.7), sales: Math.floor(totalOfflineAmt * 0.7) },
+                            신규회원: { qty: Math.floor(totalOfflineQty * 0.3), sales: Math.floor(totalOfflineAmt * 0.3) }
+                        },
+                        ageGender: { male: {}, female: {} }
+                    }
+                },
+                trendData: dateGroups
+            };
+            
+            return DATA;
+        }
 
         const states = {
             main: { metric: 'sales', view: 'daily', chart: null, selectedChannel: '전체' },
@@ -530,15 +661,19 @@
                 
                 console.log('파싱된 데이터:', data);
                 
-                // KPI 카드 업데이트
+                // KPI 카드 업데이트 (요소가 존재하는 경우에만)
                 const salesAmtElement = document.getElementById('kpi-sales-amt');
                 const errorElement = document.getElementById('kpi-error');
                 
                 if (data && data.sales_amt !== undefined) {
-                    // 숫자 포맷팅 (천 단위 구분)
-                    const formattedAmount = new Intl.NumberFormat('ko-KR').format(data.sales_amt);
-                    salesAmtElement.textContent = formattedAmount + '원';
-                    errorElement.style.display = 'none';
+                    if (salesAmtElement) {
+                        // 숫자 포맷팅 (천 단위 구분)
+                        const formattedAmount = new Intl.NumberFormat('ko-KR').format(data.sales_amt);
+                        salesAmtElement.textContent = formattedAmount + '원';
+                    }
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                    }
                 } else {
                     throw new Error('sales_amt 필드가 없음');
                 }
@@ -548,17 +683,21 @@
                 console.error('매출액 로드 실패:', error);
                 console.error('에러 상세:', error.message, error.stack);
                 
-                // 화면에는 간단한 메시지만 표시
+                // 화면에는 간단한 메시지만 표시 (요소가 존재하는 경우에만)
                 const salesAmtElement = document.getElementById('kpi-sales-amt');
                 const errorElement = document.getElementById('kpi-error');
                 
-                salesAmtElement.textContent = '-';
-                errorElement.style.display = 'block';
+                if (salesAmtElement) {
+                    salesAmtElement.textContent = '-';
+                }
+                if (errorElement) {
+                    errorElement.style.display = 'block';
+                }
             }
         }
 
         // DOMContentLoaded 이후에 실행
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             $('.js-example-basic-multiple').select2({ placeholder: "선택하세요" });
             
             // 날짜 기본값 설정 (현재 월)
@@ -570,9 +709,54 @@
             document.getElementById('startDate').value = firstDay;
             document.getElementById('endDate').value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
             
-            // 브랜드 선택 변경 시 매출액 재호출
+            // 데이터 로드
+            await loadData();
+            
+            // 초기 데이터 변환 (전체 데이터)
+            if (dashboardData) {
+                transformAndFilterData(null, null);
+            }
+            
+            // 브랜드 선택 변경 시
             document.getElementById('brand').addEventListener('change', function() {
+                const selectedBrand = this.value;
                 loadSales();
+                
+                // PART_CD 드롭다운 업데이트 (해당 브랜드의 PART_CD만 표시)
+                updatePartCdDropdown(selectedBrand);
+                
+                // PART_CD를 "전체 품번"으로 리셋
+                const partFilterSelect = document.getElementById('part-filter');
+                if (partFilterSelect) {
+                    partFilterSelect.value = 'ALL';
+                }
+                
+                // 데이터 필터링 및 변환
+                const selectedPartCd = partFilterSelect ? partFilterSelect.value : 'ALL';
+                transformAndFilterData(selectedBrand, selectedPartCd);
+                
+                // 차트 다시 그리기
+                if (DATA) {
+                    fetchAll();
+                    updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
+                    updateTotalDetail('전체', $('#total-total-row')[0]);
+                }
+            });
+            
+            // PART_CD 선택 변경 시
+            document.getElementById('part-filter').addEventListener('change', function() {
+                const selectedPartCd = this.value;
+                const selectedBrand = document.getElementById('brand').value;
+                
+                // 데이터 필터링 및 변환
+                transformAndFilterData(selectedBrand, selectedPartCd);
+                
+                // 차트 다시 그리기
+                if (DATA) {
+                    fetchAll();
+                    updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
+                    updateTotalDetail('전체', $('#total-total-row')[0]);
+                }
             });
             
             // 날짜 변경 시 매출액 재호출
@@ -586,9 +770,11 @@
             // 브랜드 목록 로드 (성공 후 loadSales 자동 호출)
             loadBrands();
             
-            fetchAll();
-            updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
-            updateTotalDetail('전체', $('#total-total-row')[0]);
+            if (DATA) {
+                fetchAll();
+                updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
+                updateTotalDetail('전체', $('#total-total-row')[0]);
+            }
         });
 
         function setChart(key, type, val) {
