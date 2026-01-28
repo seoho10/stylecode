@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "generated_at_utc": "2026-01-28T09:49:29.060212Z",
+=======
+  "generated_at_utc": "2026-01-28T10:00:42.026959Z",
+>>>>>>> a3eee03 (Success: Snowflake 데이터 추출 성공 및 JSON 생성 완료)
   "brands": [
     "I",
     "M",

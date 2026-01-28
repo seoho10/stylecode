@@ -55,15 +55,15 @@ def main():
             A.BRD_CD,
             A.PART_CD,
             CASE 
-                WHEN B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점') THEN '오프라인'
-                WHEN B.ANAL_DIST_TYPE_NM = '온라인' THEN '온라인'
+                WHEN A.ONLINE_YN = 'Y' THEN '온라인'
+                WHEN A.ONLINE_YN = 'N' THEN '오프라인'
                 ELSE '기타'
             END AS ANLYS_ON_OFF_CLS_NM,
             SUM(A.SALE_AMT) AS ALL_AMT,
             SUM(A.QTY) AS ALL_QTY,
-            SUM(COALESCE(A.CID_AMT, 0)) AS CID_AMT,
-            SUM(COALESCE(A.CID_QTY, 0)) AS CID_QTY,
-            SUM(COALESCE(A.CID_CNT, 0)) AS CID_CNT
+            0 AS CID_AMT,
+            0 AS CID_QTY,
+            0 AS CID_CNT
         FROM PRCS.DW_SALE A
         INNER JOIN PRCS.DB_SHOP B
             ON A.SHOP_ID = B.SHOP_ID
@@ -78,11 +78,7 @@ def main():
             A.SALE_DT, 
             A.BRD_CD, 
             A.PART_CD,
-            CASE 
-                WHEN B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점') THEN '오프라인'
-                WHEN B.ANAL_DIST_TYPE_NM = '온라인' THEN '온라인'
-                ELSE '기타'
-            END
+            A.ONLINE_YN
         ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
         """
         cur.execute(sql, (brd_cd, str(start_dt), str(end_dt)))
