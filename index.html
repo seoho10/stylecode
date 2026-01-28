@@ -384,9 +384,14 @@
                 
                 console.log('데이터 로드 성공:', dashboardData.length, '건');
 
+                // 브랜드 드롭다운 옵션 채우기 (BRD_CD 중복 제거)
+                updateBrandDropdown();
+                
                 // PART_CD 드롭다운 옵션 채우기 (전체 데이터 기준, 중복 제거)
-                // 브랜드 필터는 아직 적용하지 않고 전체 데이터 기준으로 채움
                 updatePartCdDropdown(null);
+                
+                // 날짜 필터 기본값 설정 (데이터의 가장 빠른/늦은 날짜)
+                updateDateRangeDefaults();
 
                 return dashboardData;
             } catch (error) {
@@ -451,6 +456,54 @@
             return { start, end };
         }
 
+        function updateBrandDropdown() {
+            const select = document.getElementById('brand-filter');
+            if (!select) return;
+
+            if (!dashboardData || !Array.isArray(dashboardData)) return;
+
+            const prev = select.value || '전체';
+            
+            // BRD_CD 중복 제거하여 추출
+            const brands = [...new Set(
+                dashboardData
+                    .map(row => row.BRD_CD)
+                    .filter(v => v != null && String(v).trim() !== '')
+                    .map(v => String(v))
+            )].sort();
+
+            // 기존 옵션 유지하면서 '전체' 옵션 확인
+            const hasAllOption = [...select.options].some(o => o.value === '전체');
+            if (!hasAllOption) {
+                select.innerHTML = '<option value="전체">전체</option>';
+            } else {
+                // '전체' 옵션은 유지하고 나머지만 제거
+                const allOption = select.querySelector('option[value="전체"]');
+                select.innerHTML = '';
+                if (allOption) select.appendChild(allOption);
+            }
+
+            // 브랜드 옵션 추가
+            brands.forEach(brand => {
+                const exists = [...select.options].some(o => o.value === brand);
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = brand;
+                    opt.textContent = brand;
+                    select.appendChild(opt);
+                }
+            });
+
+            // selection 유지 (없으면 전체)
+            const exists = [...select.options].some(o => o.value === prev);
+            select.value = exists ? prev : '전체';
+
+            // select2 렌더 동기화
+            if (window.jQuery && jQuery(select).data('select2')) {
+                jQuery(select).trigger('change.select2');
+            }
+        }
+
         function updatePartCdDropdown(brand = null) {
             const select = document.getElementById('part-filter');
             if (!select) return;
@@ -487,6 +540,31 @@
             // select2 렌더 동기화
             if (window.jQuery && jQuery(select).data('select2')) {
                 jQuery(select).trigger('change.select2');
+            }
+        }
+
+        function updateDateRangeDefaults() {
+            const startEl = document.getElementById('startDate');
+            const endEl = document.getElementById('endDate');
+            if (!startEl || !endEl || !dashboardData || !Array.isArray(dashboardData)) return;
+
+            // 데이터에서 날짜 추출 및 파싱
+            const dates = dashboardData
+                .map(row => parseSaleDate(row.SALE_DT))
+                .filter(d => d != null)
+                .sort((a, b) => a - b);
+
+            if (dates.length === 0) return;
+
+            const minDate = dates[0];
+            const maxDate = dates[dates.length - 1];
+
+            // 날짜가 설정되어 있지 않을 때만 기본값 설정
+            if (!startEl.value) {
+                startEl.value = minDate.toISOString().slice(0, 10);
+            }
+            if (!endEl.value) {
+                endEl.value = maxDate.toISOString().slice(0, 10);
             }
         }
 
@@ -691,6 +769,10 @@
             // 데이터가 아직 없으면 로드
             if (!dashboardData) {
                 await loadData();
+                // 데이터 로드 후 드롭다운 업데이트 (loadData() 내부에서도 처리되지만 확실하게)
+                updateBrandDropdown();
+                updatePartCdDropdown(getSelectedBrand());
+                updateDateRangeDefaults();
             }
             if (!dashboardData) {
                 console.warn('dashboardData가 없어 대시보드를 그릴 수 없습니다. data/sales_daily.json 생성/배치가 필요합니다.');
@@ -965,10 +1047,10 @@
                 });
             }
 
-            // 데이터 로드 후 PART_CD 드롭다운 채우기
+            // 데이터 로드 후 드롭다운 채우기
             await loadData();
             
-            // 초기 PART_CD 드롭다운 채우기 (기본 브랜드 X 기준)
+            // 데이터 로드 후 브랜드 드롭다운이 채워졌으므로, 선택된 브랜드 기준으로 품번 드롭다운 업데이트
             const initialBrand = getSelectedBrand();
             updatePartCdDropdown(initialBrand);
         });
