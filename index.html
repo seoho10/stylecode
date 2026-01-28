@@ -61,14 +61,7 @@
                     </select>
                     <div id="brand-error" class="text-xs text-red-500 mt-1" style="display: none;">브랜드 목록 로드 실패</div>
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Part Code (PART_CD)</label>
-                    <select id="part-filter" class="w-full border-slate-200 rounded-lg px-4 py-2.5 bg-slate-50 font-bold focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option value="ALL">전체 품번</option>
-                    </select>
-                    <div id="partcd-error" class="text-xs text-red-500 mt-1" style="display: none;">품번 목록 로드 실패</div>
-                </div>
-                <div class="md:col-span-5">
+                <div class="md:col-span-7">
                     <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest">Style Code</label>
                     <select id="styleCode" class="js-example-basic-multiple" multiple="multiple">
                         <option value="SC-001" selected>SC-AIR-01</option><option value="SC-002">SC-RUN-05</option><option value="SC-003">SC-CT-09</option>
@@ -383,10 +376,7 @@
                 dashboardData = result.data;
                 
                 console.log('데이터 로드 성공:', dashboardData.length, '건');
-                
-                // PART_CD 목록 추출 및 드롭다운 채우기
-                updatePartCdDropdown();
-                
+
                 return dashboardData;
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
@@ -394,51 +384,16 @@
             }
         }
         
-        // PART_CD 드롭다운 업데이트 함수
-        function updatePartCdDropdown(brandFilter = null) {
+        // 데이터 변환 및 필터링 함수
+        function transformAndFilterData(brandFilter = null) {
             if (!dashboardData || !Array.isArray(dashboardData)) {
-                return;
+                return null;
             }
             
             // 브랜드 필터링
             let filteredData = dashboardData;
             if (brandFilter && brandFilter !== '') {
-                filteredData = dashboardData.filter(item => item.BRD_CD === brandFilter);
-            }
-            
-            // 고유한 PART_CD 추출
-            const uniquePartCds = [...new Set(filteredData.map(item => item.PART_CD).filter(cd => cd != null && cd !== ''))].sort();
-            
-            const partFilterSelect = document.getElementById('part-filter');
-            if (!partFilterSelect) return;
-            
-            // 기존 옵션 제거 (전체 품번 옵션 제외)
-            partFilterSelect.innerHTML = '<option value="ALL">전체 품번</option>';
-            
-            // PART_CD 옵션 추가
-            uniquePartCds.forEach(partCd => {
-                const option = document.createElement('option');
-                option.value = partCd;
-                option.textContent = partCd;
-                partFilterSelect.appendChild(option);
-            });
-            
-            console.log(`PART_CD 드롭다운 업데이트 완료: ${uniquePartCds.length}개 (브랜드: ${brandFilter || '전체'})`);
-        }
-        
-        // 데이터 변환 및 필터링 함수
-        function transformAndFilterData(brandFilter = null, partCdFilter = null) {
-            if (!dashboardData || !Array.isArray(dashboardData)) {
-                return null;
-            }
-            
-            // 브랜드 및 PART_CD 필터링
-            let filteredData = dashboardData;
-            if (brandFilter && brandFilter !== '') {
                 filteredData = filteredData.filter(item => item.BRD_CD === brandFilter);
-            }
-            if (partCdFilter && partCdFilter !== 'ALL') {
-                filteredData = filteredData.filter(item => item.PART_CD === partCdFilter);
             }
             
             // 날짜별로 그룹화하고 데이터 집계
@@ -714,42 +669,16 @@
             
             // 초기 데이터 변환 (전체 데이터)
             if (dashboardData) {
-                transformAndFilterData(null, null);
+                transformAndFilterData(null);
             }
             
             // 브랜드 선택 변경 시
             document.getElementById('brand').addEventListener('change', function() {
                 const selectedBrand = this.value;
                 loadSales();
-                
-                // PART_CD 드롭다운 업데이트 (해당 브랜드의 PART_CD만 표시)
-                updatePartCdDropdown(selectedBrand);
-                
-                // PART_CD를 "전체 품번"으로 리셋
-                const partFilterSelect = document.getElementById('part-filter');
-                if (partFilterSelect) {
-                    partFilterSelect.value = 'ALL';
-                }
-                
+
                 // 데이터 필터링 및 변환
-                const selectedPartCd = partFilterSelect ? partFilterSelect.value : 'ALL';
-                transformAndFilterData(selectedBrand, selectedPartCd);
-                
-                // 차트 다시 그리기
-                if (DATA) {
-                    fetchAll();
-                    updateCustomerDetail('회원 전체', $('#cust-total-row')[0]);
-                    updateTotalDetail('전체', $('#total-total-row')[0]);
-                }
-            });
-            
-            // PART_CD 선택 변경 시
-            document.getElementById('part-filter').addEventListener('change', function() {
-                const selectedPartCd = this.value;
-                const selectedBrand = document.getElementById('brand').value;
-                
-                // 데이터 필터링 및 변환
-                transformAndFilterData(selectedBrand, selectedPartCd);
+                transformAndFilterData(selectedBrand);
                 
                 // 차트 다시 그리기
                 if (DATA) {
