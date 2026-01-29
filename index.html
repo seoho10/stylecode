@@ -1042,13 +1042,9 @@
             console.log('종료일:', end ? end.toISOString().slice(0, 10) : '없음');
             console.log('==================');
             
-            // 데이터가 아직 없으면 로드
+            // 데이터가 없으면 로드 (페이지 로드 시 이미 로드되어 있어야 하지만 안전장치)
             if (!dashboardData) {
                 await loadData();
-                // 데이터 로드 후 드롭다운 업데이트
-                await updateBrandDropdown();
-                updatePartCdDropdown(getSelectedBrand());
-                updateDateRangeDefaults();
             }
             if (!dashboardData) {
                 console.warn('dashboardData가 없어 대시보드를 그릴 수 없습니다. data/sales_daily.json 생성/배치가 필요합니다.');
@@ -1290,7 +1286,7 @@
             }
 
             // 브랜드 드롭다운 변경 이벤트 (통합 함수)
-            function handleBrandChange() {
+            async function handleBrandChange() {
                 const selectedBrand = getSelectedBrand();
                 console.log('=== 브랜드 변경 이벤트 트리거 ===');
                 console.log('선택된 브랜드:', selectedBrand);
@@ -1313,25 +1309,31 @@
                     console.log('✅ dashboardData 존재, 품번 드롭다운 업데이트 시작');
                     updatePartCdDropdown(selectedBrand);
                 } else {
-                    console.warn('⚠️ dashboardData 없음! 조회하기 버튼을 먼저 눌러주세요.');
-                    // 데이터가 없으면 품번 드롭다운 비우기
-                    if (window.jQuery && jQuery(partSelect).data('select2')) {
-                        jQuery(partSelect).select2('destroy');
-                    }
-                    partSelect.innerHTML = '';
-                    // Select2 다시 초기화
-                    if (window.jQuery) {
-                        jQuery(partSelect).select2({
-                            placeholder: "조회하기 버튼을 먼저 눌러주세요",
-                            allowClear: true,
-                            multiple: true,
-                            width: '100%',
-                            language: {
-                                noResults: function() {
-                                    return "조회하기 버튼을 먼저 눌러주세요";
+                    console.warn('⚠️ dashboardData 없음! 데이터 로드 중...');
+                    // 데이터가 없으면 로드 시도
+                    await loadData();
+                    if (dashboardData && dashboardData.length > 0) {
+                        updatePartCdDropdown(selectedBrand);
+                    } else {
+                        // 데이터 로드 실패 시 품번 드롭다운 비우기
+                        if (window.jQuery && jQuery(partSelect).data('select2')) {
+                            jQuery(partSelect).select2('destroy');
+                        }
+                        partSelect.innerHTML = '';
+                        // Select2 다시 초기화
+                        if (window.jQuery) {
+                            jQuery(partSelect).select2({
+                                placeholder: "데이터 로드 실패",
+                                allowClear: true,
+                                multiple: true,
+                                width: '100%',
+                                language: {
+                                    noResults: function() {
+                                        return "데이터 로드 실패";
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
             }
@@ -1371,8 +1373,19 @@
                 });
             }
 
-            // 브랜드 목록만 먼저 로드 (데이터는 조회하기 버튼 클릭 시 로드)
-            await loadBrandListOnly();
+            // 브랜드 목록과 데이터 미리 로드 (브랜드/품번 선택용)
+            await loadData();
+            
+            // 브랜드 드롭다운 업데이트
+            await updateBrandDropdown();
+            
+            // 품번 드롭다운 초기화 (전체 브랜드 기준)
+            updatePartCdDropdown('전체');
+            
+            // 날짜 기본값 설정
+            updateDateRangeDefaults();
+            
+            console.log('초기 데이터 로드 완료 - 브랜드/품번 선택 가능');
         });
 
         function setChart(key, type, val) {
