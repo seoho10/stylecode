@@ -471,7 +471,10 @@
 
         async function updateBrandDropdown() {
             const select = document.getElementById('brand-filter');
-            if (!select) return;
+            if (!select) {
+                console.error('브랜드 드롭다운 요소를 찾을 수 없습니다.');
+                return;
+            }
 
             const prev = select.value || '전체';
             
@@ -480,16 +483,25 @@
             
             // 1. data/sales_daily.json의 BRD_CD에서 브랜드 추출 (우선)
             if (dashboardData && Array.isArray(dashboardData) && dashboardData.length > 0) {
-                dashboardData.forEach(row => {
+                console.log('dashboardData 확인:', dashboardData.length, '건');
+                dashboardData.forEach((row, index) => {
                     if (row.BRD_CD && String(row.BRD_CD).trim() !== '') {
-                        brandSet.add(String(row.BRD_CD).trim());
+                        const brandCode = String(row.BRD_CD).trim();
+                        brandSet.add(brandCode);
+                        // 처음 5개만 로그 출력
+                        if (index < 5) {
+                            console.log(`  [${index}] BRD_CD:`, brandCode);
+                        }
                     }
                 });
-                console.log('sales_daily.json에서 브랜드 추출:', Array.from(brandSet));
+                console.log('sales_daily.json에서 브랜드 추출 완료:', Array.from(brandSet).sort());
+            } else {
+                console.warn('dashboardData가 없거나 비어있습니다. dashboardData:', dashboardData);
             }
             
             // 2. data/brands.json 파일에서 브랜드 목록 가져오기 (보조, 없을 경우 대비)
             if (brandSet.size === 0) {
+                console.log('brands.json에서 브랜드 로드 시도...');
                 try {
                     const brandsResponse = await fetch('data/brands.json', { cache: 'no-store' });
                     if (brandsResponse.ok) {
@@ -500,8 +512,10 @@
                                     brandSet.add(String(brand).trim());
                                 }
                             });
-                            console.log('brands.json에서 브랜드 로드:', Array.from(brandSet));
+                            console.log('brands.json에서 브랜드 로드:', Array.from(brandSet).sort());
                         }
+                    } else {
+                        console.warn('brands.json 로드 실패: HTTP', brandsResponse.status);
                     }
                 } catch (error) {
                     console.warn('brands.json 로드 실패:', error);
@@ -510,6 +524,18 @@
             
             // 브랜드 목록을 정렬
             const brands = Array.from(brandSet).sort();
+            
+            if (brands.length === 0) {
+                console.error('브랜드가 하나도 추출되지 않았습니다!');
+                return;
+            }
+            
+            console.log('최종 브랜드 목록:', brands);
+            
+            // Select2가 이미 초기화되어 있으면 destroy
+            if (window.jQuery && jQuery(select).data('select2')) {
+                jQuery(select).select2('destroy');
+            }
             
             // 드롭다운 옵션 완전히 교체 ('전체' 옵션 유지)
             select.innerHTML = '<option value="전체">전체</option>';
@@ -534,12 +560,27 @@
             
             select.value = selectedValue;
 
-            // select2 렌더 동기화 (UI와 데이터 동기화 보장)
-            if (window.jQuery && jQuery(select).data('select2')) {
+            // Select2 다시 초기화 (옵션이 모두 추가된 후)
+            if (window.jQuery) {
+                jQuery(select).select2({ 
+                    placeholder: "브랜드 선택", 
+                    allowClear: false,
+                    width: '100%',
+                    language: {
+                        noResults: function() {
+                            return "검색 결과가 없습니다.";
+                        },
+                        searching: function() {
+                            return "검색 중...";
+                        }
+                    }
+                });
+                // 선택값 설정
                 jQuery(select).val(selectedValue).trigger('change.select2');
             }
             
             console.log('브랜드 드롭다운 업데이트 완료:', brands.length, '개 브랜드', brands);
+            console.log('현재 선택된 브랜드:', selectedValue);
         }
 
         function updatePartCdDropdown(brand = null) {
@@ -1072,21 +1113,8 @@
                 endEl.value = today.toISOString().slice(0, 10);
             }
 
-            // 모든 드롭다운에 select2 적용
+            // 품번 드롭다운에만 select2 적용 (브랜드는 updateBrandDropdown에서 초기화)
             if (window.jQuery) {
-                $('.js-brand-filter').select2({ 
-                    placeholder: "브랜드 선택", 
-                    allowClear: false,
-                    width: '100%',
-                    language: {
-                        noResults: function() {
-                            return "검색 결과가 없습니다.";
-                        },
-                        searching: function() {
-                            return "검색 중...";
-                        }
-                    }
-                });
                 $('.js-part-filter').select2({ 
                     placeholder: "품번 선택 (복수 선택 가능)", 
                     allowClear: true,
