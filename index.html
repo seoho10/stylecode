@@ -839,7 +839,10 @@
                     '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} }
                 },
                 off: {
-                    '오프라인 전체': { qty: totalOfflineQty, sales: totalOfflineAmt, colors: {}, sizes: {}, geo: {} }
+                    '오프라인 전체': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes, geo: {} },
+                    '백화점': { qty: distTypeStats['백화점'].qty, sales: distTypeStats['백화점'].amt, colors: distTypeStats['백화점'].colors, sizes: distTypeStats['백화점'].sizes, geo: {} },
+                    '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes, geo: {} },
+                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes, geo: {} }
                 },
                 cust: {
                     '회원 전체': { 
@@ -895,10 +898,6 @@
                 const tAll = DATA.total['전체'];
                 const tOn = DATA.total['온라인'];
                 const tOff = DATA.total['오프라인'];
-                const t백화점 = DATA.total['백화점'] || { sales: 0, qty: 0 };
-                const t직영점 = DATA.total['직영점'] || { sales: 0, qty: 0 };
-                const t대리점 = DATA.total['대리점'] || { sales: 0, qty: 0 };
-                const t온라인유통 = DATA.total['온라인(유통)'] || { sales: 0, qty: 0 };
                 totalBody.innerHTML = `
                     <tr id="total-total-row" class="clickable-row selected-total" onclick="updateTotalDetail('전체', this)">
                         <td class="font-bold">전체</td><td>${formatAmt(tAll.sales)}</td><td>${formatQty(tAll.qty)}</td><td>100%</td>
@@ -908,18 +907,6 @@
                     </tr>
                     <tr class="clickable-row" onclick="updateTotalDetail('오프라인', this)">
                         <td class="pl-5 font-semibold text-red-600">오프라인</td><td>${formatAmt(tOff.sales)}</td><td>${formatQty(tOff.qty)}</td><td>${ratio(tOff.sales, tAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateTotalDetail('백화점', this)">
-                        <td class="pl-5 font-semibold text-slate-600">백화점</td><td>${formatAmt(t백화점.sales)}</td><td>${formatQty(t백화점.qty)}</td><td>${ratio(t백화점.sales, tAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateTotalDetail('직영점', this)">
-                        <td class="pl-5 font-semibold text-slate-600">직영점</td><td>${formatAmt(t직영점.sales)}</td><td>${formatQty(t직영점.qty)}</td><td>${ratio(t직영점.sales, tAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateTotalDetail('대리점', this)">
-                        <td class="pl-5 font-semibold text-slate-600">대리점</td><td>${formatAmt(t대리점.sales)}</td><td>${formatQty(t대리점.qty)}</td><td>${ratio(t대리점.sales, tAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateTotalDetail('온라인(유통)', this)">
-                        <td class="pl-5 font-semibold text-blue-600">온라인(유통)</td><td>${formatAmt(t온라인유통.sales)}</td><td>${formatQty(t온라인유통.qty)}</td><td>${ratio(t온라인유통.sales, tAll.sales)}%</td>
                     </tr>
                 `;
             }
@@ -939,9 +926,21 @@
             const offBody = document.getElementById('off-list');
             if (offBody) {
                 const offAll = DATA.off['오프라인 전체'] || { sales: 0, qty: 0 };
+                const off백화점 = DATA.off['백화점'] || { sales: 0, qty: 0 };
+                const off직영점 = DATA.off['직영점'] || { sales: 0, qty: 0 };
+                const off대리점 = DATA.off['대리점'] || { sales: 0, qty: 0 };
                 offBody.innerHTML = `
                     <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)">
                         <td>오프라인 전체</td><td>${formatAmt(offAll.sales)}</td><td>${formatQty(offAll.qty)}</td><td>100%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)">
+                        <td class="pl-6 text-slate-500">└ 백화점</td><td>${formatAmt(off백화점.sales)}</td><td>${formatQty(off백화점.qty)}</td><td>${ratio(off백화점.sales, offAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)">
+                        <td class="pl-6 text-slate-500">└ 직영점</td><td>${formatAmt(off직영점.sales)}</td><td>${formatQty(off직영점.qty)}</td><td>${ratio(off직영점.sales, offAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)">
+                        <td class="pl-6 text-slate-500">└ 대리점</td><td>${formatAmt(off대리점.sales)}</td><td>${formatQty(off대리점.qty)}</td><td>${ratio(off대리점.sales, offAll.sales)}%</td>
                     </tr>
                 `;
             }
