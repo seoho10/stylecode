@@ -768,10 +768,15 @@
                 if (!dateGroups[date]) {
                     dateGroups[date] = { 
                         온라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }, 
-                        오프라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 } 
+                        오프라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
+                        백화점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
+                        직영점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
+                        대리점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
+                        '온라인(유통)': { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }
                     };
                 }
                 
+                // ANLYS_ON_OFF_CLS_NM 기준으로 온라인/오프라인 집계
                 if (channel === '온라인') {
                     dateGroups[date].온라인.amt += allAmt;
                     dateGroups[date].온라인.qty += allQty;
@@ -784,6 +789,39 @@
                     dateGroups[date].오프라인.cidAmt += cidAmt;
                     dateGroups[date].오프라인.cidQty += cidQty;
                     dateGroups[date].오프라인.cidCnt += cidCnt;
+                }
+                
+                // ANAL_DIST_TYPE_NM 기준으로 각 유통 유형별 집계 (하위 항목 그래프용)
+                if (distType === '백화점') {
+                    dateGroups[date].백화점.amt += allAmt;
+                    dateGroups[date].백화점.qty += allQty;
+                    dateGroups[date].백화점.cidAmt += cidAmt;
+                    dateGroups[date].백화점.cidQty += cidQty;
+                    dateGroups[date].백화점.cidCnt += cidCnt;
+                } else if (distType === '직영점') {
+                    dateGroups[date].직영점.amt += allAmt;
+                    dateGroups[date].직영점.qty += allQty;
+                    dateGroups[date].직영점.cidAmt += cidAmt;
+                    dateGroups[date].직영점.cidQty += cidQty;
+                    dateGroups[date].직영점.cidCnt += cidCnt;
+                } else if (distType === '대리점') {
+                    dateGroups[date].대리점.amt += allAmt;
+                    dateGroups[date].대리점.qty += allQty;
+                    dateGroups[date].대리점.cidAmt += cidAmt;
+                    dateGroups[date].대리점.cidQty += cidQty;
+                    dateGroups[date].대리점.cidCnt += cidCnt;
+                } else if (distType === '온라인') {
+                    dateGroups[date]['온라인(유통)'].amt += allAmt;
+                    dateGroups[date]['온라인(유통)'].qty += allQty;
+                    dateGroups[date]['온라인(유통)'].cidAmt += cidAmt;
+                    dateGroups[date]['온라인(유통)'].cidQty += cidQty;
+                    dateGroups[date]['온라인(유통)'].cidCnt += cidCnt;
+                    // ANAL_DIST_TYPE_NM === '온라인'인 경우 온라인에도 추가 (일자별 반영을 위해)
+                    dateGroups[date].온라인.amt += allAmt;
+                    dateGroups[date].온라인.qty += allQty;
+                    dateGroups[date].온라인.cidAmt += cidAmt;
+                    dateGroups[date].온라인.cidQty += cidQty;
+                    dateGroups[date].온라인.cidCnt += cidCnt;
                 }
             });
             
@@ -833,7 +871,8 @@
                     '온라인(유통)': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes }
                 },
                 on: {
-                    '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} }
+                    '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} },
+                    '온라인(유통)': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes }
                 },
                 off: {
                     '오프라인 전체': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes, geo: {} },
@@ -912,9 +951,13 @@
             const onBody = document.getElementById('on-list');
             if (onBody) {
                 const onAll = DATA.on['온라인 전체'] || { sales: 0, qty: 0 };
+                const on유통 = DATA.on['온라인(유통)'] || { sales: 0, qty: 0 };
                 onBody.innerHTML = `
                     <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)">
                         <td>온라인 전체</td><td>${formatAmt(onAll.sales)}</td><td>${formatQty(onAll.qty)}</td><td>100%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateIndicator('on', '온라인(유통)', this)">
+                        <td class="pl-6 text-slate-500">└ 온라인(유통)</td><td>${formatAmt(on유통.sales)}</td><td>${formatQty(on유통.qty)}</td><td>${ratio(on유통.sales, onAll.sales)}%</td>
                     </tr>
                 `;
             }
@@ -1468,13 +1511,55 @@
                     ds = [{ label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#dc2626', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 }
             } else if (key === 'on') {
-                const onSeries = buildSeries('온라인');
-                labels = onSeries.labels;
-                ds = [{ label: 'ONLINE', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                const channel = s.selectedChannel || '온라인 전체';
+                if (channel === '온라인 전체') {
+                    const onSeries = buildSeries('온라인');
+                    const onDistSeries = buildSeries('온라인(유통)');
+                    labels = onSeries.labels.length ? onSeries.labels : onDistSeries.labels;
+                    ds = [
+                        { label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: 'ONLINE (유통)', data: onDistSeries.data, borderColor: '#60a5fa', tension: 0.4, borderWidth: 2, pointRadius: 2 }
+                    ];
+                } else if (channel === '온라인(유통)') {
+                    const onDistSeries = buildSeries('온라인(유통)');
+                    labels = onDistSeries.labels;
+                    ds = [{ label: 'ONLINE (유통)', data: onDistSeries.data, borderColor: '#60a5fa', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                } else {
+                    const onSeries = buildSeries('온라인');
+                    labels = onSeries.labels;
+                    ds = [{ label: 'ONLINE', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                }
             } else if (key === 'off') {
-                const offSeries = buildSeries('오프라인');
-                labels = offSeries.labels;
-                ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                const channel = s.selectedChannel || '오프라인 전체';
+                if (channel === '오프라인 전체') {
+                    const offSeries = buildSeries('오프라인');
+                    const 백화점Series = buildSeries('백화점');
+                    const 직영점Series = buildSeries('직영점');
+                    const 대리점Series = buildSeries('대리점');
+                    labels = offSeries.labels.length ? offSeries.labels : 백화점Series.labels;
+                    ds = [
+                        { label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: '백화점', data: 백화점Series.data, borderColor: '#f87171', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: '직영점', data: 직영점Series.data, borderColor: '#fb7185', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: '대리점', data: 대리점Series.data, borderColor: '#fda4af', tension: 0.4, borderWidth: 2, pointRadius: 2 }
+                    ];
+                } else if (channel === '백화점') {
+                    const 백화점Series = buildSeries('백화점');
+                    labels = 백화점Series.labels;
+                    ds = [{ label: '백화점', data: 백화점Series.data, borderColor: '#f87171', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                } else if (channel === '직영점') {
+                    const 직영점Series = buildSeries('직영점');
+                    labels = 직영점Series.labels;
+                    ds = [{ label: '직영점', data: 직영점Series.data, borderColor: '#fb7185', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                } else if (channel === '대리점') {
+                    const 대리점Series = buildSeries('대리점');
+                    labels = 대리점Series.labels;
+                    ds = [{ label: '대리점', data: 대리점Series.data, borderColor: '#fda4af', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                } else {
+                    const offSeries = buildSeries('오프라인');
+                    labels = offSeries.labels;
+                    ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                }
             }
 
             s.chart = new Chart(canvasEl.getContext('2d'), {
