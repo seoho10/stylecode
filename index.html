@@ -882,6 +882,20 @@
                 }
             });
             
+            // 온라인 채널별 합계 계산 (모든 온라인 채널의 합계)
+            let totalOnlineChannelAmt = 0, totalOnlineChannelQty = 0;
+            Object.values(onlineChannelStats).forEach(stats => {
+                totalOnlineChannelAmt += stats.amt;
+                totalOnlineChannelQty += stats.qty;
+            });
+            
+            // 온라인 채널별 합계 계산 (모든 온라인 채널의 합계)
+            let totalOnlineChannelAmt = 0, totalOnlineChannelQty = 0;
+            Object.values(onlineChannelStats).forEach(stats => {
+                totalOnlineChannelAmt += stats.amt;
+                totalOnlineChannelQty += stats.qty;
+            });
+            
             // 전체 집계 계산
             let totalOnlineAmt = 0, totalOnlineQty = 0, totalOfflineAmt = 0, totalOfflineQty = 0;
             let totalCidAmt = 0, totalCidQty = 0, totalCidCnt = 0;
@@ -895,6 +909,11 @@
                 totalCidQty += group.온라인.cidQty + group.오프라인.cidQty;
                 totalCidCnt += group.온라인.cidCnt + group.오프라인.cidCnt;
             });
+            
+            // 온라인 전체는 모든 온라인 채널(SHOP_NM_SHORT 기준)의 합계로 설정
+            // 온라인 채널이 있으면 채널 합계 사용, 없으면 기존 온라인 합계 사용
+            const finalOnlineAmt = totalOnlineChannelAmt > 0 ? totalOnlineChannelAmt : totalOnlineAmt;
+            const finalOnlineQty = totalOnlineChannelQty > 0 ? totalOnlineChannelQty : totalOnlineQty;
             
             // 오프라인 합계 = 백화점 + 직영점 + 대리점 (ANAL_DIST_TYPE_NM 기준)
             const offlineAmtFromDistType = distTypeStats['백화점'].amt + distTypeStats['직영점'].amt + distTypeStats['대리점'].amt;
@@ -924,11 +943,11 @@
                     '오프라인': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes },
                     '백화점': { qty: distTypeStats['백화점'].qty, sales: distTypeStats['백화점'].amt, colors: distTypeStats['백화점'].colors, sizes: distTypeStats['백화점'].sizes },
                     '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes },
-                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes },
-                    '온라인(유통)': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes }
+                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes }
                 },
                 on: {
-                    '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} },
+                    // 온라인 전체는 모든 온라인 채널의 합계
+                    '온라인 전체': { qty: finalOnlineQty, sales: finalOnlineAmt, colors: {}, sizes: {} },
                     // 온라인 채널별 데이터 추가 (SHOP_NM_SHORT 기준)
                     ...Object.fromEntries(
                         Object.entries(onlineChannelStats).map(([channelName, stats]) => [
@@ -1015,7 +1034,7 @@
             if (onBody) {
                 const onAll = DATA.on['온라인 전체'] || { sales: 0, qty: 0 };
                 
-                // 온라인 채널 목록 추출 (온라인 전체 제외)
+                // 온라인 채널 목록 추출 (온라인 전체 제외, SHOP_NM_SHORT 값들)
                 const onlineChannels = Object.keys(DATA.on)
                     .filter(key => key !== '온라인 전체')
                     .sort();
@@ -1026,12 +1045,16 @@
                     </tr>
                 `;
                 
-                // 각 온라인 채널을 하위 행으로 추가
+                // 각 온라인 채널을 하위 행으로 추가 (SHOP_NM_SHORT 값 사용)
                 onlineChannels.forEach(channelName => {
                     const channelData = DATA.on[channelName] || { sales: 0, qty: 0 };
+                    const channelSales = channelData.sales || 0;
+                    const channelQty = channelData.qty || 0;
+                    const salesRatio = onAll.sales > 0 ? ratio(channelSales, onAll.sales) : '0.0';
+                    
                     rowsHtml += `
                         <tr class="clickable-row" onclick="updateIndicator('on', '${channelName}', this)">
-                            <td class="pl-6 text-slate-500">└ ${channelName}</td><td>${formatAmt(channelData.sales)}</td><td>${formatQty(channelData.qty)}</td><td>${ratio(channelData.sales, onAll.sales)}%</td>
+                            <td class="pl-6 text-slate-500">└ ${channelName}</td><td>${formatAmt(channelSales)}</td><td>${formatQty(channelQty)}</td><td>${salesRatio}%</td>
                         </tr>
                     `;
                 });
