@@ -566,8 +566,17 @@
         }
 
         function updatePartCdDropdown(brand = null) {
+            console.log('=== updatePartCdDropdown 호출 ===');
+            console.log('전달된 brand:', brand);
+            console.log('dashboardData 존재 여부:', !!dashboardData);
+            console.log('dashboardData 길이:', dashboardData ? dashboardData.length : 0);
+            
             const select = document.getElementById('part-filter');
-            if (!select) return;
+            if (!select) {
+                console.error('part-filter 요소를 찾을 수 없습니다!');
+                return;
+            }
+            console.log('part-filter 요소 찾음');
 
             // 이전 선택값 저장 (복수 선택 지원)
             let prevSelected = [];
@@ -1280,76 +1289,66 @@
                 });
             }
 
-            // 브랜드 드롭다운 변경 이벤트
-            const brandSelect = document.getElementById('brand-filter');
-            if (brandSelect) {
-                // Select2 change 이벤트도 감지
-                if (window.jQuery) {
-                    jQuery(brandSelect).on('change', async function() {
-                        const selectedBrand = getSelectedBrand();
-                        console.log('브랜드 변경 감지:', selectedBrand);
-                        
-                        // 브랜드 변경 시 PART_CD 드롭다운 업데이트 (선택 초기화)
-                        const partSelect = document.getElementById('part-filter');
-                        if (partSelect) {
-                            // Select2 multiple인 경우 모든 선택 해제
-                            if (window.jQuery && jQuery(partSelect).data('select2')) {
-                                jQuery(partSelect).val(null).trigger('change.select2');
-                            } else {
-                                // 일반 select인 경우
-                                Array.from(partSelect.options).forEach(opt => opt.selected = false);
-                            }
-                        }
-                        
-                        // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
-                        if (dashboardData && dashboardData.length > 0) {
-                            console.log('dashboardData 존재, 품번 드롭다운 업데이트 시작');
-                            updatePartCdDropdown(selectedBrand);
-                        } else {
-                            console.log('dashboardData 없음, 품번 드롭다운 비우기');
-                            // 데이터가 없으면 품번 드롭다운 비우기
-                            if (partSelect) {
-                                partSelect.innerHTML = '';
-                                if (window.jQuery && jQuery(partSelect).data('select2')) {
-                                    jQuery(partSelect).val(null).trigger('change.select2');
-                                }
-                            }
-                        }
-                    });
+            // 브랜드 드롭다운 변경 이벤트 (통합 함수)
+            function handleBrandChange() {
+                const selectedBrand = getSelectedBrand();
+                console.log('=== 브랜드 변경 이벤트 트리거 ===');
+                console.log('선택된 브랜드:', selectedBrand);
+                console.log('dashboardData 상태:', {
+                    exists: !!dashboardData,
+                    length: dashboardData ? dashboardData.length : 0,
+                    isArray: Array.isArray(dashboardData),
+                    firstItem: dashboardData && dashboardData.length > 0 ? dashboardData[0] : null
+                });
+                
+                // 브랜드 변경 시 PART_CD 드롭다운 업데이트
+                const partSelect = document.getElementById('part-filter');
+                if (!partSelect) {
+                    console.error('part-filter 요소를 찾을 수 없습니다!');
+                    return;
                 }
                 
-                // 일반 change 이벤트도 추가 (이중 보장)
-                brandSelect.addEventListener('change', async () => {
-                    const selectedBrand = getSelectedBrand();
-                    console.log('브랜드 변경 감지 (일반 이벤트):', selectedBrand);
-                    
-                    // 브랜드 변경 시 PART_CD 드롭다운 업데이트 (선택 초기화)
-                    const partSelect = document.getElementById('part-filter');
-                    if (partSelect) {
-                        // Select2 multiple인 경우 모든 선택 해제
-                        if (window.jQuery && jQuery(partSelect).data('select2')) {
-                            jQuery(partSelect).val(null).trigger('change.select2');
-                        } else {
-                            // 일반 select인 경우
-                            Array.from(partSelect.options).forEach(opt => opt.selected = false);
-                        }
+                // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
+                if (dashboardData && Array.isArray(dashboardData) && dashboardData.length > 0) {
+                    console.log('✅ dashboardData 존재, 품번 드롭다운 업데이트 시작');
+                    updatePartCdDropdown(selectedBrand);
+                } else {
+                    console.warn('⚠️ dashboardData 없음! 조회하기 버튼을 먼저 눌러주세요.');
+                    // 데이터가 없으면 품번 드롭다운 비우기
+                    if (window.jQuery && jQuery(partSelect).data('select2')) {
+                        jQuery(partSelect).select2('destroy');
                     }
-                    
-                    // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
-                    if (dashboardData && dashboardData.length > 0) {
-                        console.log('dashboardData 존재, 품번 드롭다운 업데이트 시작');
-                        updatePartCdDropdown(selectedBrand);
-                    } else {
-                        console.log('dashboardData 없음, 품번 드롭다운 비우기');
-                        // 데이터가 없으면 품번 드롭다운 비우기
-                        if (partSelect) {
-                            partSelect.innerHTML = '';
-                            if (window.jQuery && jQuery(partSelect).data('select2')) {
-                                jQuery(partSelect).val(null).trigger('change.select2');
+                    partSelect.innerHTML = '';
+                    // Select2 다시 초기화
+                    if (window.jQuery) {
+                        jQuery(partSelect).select2({
+                            placeholder: "조회하기 버튼을 먼저 눌러주세요",
+                            allowClear: true,
+                            multiple: true,
+                            width: '100%',
+                            language: {
+                                noResults: function() {
+                                    return "조회하기 버튼을 먼저 눌러주세요";
+                                }
                             }
-                        }
+                        });
                     }
-                });
+                }
+            }
+            
+            // 브랜드 드롭다운 변경 이벤트 연결
+            const brandSelect = document.getElementById('brand-filter');
+            if (brandSelect) {
+                // Select2 change 이벤트
+                if (window.jQuery) {
+                    jQuery(brandSelect).on('change.select2', handleBrandChange);
+                    jQuery(brandSelect).on('change', handleBrandChange);
+                }
+                
+                // 일반 change 이벤트도 추가
+                brandSelect.addEventListener('change', handleBrandChange);
+                
+                console.log('브랜드 변경 이벤트 연결 완료');
             }
 
             // PART_CD 변경 시 (조회하기 버튼을 눌러야 실제 반영)
