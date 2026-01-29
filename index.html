@@ -148,6 +148,16 @@
                     </div>
                     <div style="height: 250px;"><canvas id="mainChart"></canvas></div>
                 </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 400px; display: flex; flex-direction: column;">
+                        <div class="section-title mb-4"><span>컬러별 판매 수량 차트</span><span id="total-chart-color" class="badge bg-slate-100 text-slate-600">전체</span></div>
+                        <div style="height: 320px; flex: 1;"><canvas id="colorChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 400px; display: flex; flex-direction: column;">
+                        <div class="section-title mb-4"><span>사이즈별 판매 수량 차트</span><span id="total-chart-size" class="badge bg-slate-100 text-slate-600">전체</span></div>
+                        <div style="height: 320px; flex: 1;"><canvas id="sizeChart"></canvas></div>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-16">
@@ -698,16 +708,66 @@
             });
         }
 
-        // filteredData 기반으로 DATA 재계산
+        // filteredData 기반으로 DATA 재계산 (성능 최적화: 한 번의 forEach로 모든 계산 수행)
         function buildDATA(filteredData) {
             if (!filteredData || !Array.isArray(filteredData)) return null;
             
-            // 날짜별로 그룹화하고 데이터 집계 (ANLYS_ON_OFF_CLS_NM 기준으로 온라인/오프라인 구분)
+            // ANAL_DIST_TYPE_NM별 집계 초기화 (백화점, 직영점, 대리점, 온라인)
+            const distTypeStats = {
+                '백화점': { amt: 0, qty: 0, colors: {}, sizes: {} },
+                '직영점': { amt: 0, qty: 0, colors: {}, sizes: {} },
+                '대리점': { amt: 0, qty: 0, colors: {}, sizes: {} },
+                '온라인': { amt: 0, qty: 0, colors: {}, sizes: {} }
+            };
+            
+            // COLOR_CD와 SIZE_CD별 집계 초기화 (전체용)
+            const colorStats = {};
+            const sizeStats = {};
+            
+            // 날짜별 그룹화 및 채널별 집계 초기화
             const dateGroups = {};
+            
+            // 한 번의 forEach로 모든 집계 수행 (25만 건 최적화)
             filteredData.forEach(item => {
+                const allAmt = Number(item.ALL_AMT) || 0;
+                const allQty = Number(item.ALL_QTY) || 0;
+                const cidAmt = Number(item.CID_AMT) || 0;
+                const cidQty = Number(item.CID_QTY) || 0;
+                const cidCnt = Number(item.CID_CNT) || 0;
+                
                 const date = item.SALE_DT;
                 const channel = item.ANLYS_ON_OFF_CLS_NM || '전체';
+                const distType = item.ANAL_DIST_TYPE_NM || '';
+                const colorCd = String(item.COLOR_CD || '').trim();
+                const sizeCd = String(item.SIZE_CD || '').trim();
                 
+                // 1. ANAL_DIST_TYPE_NM별 매출/수량 집계 및 컬러/사이즈 통계
+                if (distType === '백화점' || distType === '직영점' || distType === '대리점' || distType === '온라인') {
+                    distTypeStats[distType].amt += allAmt;
+                    distTypeStats[distType].qty += allQty;
+                    
+                    // 각 유통 유형별 컬러 통계
+                    if (colorCd) {
+                        distTypeStats[distType].colors[colorCd] = (distTypeStats[distType].colors[colorCd] || 0) + allQty;
+                    }
+                    
+                    // 각 유통 유형별 사이즈 통계
+                    if (sizeCd) {
+                        distTypeStats[distType].sizes[sizeCd] = (distTypeStats[distType].sizes[sizeCd] || 0) + allQty;
+                    }
+                }
+                
+                // 2. COLOR_CD별 ALL_QTY 합계 (전체 컬러별 판매 현황 차트용)
+                if (colorCd) {
+                    colorStats[colorCd] = (colorStats[colorCd] || 0) + allQty;
+                }
+                
+                // 3. SIZE_CD별 ALL_QTY 합계 (전체 사이즈별 판매 현황 차트용)
+                if (sizeCd) {
+                    sizeStats[sizeCd] = (sizeStats[sizeCd] || 0) + allQty;
+                }
+                
+                // 4. 날짜별 채널별 집계 (트렌드 차트용)
                 if (!dateGroups[date]) {
                     dateGroups[date] = { 
                         온라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }, 
@@ -715,23 +775,22 @@
                     };
                 }
                 
-                // 채널별로 집계
-                if (channel === '온라인' && dateGroups[date].온라인) {
-                    dateGroups[date].온라인.amt += item.ALL_AMT || 0;
-                    dateGroups[date].온라인.qty += item.ALL_QTY || 0;
-                    dateGroups[date].온라인.cidAmt += item.CID_AMT || 0;
-                    dateGroups[date].온라인.cidQty += item.CID_QTY || 0;
-                    dateGroups[date].온라인.cidCnt += item.CID_CNT || 0;
-                } else if (channel === '오프라인' && dateGroups[date].오프라인) {
-                    dateGroups[date].오프라인.amt += item.ALL_AMT || 0;
-                    dateGroups[date].오프라인.qty += item.ALL_QTY || 0;
-                    dateGroups[date].오프라인.cidAmt += item.CID_AMT || 0;
-                    dateGroups[date].오프라인.cidQty += item.CID_QTY || 0;
-                    dateGroups[date].오프라인.cidCnt += item.CID_CNT || 0;
+                if (channel === '온라인') {
+                    dateGroups[date].온라인.amt += allAmt;
+                    dateGroups[date].온라인.qty += allQty;
+                    dateGroups[date].온라인.cidAmt += cidAmt;
+                    dateGroups[date].온라인.cidQty += cidQty;
+                    dateGroups[date].온라인.cidCnt += cidCnt;
+                } else if (channel === '오프라인') {
+                    dateGroups[date].오프라인.amt += allAmt;
+                    dateGroups[date].오프라인.qty += allQty;
+                    dateGroups[date].오프라인.cidAmt += cidAmt;
+                    dateGroups[date].오프라인.cidQty += cidQty;
+                    dateGroups[date].오프라인.cidCnt += cidCnt;
                 }
             });
             
-            // 전체 집계
+            // 전체 집계 계산
             let totalOnlineAmt = 0, totalOnlineQty = 0, totalOfflineAmt = 0, totalOfflineQty = 0;
             let totalCidAmt = 0, totalCidQty = 0, totalCidCnt = 0;
             
@@ -745,15 +804,36 @@
                 totalCidCnt += group.온라인.cidCnt + group.오프라인.cidCnt;
             });
             
-            const totalAmt = totalOnlineAmt + totalOfflineAmt;
-            const totalQty = totalOnlineQty + totalOfflineQty;
+            // 오프라인 합계 = 백화점 + 직영점 + 대리점 (ANAL_DIST_TYPE_NM 기준)
+            const offlineAmtFromDistType = distTypeStats['백화점'].amt + distTypeStats['직영점'].amt + distTypeStats['대리점'].amt;
+            const offlineQtyFromDistType = distTypeStats['백화점'].qty + distTypeStats['직영점'].qty + distTypeStats['대리점'].qty;
+            
+            // 전체 합계 = 오프라인(백화점+직영점+대리점) + 온라인(ANAL_DIST_TYPE_NM 기준)
+            const totalAmt = offlineAmtFromDistType + distTypeStats['온라인'].amt;
+            const totalQty = offlineQtyFromDistType + distTypeStats['온라인'].qty;
+            
+            // 오프라인 합계의 컬러/사이즈 통계 (백화점 + 직영점 + 대리점)
+            const offlineColors = {};
+            const offlineSizes = {};
+            ['백화점', '직영점', '대리점'].forEach(type => {
+                Object.entries(distTypeStats[type].colors).forEach(([color, qty]) => {
+                    offlineColors[color] = (offlineColors[color] || 0) + qty;
+                });
+                Object.entries(distTypeStats[type].sizes).forEach(([size, qty]) => {
+                    offlineSizes[size] = (offlineSizes[size] || 0) + qty;
+                });
+            });
             
             // DATA 구조 생성
             DATA = {
                 total: {
-                    '전체': { qty: totalQty, sales: totalAmt, colors: {}, sizes: {} },
-                    '온라인': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} },
-                    '오프라인': { qty: totalOfflineQty, sales: totalOfflineAmt, colors: {}, sizes: {} }
+                    '전체': { qty: totalQty, sales: totalAmt, colors: colorStats, sizes: sizeStats },
+                    '온라인': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes },
+                    '오프라인': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes },
+                    '백화점': { qty: distTypeStats['백화점'].qty, sales: distTypeStats['백화점'].amt, colors: distTypeStats['백화점'].colors, sizes: distTypeStats['백화점'].sizes },
+                    '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes },
+                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes },
+                    '온라인(유통)': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes }
                 },
                 on: {
                     '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} }
@@ -815,6 +895,10 @@
                 const tAll = DATA.total['전체'];
                 const tOn = DATA.total['온라인'];
                 const tOff = DATA.total['오프라인'];
+                const t백화점 = DATA.total['백화점'] || { sales: 0, qty: 0 };
+                const t직영점 = DATA.total['직영점'] || { sales: 0, qty: 0 };
+                const t대리점 = DATA.total['대리점'] || { sales: 0, qty: 0 };
+                const t온라인유통 = DATA.total['온라인(유통)'] || { sales: 0, qty: 0 };
                 totalBody.innerHTML = `
                     <tr id="total-total-row" class="clickable-row selected-total" onclick="updateTotalDetail('전체', this)">
                         <td class="font-bold">전체</td><td>${formatAmt(tAll.sales)}</td><td>${formatQty(tAll.qty)}</td><td>100%</td>
@@ -824,6 +908,18 @@
                     </tr>
                     <tr class="clickable-row" onclick="updateTotalDetail('오프라인', this)">
                         <td class="pl-5 font-semibold text-red-600">오프라인</td><td>${formatAmt(tOff.sales)}</td><td>${formatQty(tOff.qty)}</td><td>${ratio(tOff.sales, tAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('백화점', this)">
+                        <td class="pl-5 font-semibold text-slate-600">백화점</td><td>${formatAmt(t백화점.sales)}</td><td>${formatQty(t백화점.qty)}</td><td>${ratio(t백화점.sales, tAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('직영점', this)">
+                        <td class="pl-5 font-semibold text-slate-600">직영점</td><td>${formatAmt(t직영점.sales)}</td><td>${formatQty(t직영점.qty)}</td><td>${ratio(t직영점.sales, tAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('대리점', this)">
+                        <td class="pl-5 font-semibold text-slate-600">대리점</td><td>${formatAmt(t대리점.sales)}</td><td>${formatQty(t대리점.qty)}</td><td>${ratio(t대리점.sales, tAll.sales)}%</td>
+                    </tr>
+                    <tr class="clickable-row" onclick="updateTotalDetail('온라인(유통)', this)">
+                        <td class="pl-5 font-semibold text-blue-600">온라인(유통)</td><td>${formatAmt(t온라인유통.sales)}</td><td>${formatQty(t온라인유통.qty)}</td><td>${ratio(t온라인유통.sales, tAll.sales)}%</td>
                     </tr>
                 `;
             }
@@ -916,7 +1012,15 @@
                 const custRow = document.getElementById('cust-total-row');
                 const totalRow = document.getElementById('total-total-row');
                 if (custRow) updateCustomerDetail('회원 전체', custRow);
-                if (totalRow) updateTotalDetail('전체', totalRow);
+                if (totalRow) {
+                    updateTotalDetail('전체', totalRow);
+                    // 초기 컬러/사이즈 차트 렌더링
+                    const totalData = DATA.total['전체'];
+                    if (totalData) {
+                        renderColorChart(totalData.colors);
+                        renderSizeChart(totalData.sizes);
+                    }
+                }
             }
         }
 
@@ -1213,6 +1317,8 @@
             $(rowElement).addClass('selected-total');
             $('#total-t-color').text(name);
             $('#total-t-size').text(name);
+            $('#total-chart-color').text(name);
+            $('#total-chart-size').text(name);
             
             const d = DATA.total[name] || DATA.total['전체'];
             fillTable('total-color-body', d.colors, d.qty);
@@ -1222,6 +1328,10 @@
             states.main.selectedChannel = name;
             document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${name}`;
             renderSingleChart('main');
+            
+            // 컬러/사이즈 차트 업데이트
+            renderColorChart(d.colors);
+            renderSizeChart(d.sizes);
         }
 
         function updateCustomerDetail(name, rowElement) {
@@ -1468,12 +1578,144 @@
             });
         }
 
+        function renderColorChart(colorData) {
+            const canvasEl = document.getElementById('colorChart');
+            if (!canvasEl || !colorData) return;
+            
+            if (window.colorChartInstance) {
+                window.colorChartInstance.destroy();
+            }
+            
+            const sortedColors = Object.entries(colorData)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // 상위 10개만 표시
+            
+            const labels = sortedColors.map(([color]) => color || '미지정');
+            const data = sortedColors.map(([, qty]) => qty);
+            
+            window.colorChartInstance = new Chart(canvasEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '판매 수량',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '판매 수량: ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSizeChart(sizeData) {
+            const canvasEl = document.getElementById('sizeChart');
+            if (!canvasEl || !sizeData) return;
+            
+            if (window.sizeChartInstance) {
+                window.sizeChartInstance.destroy();
+            }
+            
+            const sortedSizes = Object.entries(sizeData)
+                .sort((a, b) => {
+                    // 사이즈를 숫자로 변환하여 정렬 (예: S=1, M=2, L=3 등)
+                    const sizeOrder = { 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6 };
+                    const aOrder = sizeOrder[a[0].toUpperCase()] || parseInt(a[0]) || 999;
+                    const bOrder = sizeOrder[b[0].toUpperCase()] || parseInt(b[0]) || 999;
+                    return aOrder - bOrder;
+                });
+            
+            const labels = sortedSizes.map(([size]) => size || '미지정');
+            const data = sortedSizes.map(([, qty]) => qty);
+            
+            window.sizeChartInstance = new Chart(canvasEl.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '판매 수량',
+                        data: data,
+                        backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                        borderColor: '#ec4899',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '판매 수량: ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
         function fetchAll() { 
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
             renderAgeChart();
             document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${states.main.selectedChannel || '전체'}`;
+            
+            // 컬러/사이즈 차트 초기 렌더링
+            const totalData = DATA.total[states.main.selectedChannel || '전체'] || DATA.total['전체'];
+            if (totalData) {
+                renderColorChart(totalData.colors);
+                renderSizeChart(totalData.sizes);
+            }
         }
     </script>
 </body>

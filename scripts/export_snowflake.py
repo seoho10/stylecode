@@ -53,6 +53,9 @@ def main():
             A.SALE_DT,
             A.BRD_CD,
             A.PART_CD,
+            B.ANAL_DIST_TYPE_NM,
+            A.COLOR_CD,
+            A.SIZE_CD,
             CASE 
                 WHEN A.ONLINE_YN = 'Y' THEN '온라인'
                 WHEN A.ONLINE_YN = 'N' THEN '오프라인'
@@ -76,6 +79,9 @@ def main():
             A.SALE_DT, 
             A.BRD_CD, 
             A.PART_CD,
+            B.ANAL_DIST_TYPE_NM,
+            A.COLOR_CD,
+            A.SIZE_CD,
             A.ONLINE_YN
         ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
         """
