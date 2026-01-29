@@ -419,7 +419,16 @@
 
         function getSelectedBrand() {
             const el = document.getElementById('brand-filter');
-            return el ? el.value : '전체';
+            if (!el) return '전체';
+            
+            // Select2가 초기화되어 있으면 Select2의 값을 사용
+            if (window.jQuery && jQuery(el).data('select2')) {
+                const val = jQuery(el).val();
+                return val || '전체';
+            }
+            
+            // 일반 select인 경우
+            return el.value || '전체';
         }
 
         function getSelectedPartCd() {
@@ -458,7 +467,14 @@
                 return;
             }
 
-            const prev = select.value || '전체';
+            // 현재 선택된 브랜드 값 가져오기 (Select2 고려)
+            let prev = '전체';
+            if (window.jQuery && jQuery(select).data('select2')) {
+                const currentVal = jQuery(select).val();
+                prev = currentVal || '전체';
+            } else {
+                prev = select.value || '전체';
+            }
             
             // 브랜드 목록을 수집할 Set (sales_daily.json 우선)
             const brandSet = new Set();
@@ -544,6 +560,9 @@
 
             // Select2 다시 초기화 (옵션이 모두 추가된 후)
             if (window.jQuery) {
+                // 먼저 실제 select의 value를 설정
+                select.value = selectedValue;
+                
                 jQuery(select).select2({ 
                     placeholder: "브랜드 선택", 
                     allowClear: false,
@@ -557,8 +576,21 @@
                         }
                     }
                 });
-                // 선택값 설정
-                jQuery(select).val(selectedValue).trigger('change.select2');
+                
+                // Select2의 값 설정 (change 이벤트는 트리거하지 않음 - 무한 루프 방지)
+                jQuery(select).val(selectedValue);
+                
+                // Select2가 값을 제대로 반영하도록 강제 업데이트
+                setTimeout(() => {
+                    const currentVal = jQuery(select).val();
+                    if (currentVal !== selectedValue) {
+                        jQuery(select).val(selectedValue);
+                    }
+                    // 실제 select의 value도 동기화
+                    if (select.value !== selectedValue) {
+                        select.value = selectedValue;
+                    }
+                }, 50);
             }
             
             console.log('브랜드 드롭다운 업데이트 완료:', brands.length, '개 브랜드', brands);
@@ -699,6 +731,16 @@
         
         // 브랜드 드롭다운 변경 이벤트 핸들러 (전역 함수)
         function handleBrandChange() {
+            // Select2의 값을 강제로 동기화
+            const brandSelect = document.getElementById('brand-filter');
+            if (brandSelect && window.jQuery && jQuery(brandSelect).data('select2')) {
+                // Select2의 값과 실제 select의 value를 동기화
+                const select2Val = jQuery(brandSelect).val();
+                if (select2Val && brandSelect.value !== select2Val) {
+                    brandSelect.value = select2Val;
+                }
+            }
+            
             const selectedBrand = getSelectedBrand();
             console.log('=== 브랜드 변경 이벤트 트리거 ===');
             console.log('선택된 브랜드:', selectedBrand);
