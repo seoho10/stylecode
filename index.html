@@ -566,6 +566,18 @@
                 // 먼저 실제 select의 value를 설정
                 select.value = selectedValue;
                 
+                // Select2 destroy 전에 현재 선택값 저장
+                const wasSelect2 = jQuery(select).data('select2');
+                let currentSelectedValue = selectedValue;
+                if (wasSelect2) {
+                    const currentVal = jQuery(select).val();
+                    if (currentVal && currentVal !== '전체') {
+                        // 사용자가 선택한 값이 있으면 그것을 우선 사용
+                        currentSelectedValue = currentVal;
+                        select.value = currentSelectedValue;
+                    }
+                }
+                
                 jQuery(select).select2({ 
                     placeholder: "브랜드 선택", 
                     allowClear: false,
@@ -581,24 +593,30 @@
                 });
                 
                 // Select2의 값 설정 (change 이벤트는 트리거하지 않음 - 무한 루프 방지)
-                jQuery(select).val(selectedValue);
+                jQuery(select).val(currentSelectedValue);
                 
                 // Select2가 값을 제대로 반영하도록 강제 업데이트
                 setTimeout(() => {
                     const currentVal = jQuery(select).val();
-                    if (currentVal !== selectedValue) {
-                        jQuery(select).val(selectedValue).trigger('change.select2');
+                    const finalValue = currentVal || currentSelectedValue;
+                    
+                    if (jQuery(select).val() !== finalValue) {
+                        jQuery(select).val(finalValue);
                     }
+                    
                     // 실제 select의 value도 동기화
-                    if (select.value !== selectedValue) {
-                        select.value = selectedValue;
+                    if (select.value !== finalValue) {
+                        select.value = finalValue;
                     }
-                    // Select2의 표시값도 강제 업데이트
+                    
+                    // Select2의 표시값 강제 업데이트
                     const select2Instance = jQuery(select).data('select2');
                     if (select2Instance) {
-                        select2Instance.trigger('select', {
-                            data: { id: selectedValue, text: selectedValue }
-                        });
+                        // 선택된 옵션의 텍스트 찾기
+                        const selectedOption = select.querySelector(`option[value="${finalValue}"]`);
+                        if (selectedOption) {
+                            select2Instance.$container.find('.select2-selection__rendered').text(selectedOption.textContent);
+                        }
                     }
                 }, 100);
             }
@@ -753,13 +771,26 @@
                 if (brandSelect.value !== selectedBrand) {
                     brandSelect.value = selectedBrand;
                 }
+                
                 // Select2의 표시값이 제대로 반영되도록 강제 업데이트
                 setTimeout(() => {
                     const currentSelect2Val = jQuery(brandSelect).val();
                     if (currentSelect2Val !== selectedBrand) {
-                        jQuery(brandSelect).val(selectedBrand).trigger('change.select2');
+                        jQuery(brandSelect).val(selectedBrand);
                     }
-                }, 50);
+                    
+                    // Select2의 표시 텍스트 강제 업데이트
+                    const select2Instance = jQuery(brandSelect).data('select2');
+                    if (select2Instance && selectedBrand !== '전체') {
+                        const selectedOption = brandSelect.querySelector(`option[value="${selectedBrand}"]`);
+                        if (selectedOption) {
+                            const renderedElement = select2Instance.$container.find('.select2-selection__rendered');
+                            if (renderedElement.length) {
+                                renderedElement.text(selectedOption.textContent);
+                            }
+                        }
+                    }
+                }, 100);
             } else {
                 selectedBrand = brandSelect.value || '전체';
             }
