@@ -354,6 +354,17 @@
                 
                 console.log('데이터 로드 성공:', dashboardData.length, '건');
 
+                // 콘솔에서 데이터 구조를 직접 확인하기 위한 코드
+                if (dashboardData && dashboardData.length > 0) {
+                    console.log("데이터 샘플:", dashboardData[0]);
+                    console.log("데이터의 키 목록:", Object.keys(dashboardData[0]));
+                    
+                    const sampleBrand = dashboardData[0].BRD_CD || "BRD_CD 없음";
+                    console.log("첫 번째 데이터의 브랜드 값:", sampleBrand);
+                } else {
+                    console.log("dashboardData가 비어있습니다.");
+                }
+
                 // 브랜드 드롭다운 옵션 채우기 (sales_daily.json의 BRD_CD에서 추출)
                 await updateBrandDropdown();
                 
@@ -583,7 +594,11 @@
             // 브랜드 필터 적용 (brand가 null이면 전체, '전체'면 전체)
             let filteredForPart = dashboardData;
             if (brand && brand !== '전체') {
-                filteredForPart = dashboardData.filter(row => row.BRD_CD === brand);
+                filteredForPart = dashboardData.filter(row => {
+                    const rowBrand = row.BRD_CD;
+                    const match = String(rowBrand) === String(brand);
+                    return match;
+                });
                 console.log(`브랜드 필터링: ${brand} → ${filteredForPart.length}건`);
             }
             
@@ -594,6 +609,10 @@
                     .filter(v => v != null && String(v).trim() !== '')
                     .map(v => String(v))
             )].sort();
+
+            // 디버깅: 품번 개수 확인
+            console.log('추출된 품번 개수:', partCodes.length);
+            console.log('품번 목록 (처음 10개):', partCodes.slice(0, 10));
 
             // 품번 옵션 추가 (복수 선택 지원)
             partCodes.forEach(cd => {
@@ -617,6 +636,11 @@
                     // 선택된 품번이 없거나 해당 브랜드에 속하지 않으면 초기화
                     jQuery(select).val(null).trigger('change.select2');
                 }
+                // Select2 업데이트 강제 실행
+                jQuery(select).trigger('change');
+            } else {
+                // Select2가 없으면 일반 change 이벤트 트리거
+                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
             
             console.log(`품번 드롭다운 업데이트 완료: ${partCodes.length}개 품번 (브랜드: ${brand || '전체'}, 선택된 품번: ${prevSelected.length}개)`);
@@ -1233,8 +1257,46 @@
             // 브랜드 드롭다운 변경 이벤트
             const brandSelect = document.getElementById('brand-filter');
             if (brandSelect) {
+                // Select2 change 이벤트도 감지
+                if (window.jQuery) {
+                    jQuery(brandSelect).on('change', async function() {
+                        const selectedBrand = getSelectedBrand();
+                        console.log('브랜드 변경 감지:', selectedBrand);
+                        
+                        // 브랜드 변경 시 PART_CD 드롭다운 업데이트 (선택 초기화)
+                        const partSelect = document.getElementById('part-filter');
+                        if (partSelect) {
+                            // Select2 multiple인 경우 모든 선택 해제
+                            if (window.jQuery && jQuery(partSelect).data('select2')) {
+                                jQuery(partSelect).val(null).trigger('change.select2');
+                            } else {
+                                // 일반 select인 경우
+                                Array.from(partSelect.options).forEach(opt => opt.selected = false);
+                            }
+                        }
+                        
+                        // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
+                        if (dashboardData && dashboardData.length > 0) {
+                            console.log('dashboardData 존재, 품번 드롭다운 업데이트 시작');
+                            updatePartCdDropdown(selectedBrand);
+                        } else {
+                            console.log('dashboardData 없음, 품번 드롭다운 비우기');
+                            // 데이터가 없으면 품번 드롭다운 비우기
+                            if (partSelect) {
+                                partSelect.innerHTML = '';
+                                if (window.jQuery && jQuery(partSelect).data('select2')) {
+                                    jQuery(partSelect).val(null).trigger('change.select2');
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // 일반 change 이벤트도 추가 (이중 보장)
                 brandSelect.addEventListener('change', async () => {
                     const selectedBrand = getSelectedBrand();
+                    console.log('브랜드 변경 감지 (일반 이벤트):', selectedBrand);
+                    
                     // 브랜드 변경 시 PART_CD 드롭다운 업데이트 (선택 초기화)
                     const partSelect = document.getElementById('part-filter');
                     if (partSelect) {
@@ -1246,10 +1308,13 @@
                             Array.from(partSelect.options).forEach(opt => opt.selected = false);
                         }
                     }
+                    
                     // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
-                    if (dashboardData) {
+                    if (dashboardData && dashboardData.length > 0) {
+                        console.log('dashboardData 존재, 품번 드롭다운 업데이트 시작');
                         updatePartCdDropdown(selectedBrand);
                     } else {
+                        console.log('dashboardData 없음, 품번 드롭다운 비우기');
                         // 데이터가 없으면 품번 드롭다운 비우기
                         if (partSelect) {
                             partSelect.innerHTML = '';
@@ -1258,7 +1323,6 @@
                             }
                         }
                     }
-                    // 자동 업데이트는 하지 않고, 조회하기 버튼을 눌러야 업데이트
                 });
             }
 

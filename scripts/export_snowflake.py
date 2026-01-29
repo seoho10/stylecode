@@ -27,9 +27,9 @@ def main():
     role = os.getenv("SF_ROLE")
     # 브랜드 필터 제거: 모든 브랜드 데이터를 한꺼번에 가져옴
 
-    # 최근 30일 데이터 추출 범위 설정
+    # 최근 7일 데이터 추출 범위 설정
     end_dt = datetime.utcnow().date()
-    start_dt = end_dt - timedelta(days=30)
+    start_dt = end_dt - timedelta(days=7)
 
     conn_args = {
         "account": account,
