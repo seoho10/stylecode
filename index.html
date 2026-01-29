@@ -1626,17 +1626,28 @@
                     // 각 채널별 시리즈 생성
                     const channelSeries = onlineChannels.map(channelName => buildSeries(channelName));
                     
-                    // 색상 배열 (파란색 계열)
-                    const blueColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#1e40af'];
+                    // 온라인 채널별 색상 배열 (오프라인과 구분되게: 청록색, 노란색, 분홍색, 갈색, 인디고 등)
+                    // 오프라인: 주황(#f97316), 보라(#a855f7), 초록(#10b981) 사용 중
+                    const onlineChannelColors = [
+                        { border: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' },      // 청록색 (cyan)
+                        { border: '#eab308', bg: 'rgba(234, 179, 8, 0.1)' },       // 노란색 (yellow)
+                        { border: '#ec4899', bg: 'rgba(236, 72, 153, 0.1)' },     // 분홍색 (pink)
+                        { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },    // 보라색 계열 (violet, 오프라인 보라와 다름)
+                        { border: '#14b8a6', bg: 'rgba(20, 184, 166, 0.1)' },    // 틸 색상 (teal)
+                        { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },    // 호박색 (amber)
+                        { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },     // 빨간색 (red)
+                        { border: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)' }     // 인디고 (indigo)
+                    ];
                     
                     ds = [];
                     onlineChannels.forEach((channelName, index) => {
                         const series = channelSeries[index];
+                        const colorSet = onlineChannelColors[index % onlineChannelColors.length];
                         ds.push({
                             label: channelName,
                             data: series.data,
-                            borderColor: blueColors[index % blueColors.length],
-                            backgroundColor: `rgba(${index * 40}, 130, 246, 0.1)`,
+                            borderColor: colorSet.border,
+                            backgroundColor: colorSet.bg,
                             tension: 0.4,
                             borderWidth: 2,
                             pointRadius: 2
@@ -1647,12 +1658,25 @@
                     const channelSeries = buildSeries(channel);
                     labels = channelSeries.labels;
                     const channelIndex = Object.keys(DATA.on || {}).filter(key => key !== '온라인 전체').indexOf(channel);
-                    const blueColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#1e40af'];
+                    
+                    // 온라인 채널별 색상 배열 (오프라인과 구분되게)
+                    const onlineChannelColors = [
+                        { border: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' },      // 청록색
+                        { border: '#eab308', bg: 'rgba(234, 179, 8, 0.1)' },       // 노란색
+                        { border: '#ec4899', bg: 'rgba(236, 72, 153, 0.1)' },     // 분홍색
+                        { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },    // 보라색 계열
+                        { border: '#14b8a6', bg: 'rgba(20, 184, 166, 0.1)' },    // 틸 색상
+                        { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },    // 호박색
+                        { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },     // 빨간색
+                        { border: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)' }     // 인디고
+                    ];
+                    
+                    const colorSet = onlineChannelColors[channelIndex % onlineChannelColors.length] || { border: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' };
                     ds = [{
                         label: channel,
                         data: channelSeries.data,
-                        borderColor: blueColors[channelIndex % blueColors.length] || '#3b82f6',
-                        backgroundColor: `rgba(59, 130, 246, 0.1)`,
+                        borderColor: colorSet.border,
+                        backgroundColor: colorSet.bg,
                         tension: 0.4,
                         borderWidth: 2,
                         pointRadius: 2
