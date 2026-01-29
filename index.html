@@ -104,15 +104,7 @@
                                 <table>
                                     <thead><tr><th>채널 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                     <tbody id="total-list">
-                                        <tr id="total-total-row" class="clickable-row selected-total" onclick="updateTotalDetail('전체', this)">
-                                            <td class="font-bold">전체</td><td>772,100,000</td><td>6,300</td><td>100%</td>
-                                        </tr>
-                                        <tr class="clickable-row" onclick="updateTotalDetail('온라인', this)">
-                                            <td class="pl-5 font-semibold text-blue-600">온라인</td><td>452,100,000</td><td>3,500</td><td>58.5%</td>
-                                        </tr>
-                                        <tr class="clickable-row" onclick="updateTotalDetail('오프라인', this)">
-                                            <td class="pl-5 font-semibold text-red-600">오프라인</td><td>320,000,000</td><td>2,800</td><td>41.5%</td>
-                                        </tr>
+                                        <tr><td colspan="4" class="text-center text-slate-400 py-8">조회하기 버튼을 눌러 데이터를 불러오세요</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -173,12 +165,7 @@
                                 <table>
                                     <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                     <tbody id="on-list">
-                                        <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)"><td>온라인 전체</td><td>452,100,000</td><td>3,500</td><td>100%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('on', '자사몰', this)"><td class="pl-6 text-slate-500">└ 자사몰</td><td>135,630,000</td><td>1,050</td><td>30%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('on', '무신사', this)"><td class="pl-6 text-slate-500">└ 무신사</td><td>113,025,000</td><td>875</td><td>25%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('on', '네이버 스토어', this)"><td class="pl-6 text-slate-500">└ 네이버 스토어</td><td>90,420,000</td><td>700</td><td>20%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('on', '29CM', this)"><td class="pl-6 text-slate-500">└ 29CM</td><td>67,815,000</td><td>525</td><td>15%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('on', 'W컨셉', this)"><td class="pl-6 text-slate-500">└ W컨셉</td><td>45,210,000</td><td>350</td><td>10%</td></tr>
+                                        <tr><td colspan="4" class="text-center text-slate-400 py-8">조회하기 버튼을 눌러 데이터를 불러오세요</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -229,10 +216,7 @@
                                 <table>
                                     <thead><tr><th>채널명</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                     <tbody id="off-list">
-                                        <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)"><td>오프라인 전체</td><td>320,000,000</td><td>2,800</td><td>100%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)"><td class="pl-6 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)"><td class="pl-6 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td></tr>
-                                        <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)"><td class="pl-6 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td></tr>
+                                        <tr><td colspan="4" class="text-center text-slate-400 py-8">조회하기 버튼을 눌러 데이터를 불러오세요</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -295,27 +279,7 @@
                             <table>
                                 <thead><tr><th>채널 구분</th><th>매출액</th><th>수량</th><th>비중</th></tr></thead>
                                 <tbody id="cust-list">
-                                    <tr id="cust-total-row" class="clickable-row selected-customer" onclick="updateCustomerDetail('회원 전체', this)">
-                                        <td class="font-bold">회원 전체</td><td>772,100,000</td><td>6,300</td><td>100%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('온라인', this)">
-                                        <td class="pl-5 font-semibold text-blue-600">└ 온라인</td><td>452,100,000</td><td>3,500</td><td>58.5%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('자사몰', this)">
-                                        <td class="pl-10 text-slate-500">└ 자사몰</td><td>452,100,000</td><td>3,500</td><td>100%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('오프라인', this)">
-                                        <td class="pl-5 font-semibold text-red-600">└ 오프라인</td><td>320,000,000</td><td>2,800</td><td>41.5%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('백화점', this)">
-                                        <td class="pl-10 text-slate-500">└ 백화점</td><td>224,000,000</td><td>1,960</td><td>70%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('대리점', this)">
-                                        <td class="pl-10 text-slate-500">└ 대리점</td><td>64,000,000</td><td>560</td><td>20%</td>
-                                    </tr>
-                                    <tr class="clickable-row" onclick="updateCustomerDetail('직영점', this)">
-                                        <td class="pl-10 text-slate-500">└ 직영점</td><td>32,000,000</td><td>280</td><td>10%</td>
-                                    </tr>
+                                    <tr><td colspan="4" class="text-center text-slate-400 py-8">조회하기 버튼을 눌러 데이터를 불러오세요</td></tr>
                                 </tbody>
                             </table>
                         </div>
