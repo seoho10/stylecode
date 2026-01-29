@@ -943,6 +943,28 @@
                 });
             });
             
+            // 온라인 전체의 컬러/사이즈 통계 (모든 온라인 채널의 합계)
+            const onlineColors = {};
+            const onlineSizes = {};
+            Object.values(onlineChannelStats).forEach(stats => {
+                Object.entries(stats.colors || {}).forEach(([color, qty]) => {
+                    onlineColors[color] = (onlineColors[color] || 0) + qty;
+                });
+                Object.entries(stats.sizes || {}).forEach(([size, qty]) => {
+                    onlineSizes[size] = (onlineSizes[size] || 0) + qty;
+                });
+            });
+            
+            // 온라인 채널이 없으면 distTypeStats['온라인']의 colors/sizes 사용
+            if (Object.keys(onlineColors).length === 0 && distTypeStats['온라인']) {
+                Object.entries(distTypeStats['온라인'].colors || {}).forEach(([color, qty]) => {
+                    onlineColors[color] = (onlineColors[color] || 0) + qty;
+                });
+                Object.entries(distTypeStats['온라인'].sizes || {}).forEach(([size, qty]) => {
+                    onlineSizes[size] = (onlineSizes[size] || 0) + qty;
+                });
+            }
+            
             // DATA 구조 생성
             DATA = {
                 total: {
@@ -955,7 +977,7 @@
                 },
                 on: {
                     // 온라인 전체는 모든 온라인 채널의 합계
-                    '온라인 전체': { qty: finalOnlineQty, sales: finalOnlineAmt, colors: {}, sizes: {} },
+                    '온라인 전체': { qty: finalOnlineQty, sales: finalOnlineAmt, colors: onlineColors, sizes: onlineSizes },
                     // 온라인 채널별 데이터 추가 (SHOP_NM_SHORT 기준)
                     ...Object.fromEntries(
                         Object.entries(onlineChannelStats).map(([channelName, stats]) => [
