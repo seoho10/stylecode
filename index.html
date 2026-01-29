@@ -556,6 +556,9 @@
             }
             // 그 외의 경우는 항상 '전체' 선택
             
+            console.log('브랜드 드롭다운 선택값 설정:', { prev, selectedValue, exists });
+            
+            // 실제 select의 value 설정
             select.value = selectedValue;
 
             // Select2 다시 초기화 (옵션이 모두 추가된 후)
@@ -584,13 +587,20 @@
                 setTimeout(() => {
                     const currentVal = jQuery(select).val();
                     if (currentVal !== selectedValue) {
-                        jQuery(select).val(selectedValue);
+                        jQuery(select).val(selectedValue).trigger('change.select2');
                     }
                     // 실제 select의 value도 동기화
                     if (select.value !== selectedValue) {
                         select.value = selectedValue;
                     }
-                }, 50);
+                    // Select2의 표시값도 강제 업데이트
+                    const select2Instance = jQuery(select).data('select2');
+                    if (select2Instance) {
+                        select2Instance.trigger('select', {
+                            data: { id: selectedValue, text: selectedValue }
+                        });
+                    }
+                }, 100);
             }
             
             console.log('브랜드 드롭다운 업데이트 완료:', brands.length, '개 브랜드', brands);
@@ -730,21 +740,35 @@
         let previousBrand = null;
         
         // 브랜드 드롭다운 변경 이벤트 핸들러 (전역 함수)
-        function handleBrandChange() {
-            // Select2의 값을 강제로 동기화
+        function handleBrandChange(event) {
             const brandSelect = document.getElementById('brand-filter');
-            if (brandSelect && window.jQuery && jQuery(brandSelect).data('select2')) {
-                // Select2의 값과 실제 select의 value를 동기화
+            if (!brandSelect) return;
+            
+            // Select2의 값을 먼저 읽기
+            let selectedBrand = '전체';
+            if (window.jQuery && jQuery(brandSelect).data('select2')) {
                 const select2Val = jQuery(brandSelect).val();
-                if (select2Val && brandSelect.value !== select2Val) {
-                    brandSelect.value = select2Val;
+                selectedBrand = select2Val || '전체';
+                // 실제 select의 value도 동기화
+                if (brandSelect.value !== selectedBrand) {
+                    brandSelect.value = selectedBrand;
                 }
+                // Select2의 표시값이 제대로 반영되도록 강제 업데이트
+                setTimeout(() => {
+                    const currentSelect2Val = jQuery(brandSelect).val();
+                    if (currentSelect2Val !== selectedBrand) {
+                        jQuery(brandSelect).val(selectedBrand).trigger('change.select2');
+                    }
+                }, 50);
+            } else {
+                selectedBrand = brandSelect.value || '전체';
             }
             
-            const selectedBrand = getSelectedBrand();
             console.log('=== 브랜드 변경 이벤트 트리거 ===');
             console.log('선택된 브랜드:', selectedBrand);
             console.log('이전 브랜드:', previousBrand);
+            console.log('Select2 값:', window.jQuery && jQuery(brandSelect).data('select2') ? jQuery(brandSelect).val() : 'N/A');
+            console.log('실제 select value:', brandSelect.value);
             
             // 브랜드가 변경되었는지 확인
             const brandChanged = previousBrand !== selectedBrand;
@@ -1490,15 +1514,30 @@
                 // 브랜드 변경 이벤트 연결 (데이터 로드 후)
                 const brandSelect = document.getElementById('brand-filter');
                 if (brandSelect) {
-                    // Select2 change 이벤트
+                    // 기존 이벤트 모두 제거
                     if (window.jQuery) {
-                        jQuery(brandSelect).off('change.select2 change');
-                        jQuery(brandSelect).on('change.select2', handleBrandChange);
-                        jQuery(brandSelect).on('change', handleBrandChange);
+                        jQuery(brandSelect).off('change.select2 change select2:select');
+                    }
+                    brandSelect.removeEventListener('change', handleBrandChange);
+                    
+                    // Select2 change 이벤트 (select2:select 이벤트도 추가)
+                    if (window.jQuery) {
+                        jQuery(brandSelect).on('change.select2', function(e) {
+                            console.log('Select2 change 이벤트 발생, 값:', jQuery(this).val());
+                            handleBrandChange(e);
+                        });
+                        jQuery(brandSelect).on('select2:select', function(e) {
+                            console.log('Select2 select 이벤트 발생, 값:', jQuery(this).val());
+                            // Select2의 값을 실제 select에도 반영
+                            const selectedVal = jQuery(this).val();
+                            if (selectedVal && brandSelect.value !== selectedVal) {
+                                brandSelect.value = selectedVal;
+                            }
+                            handleBrandChange(e);
+                        });
                     }
                     
                     // 일반 change 이벤트도 추가
-                    brandSelect.removeEventListener('change', handleBrandChange);
                     brandSelect.addEventListener('change', handleBrandChange);
                 }
                 
