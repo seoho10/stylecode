@@ -396,13 +396,13 @@
                 // 첫 번째 브랜드 자동 선택 및 품번 드롭다운 채우기
                 const brandSelect = document.getElementById('brand-filter');
                 if (brandSelect && extractedBrands.length > 0) {
-                    // 첫 번째 브랜드 선택 (또는 'X'가 있으면 'X')
-                    const firstBrand = extractedBrands.includes('X') ? 'X' : extractedBrands[0];
+                    // 첫 번째 브랜드 선택 (정렬된 순서대로)
+                    const firstBrand = extractedBrands[0];
                     brandSelect.value = firstBrand;
                     
                     // Select2 동기화
                     if (window.jQuery && jQuery(brandSelect).data('select2')) {
-                        jQuery(brandSelect).trigger('change.select2');
+                        jQuery(brandSelect).val(firstBrand).trigger('change.select2');
                     }
                     
                     // 선택된 브랜드에 맞는 품번 드롭다운 즉시 채우기
@@ -543,21 +543,24 @@
                 select.appendChild(opt);
             });
 
-            // selection 유지 (없으면 이전 값 유지, 없으면 첫 번째 브랜드)
+            // selection 유지 (없으면 '전체' 또는 첫 번째 브랜드)
             const exists = [...select.options].some(o => o.value === prev);
+            let selectedValue = '전체'; // 기본값은 '전체'
+            
             if (exists) {
-                select.value = prev;
+                // 이전 선택값이 있으면 유지
+                selectedValue = prev;
             } else if (brands.length > 0) {
-                // 기본값: 'X'가 있으면 'X', 없으면 첫 번째 브랜드
-                const defaultBrand = brands.includes('X') ? 'X' : brands[0];
-                select.value = defaultBrand;
-            } else {
-                select.value = '전체';
+                // 이전 선택값이 없으면 첫 번째 브랜드 선택
+                selectedValue = brands[0];
             }
+            // brands.length === 0이면 '전체' 유지
+            
+            select.value = selectedValue;
 
-            // select2 렌더 동기화
+            // select2 렌더 동기화 (UI와 데이터 동기화 보장)
             if (window.jQuery && jQuery(select).data('select2')) {
-                jQuery(select).trigger('change.select2');
+                jQuery(select).val(selectedValue).trigger('change.select2');
             }
             
             console.log('브랜드 드롭다운 업데이트 완료:', brands.length, '개 브랜드', brands);
@@ -947,9 +950,10 @@
                         brandSelect.appendChild(option);
                     });
                     
-                    // 기본값 "X" 선택 (없으면 첫 번째 옵션 선택)
-                    const defaultBrand = brands.includes('X') ? 'X' : brands[0];
-                    brandSelect.value = defaultBrand;
+                    // 기본값: 첫 번째 브랜드 선택
+                    if (brands.length > 0) {
+                        brandSelect.value = brands[0];
+                    }
                     
                     // 에러 메시지 숨기기
                     errorElement.style.display = 'none';
