@@ -565,9 +565,10 @@
             console.log('현재 선택된 브랜드:', selectedValue);
         }
 
-        function updatePartCdDropdown(brand = null) {
+        function updatePartCdDropdown(brand = null, resetSelection = true) {
             console.log('=== updatePartCdDropdown 호출 ===');
             console.log('전달된 brand:', brand);
+            console.log('resetSelection:', resetSelection);
             console.log('dashboardData 존재 여부:', !!dashboardData);
             console.log('dashboardData 길이:', dashboardData ? dashboardData.length : 0);
             
@@ -578,18 +579,24 @@
             }
             console.log('part-filter 요소 찾음');
 
-            // 이전 선택값 저장 (복수 선택 지원)
+            // 브랜드가 변경되면 품번 선택을 초기화해야 함
+            // resetSelection이 true이면 이전 선택값을 무시하고 초기화
             let prevSelected = [];
-            if (window.jQuery && jQuery(select).data('select2')) {
-                // Select2 multiple인 경우
-                const selected = jQuery(select).val();
-                prevSelected = Array.isArray(selected) ? selected : (selected ? [selected] : []);
-            } else if (select.multiple) {
-                // 일반 select multiple인 경우
-                prevSelected = Array.from(select.selectedOptions).map(opt => opt.value);
-            } else {
-                // 단일 선택인 경우
-                prevSelected = select.value ? [select.value] : [];
+            const shouldResetSelection = resetSelection;
+            
+            if (!shouldResetSelection) {
+                // 브랜드가 변경되지 않았을 때만 이전 선택값 유지
+                if (window.jQuery && jQuery(select).data('select2')) {
+                    // Select2 multiple인 경우
+                    const selected = jQuery(select).val();
+                    prevSelected = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+                } else if (select.multiple) {
+                    // 일반 select multiple인 경우
+                    prevSelected = Array.from(select.selectedOptions).map(opt => opt.value);
+                } else {
+                    // 단일 선택인 경우
+                    prevSelected = select.value ? [select.value] : [];
+                }
             }
 
             if (!dashboardData || !Array.isArray(dashboardData)) {
@@ -645,8 +652,8 @@
                 const opt = document.createElement('option');
                 opt.value = cd;
                 opt.textContent = cd;
-                // 이전 선택값이 있고, 해당 브랜드에 속한 품번이면 선택 상태 유지
-                if (prevSelected.includes(cd)) {
+                // 브랜드가 변경되지 않았을 때만 이전 선택값 유지
+                if (!shouldResetSelection && prevSelected.includes(cd)) {
                     opt.selected = true;
                 }
                 select.appendChild(opt);
@@ -669,28 +676,43 @@
                     }
                 });
                 
-                // 선택된 값들을 다시 설정
-                const validSelected = partCodes.filter(cd => prevSelected.includes(cd));
-                if (validSelected.length > 0) {
-                    jQuery(select).val(validSelected).trigger('change.select2');
-                } else {
+                // 브랜드가 변경된 경우 선택값 초기화, 그렇지 않으면 유효한 선택값만 유지
+                if (shouldResetSelection) {
+                    // 브랜드 변경 시 품번 선택 초기화
                     jQuery(select).val(null).trigger('change.select2');
+                } else {
+                    // 선택된 값들을 다시 설정 (유효한 값만)
+                    const validSelected = partCodes.filter(cd => prevSelected.includes(cd));
+                    if (validSelected.length > 0) {
+                        jQuery(select).val(validSelected).trigger('change.select2');
+                    } else {
+                        jQuery(select).val(null).trigger('change.select2');
+                    }
                 }
             }
             
             console.log(`품번 드롭다운 업데이트 완료: ${partCodes.length}개 품번 (브랜드: ${brand || '전체'}, 선택된 품번: ${prevSelected.length}개)`);
         }
 
+        // 이전 선택된 브랜드 추적 (품번 초기화를 위해)
+        let previousBrand = null;
+        
         // 브랜드 드롭다운 변경 이벤트 핸들러 (전역 함수)
         function handleBrandChange() {
             const selectedBrand = getSelectedBrand();
             console.log('=== 브랜드 변경 이벤트 트리거 ===');
             console.log('선택된 브랜드:', selectedBrand);
+            console.log('이전 브랜드:', previousBrand);
+            
+            // 브랜드가 변경되었는지 확인
+            const brandChanged = previousBrand !== selectedBrand;
+            previousBrand = selectedBrand; // 현재 브랜드를 이전 브랜드로 저장
             
             // 데이터가 로드되어 있으면 해당 브랜드의 품번만 표시하도록 업데이트
             if (dashboardData && Array.isArray(dashboardData) && dashboardData.length > 0) {
                 console.log('✅ dashboardData 존재, 품번 드롭다운 업데이트 시작');
-                updatePartCdDropdown(selectedBrand);
+                // 브랜드가 변경되었으면 품번 선택 초기화
+                updatePartCdDropdown(selectedBrand, brandChanged);
             } else {
                 console.warn('⚠️ dashboardData 없음! 조회하기 버튼을 먼저 눌러주세요.');
             }
@@ -1420,6 +1442,9 @@
                 // 브랜드 드롭다운 업데이트
                 await updateBrandDropdown();
                 
+                // 초기 브랜드 값 설정 (전체)
+                previousBrand = '전체';
+                
                 // 브랜드 변경 이벤트 연결 (데이터 로드 후)
                 const brandSelect = document.getElementById('brand-filter');
                 if (brandSelect) {
@@ -1435,8 +1460,8 @@
                     brandSelect.addEventListener('change', handleBrandChange);
                 }
                 
-                // 품번 드롭다운 초기화 (전체 브랜드 기준)
-                updatePartCdDropdown('전체');
+                // 품번 드롭다운 초기화 (전체 브랜드 기준, 선택값 초기화)
+                updatePartCdDropdown('전체', true);
                 
                 // 날짜 기본값 설정
                 updateDateRangeDefaults();
