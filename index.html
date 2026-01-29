@@ -583,11 +583,15 @@
                 prevSelected = select.value ? [select.value] : [];
             }
 
-            // 옵션 초기화
-            select.innerHTML = '';
-
             if (!dashboardData || !Array.isArray(dashboardData)) {
                 console.warn('품번 드롭다운 업데이트 실패: dashboardData가 없습니다.');
+                // Select2가 있으면 비우기
+                if (window.jQuery && jQuery(select).data('select2')) {
+                    select.innerHTML = '';
+                    jQuery(select).val(null).trigger('change.select2');
+                } else {
+                    select.innerHTML = '';
+                }
                 return;
             }
             
@@ -595,11 +599,15 @@
             let filteredForPart = dashboardData;
             if (brand && brand !== '전체') {
                 filteredForPart = dashboardData.filter(row => {
-                    const rowBrand = row.BRD_CD;
-                    const match = String(rowBrand) === String(brand);
+                    const rowBrand = String(row.BRD_CD || '').trim();
+                    const brandValue = String(brand || '').trim();
+                    const match = rowBrand === brandValue;
+                    if (!match && filteredForPart.length < 5) {
+                        console.log(`브랜드 불일치: row.BRD_CD="${rowBrand}" !== brand="${brandValue}"`);
+                    }
                     return match;
                 });
-                console.log(`브랜드 필터링: ${brand} → ${filteredForPart.length}건`);
+                console.log(`브랜드 필터링: "${brand}" → ${filteredForPart.length}건`);
             }
             
             // PART_CD 중복 제거하여 추출
@@ -614,6 +622,15 @@
             console.log('추출된 품번 개수:', partCodes.length);
             console.log('품번 목록 (처음 10개):', partCodes.slice(0, 10));
 
+            // Select2가 이미 초기화되어 있으면 destroy
+            const wasSelect2 = window.jQuery && jQuery(select).data('select2');
+            if (wasSelect2) {
+                jQuery(select).select2('destroy');
+            }
+
+            // 옵션 초기화 및 추가
+            select.innerHTML = '';
+            
             // 품번 옵션 추가 (복수 선택 지원)
             partCodes.forEach(cd => {
                 const opt = document.createElement('option');
@@ -626,21 +643,30 @@
                 select.appendChild(opt);
             });
 
-            // select2 렌더 동기화 (multiple 모드 지원)
-            if (window.jQuery && jQuery(select).data('select2')) {
-                // 선택된 값들을 다시 설정 (해당 브랜드에 속한 품번만 유지)
+            // Select2 다시 초기화 (multiple 모드)
+            if (window.jQuery) {
+                jQuery(select).select2({
+                    placeholder: "품번 선택 (복수 선택 가능)",
+                    allowClear: true,
+                    multiple: true,
+                    width: '100%',
+                    language: {
+                        noResults: function() {
+                            return "검색 결과가 없습니다.";
+                        },
+                        searching: function() {
+                            return "검색 중...";
+                        }
+                    }
+                });
+                
+                // 선택된 값들을 다시 설정
                 const validSelected = partCodes.filter(cd => prevSelected.includes(cd));
                 if (validSelected.length > 0) {
                     jQuery(select).val(validSelected).trigger('change.select2');
                 } else {
-                    // 선택된 품번이 없거나 해당 브랜드에 속하지 않으면 초기화
                     jQuery(select).val(null).trigger('change.select2');
                 }
-                // Select2 업데이트 강제 실행
-                jQuery(select).trigger('change');
-            } else {
-                // Select2가 없으면 일반 change 이벤트 트리거
-                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
             
             console.log(`품번 드롭다운 업데이트 완료: ${partCodes.length}개 품번 (브랜드: ${brand || '전체'}, 선택된 품번: ${prevSelected.length}개)`);
