@@ -1598,33 +1598,32 @@
             } else if (key === 'off') {
                 const channel = s.selectedChannel || '오프라인 전체';
                 if (channel === '오프라인 전체') {
-                    const offSeries = buildSeries('오프라인');
+                    // 오프라인 전체 선택 시: 백화점, 직영점, 대리점 3개만 표시 (전체 라인 제거)
                     const 백화점Series = buildSeries('백화점');
                     const 직영점Series = buildSeries('직영점');
                     const 대리점Series = buildSeries('대리점');
-                    labels = offSeries.labels.length ? offSeries.labels : 백화점Series.labels;
+                    labels = 백화점Series.labels.length ? 백화점Series.labels : (직영점Series.labels.length ? 직영점Series.labels : 대리점Series.labels);
                     ds = [
-                        { label: 'OFFLINE TOTAL', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: '백화점', data: 백화점Series.data, borderColor: '#f87171', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: '직영점', data: 직영점Series.data, borderColor: '#fb7185', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: '대리점', data: 대리점Series.data, borderColor: '#fda4af', tension: 0.4, borderWidth: 2, pointRadius: 2 }
+                        { label: '백화점', data: 백화점Series.data, borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: '직영점', data: 직영점Series.data, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 },
+                        { label: '대리점', data: 대리점Series.data, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 }
                     ];
                 } else if (channel === '백화점') {
                     const 백화점Series = buildSeries('백화점');
                     labels = 백화점Series.labels;
-                    ds = [{ label: '백화점', data: 백화점Series.data, borderColor: '#f87171', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    ds = [{ label: '백화점', data: 백화점Series.data, borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 } else if (channel === '직영점') {
                     const 직영점Series = buildSeries('직영점');
                     labels = 직영점Series.labels;
-                    ds = [{ label: '직영점', data: 직영점Series.data, borderColor: '#fb7185', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    ds = [{ label: '직영점', data: 직영점Series.data, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 } else if (channel === '대리점') {
                     const 대리점Series = buildSeries('대리점');
                     labels = 대리점Series.labels;
-                    ds = [{ label: '대리점', data: 대리점Series.data, borderColor: '#fda4af', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    ds = [{ label: '대리점', data: 대리점Series.data, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 } else {
                     const offSeries = buildSeries('오프라인');
                     labels = offSeries.labels;
-                    ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#ef4444', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    ds = [{ label: 'OFFLINE', data: offSeries.data, borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
                 }
             }
 
