@@ -740,6 +740,9 @@
                 '온라인': { amt: 0, qty: 0, colors: {}, sizes: {} }
             };
             
+            // 온라인 채널별 집계 (SHOP_NM_SHORT 기준)
+            const onlineChannelStats = {};
+            
             // COLOR_CD와 SIZE_CD별 집계 초기화 (전체용)
             const colorStats = {};
             const sizeStats = {};
@@ -758,6 +761,7 @@
                 const date = item.SALE_DT;
                 const channel = item.ANLYS_ON_OFF_CLS_NM || '전체';
                 const distType = item.ANAL_DIST_TYPE_NM || '';
+                const shopNmShort = String(item.SHOP_NM_SHORT || '').trim();
                 const colorCd = String(item.COLOR_CD || '').trim();
                 const sizeCd = String(item.SIZE_CD || '').trim();
                 
@@ -774,6 +778,30 @@
                     // 각 유통 유형별 사이즈 통계
                     if (sizeCd) {
                         distTypeStats[distType].sizes[sizeCd] = (distTypeStats[distType].sizes[sizeCd] || 0) + allQty;
+                    }
+                }
+                
+                // 1-1. 온라인 채널별 집계 (SHOP_NM_SHORT 기준)
+                if (distType === '온라인' && shopNmShort) {
+                    if (!onlineChannelStats[shopNmShort]) {
+                        onlineChannelStats[shopNmShort] = {
+                            amt: 0,
+                            qty: 0,
+                            colors: {},
+                            sizes: {}
+                        };
+                    }
+                    onlineChannelStats[shopNmShort].amt += allAmt;
+                    onlineChannelStats[shopNmShort].qty += allQty;
+                    
+                    // 각 온라인 채널별 컬러 통계
+                    if (colorCd) {
+                        onlineChannelStats[shopNmShort].colors[colorCd] = (onlineChannelStats[shopNmShort].colors[colorCd] || 0) + allQty;
+                    }
+                    
+                    // 각 온라인 채널별 사이즈 통계
+                    if (sizeCd) {
+                        onlineChannelStats[shopNmShort].sizes[sizeCd] = (onlineChannelStats[shopNmShort].sizes[sizeCd] || 0) + allQty;
                     }
                 }
                 
@@ -794,9 +822,20 @@
                         오프라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
                         백화점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
                         직영점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
-                        대리점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 },
-                        '온라인(유통)': { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }
+                        대리점: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }
                     };
+                }
+                
+                // 온라인 채널별 날짜별 집계 추가 (SHOP_NM_SHORT 기준)
+                if (distType === '온라인' && shopNmShort) {
+                    if (!dateGroups[date][shopNmShort]) {
+                        dateGroups[date][shopNmShort] = { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 };
+                    }
+                    dateGroups[date][shopNmShort].amt += allAmt;
+                    dateGroups[date][shopNmShort].qty += allQty;
+                    dateGroups[date][shopNmShort].cidAmt += cidAmt;
+                    dateGroups[date][shopNmShort].cidQty += cidQty;
+                    dateGroups[date][shopNmShort].cidCnt += cidCnt;
                 }
                 
                 // ANLYS_ON_OFF_CLS_NM 기준으로 온라인/오프라인 집계
@@ -834,11 +873,6 @@
                     dateGroups[date].대리점.cidQty += cidQty;
                     dateGroups[date].대리점.cidCnt += cidCnt;
                 } else if (distType === '온라인') {
-                    dateGroups[date]['온라인(유통)'].amt += allAmt;
-                    dateGroups[date]['온라인(유통)'].qty += allQty;
-                    dateGroups[date]['온라인(유통)'].cidAmt += cidAmt;
-                    dateGroups[date]['온라인(유통)'].cidQty += cidQty;
-                    dateGroups[date]['온라인(유통)'].cidCnt += cidCnt;
                     // ANAL_DIST_TYPE_NM === '온라인'인 경우 온라인에도 추가 (일자별 반영을 위해)
                     dateGroups[date].온라인.amt += allAmt;
                     dateGroups[date].온라인.qty += allQty;
@@ -895,7 +929,13 @@
                 },
                 on: {
                     '온라인 전체': { qty: totalOnlineQty, sales: totalOnlineAmt, colors: {}, sizes: {} },
-                    '온라인(유통)': { qty: distTypeStats['온라인'].qty, sales: distTypeStats['온라인'].amt, colors: distTypeStats['온라인'].colors, sizes: distTypeStats['온라인'].sizes }
+                    // 온라인 채널별 데이터 추가 (SHOP_NM_SHORT 기준)
+                    ...Object.fromEntries(
+                        Object.entries(onlineChannelStats).map(([channelName, stats]) => [
+                            channelName,
+                            { qty: stats.qty, sales: stats.amt, colors: stats.colors, sizes: stats.sizes }
+                        ])
+                    )
                 },
                 off: {
                     '오프라인 전체': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes, geo: {} },
@@ -974,15 +1014,29 @@
             const onBody = document.getElementById('on-list');
             if (onBody) {
                 const onAll = DATA.on['온라인 전체'] || { sales: 0, qty: 0 };
-                const on유통 = DATA.on['온라인(유통)'] || { sales: 0, qty: 0 };
-                onBody.innerHTML = `
+                
+                // 온라인 채널 목록 추출 (온라인 전체 제외)
+                const onlineChannels = Object.keys(DATA.on)
+                    .filter(key => key !== '온라인 전체')
+                    .sort();
+                
+                let rowsHtml = `
                     <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)">
                         <td>온라인 전체</td><td>${formatAmt(onAll.sales)}</td><td>${formatQty(onAll.qty)}</td><td>100%</td>
                     </tr>
-                    <tr class="clickable-row" onclick="updateIndicator('on', '온라인(유통)', this)">
-                        <td class="pl-6 text-slate-500">└ 온라인(유통)</td><td>${formatAmt(on유통.sales)}</td><td>${formatQty(on유통.qty)}</td><td>${ratio(on유통.sales, onAll.sales)}%</td>
-                    </tr>
                 `;
+                
+                // 각 온라인 채널을 하위 행으로 추가
+                onlineChannels.forEach(channelName => {
+                    const channelData = DATA.on[channelName] || { sales: 0, qty: 0 };
+                    rowsHtml += `
+                        <tr class="clickable-row" onclick="updateIndicator('on', '${channelName}', this)">
+                            <td class="pl-6 text-slate-500">└ ${channelName}</td><td>${formatAmt(channelData.sales)}</td><td>${formatQty(channelData.qty)}</td><td>${ratio(channelData.sales, onAll.sales)}%</td>
+                        </tr>
+                    `;
+                });
+                
+                onBody.innerHTML = rowsHtml;
             }
 
             // OFF
@@ -1579,21 +1633,47 @@
             } else if (key === 'on') {
                 const channel = s.selectedChannel || '온라인 전체';
                 if (channel === '온라인 전체') {
-                    const onSeries = buildSeries('온라인');
-                    const onDistSeries = buildSeries('온라인(유통)');
-                    labels = onSeries.labels.length ? onSeries.labels : onDistSeries.labels;
-                    ds = [
-                        { label: 'ONLINE TOTAL', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 },
-                        { label: 'ONLINE (유통)', data: onDistSeries.data, borderColor: '#60a5fa', tension: 0.4, borderWidth: 2, pointRadius: 2 }
-                    ];
-                } else if (channel === '온라인(유통)') {
-                    const onDistSeries = buildSeries('온라인(유통)');
-                    labels = onDistSeries.labels;
-                    ds = [{ label: 'ONLINE (유통)', data: onDistSeries.data, borderColor: '#60a5fa', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
-                } else {
+                    // 온라인 전체 선택 시: 모든 온라인 채널 표시
                     const onSeries = buildSeries('온라인');
                     labels = onSeries.labels;
-                    ds = [{ label: 'ONLINE', data: onSeries.data, borderColor: '#3b82f6', tension: 0.4, borderWidth: 2, pointRadius: 2 }];
+                    
+                    // 온라인 채널 목록 가져오기
+                    const onlineChannels = Object.keys(DATA.on || {}).filter(key => key !== '온라인 전체').sort();
+                    
+                    // 각 채널별 시리즈 생성
+                    const channelSeries = onlineChannels.map(channelName => buildSeries(channelName));
+                    
+                    // 색상 배열 (파란색 계열)
+                    const blueColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#1e40af'];
+                    
+                    ds = [];
+                    onlineChannels.forEach((channelName, index) => {
+                        const series = channelSeries[index];
+                        ds.push({
+                            label: channelName,
+                            data: series.data,
+                            borderColor: blueColors[index % blueColors.length],
+                            backgroundColor: `rgba(${index * 40}, 130, 246, 0.1)`,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        });
+                    });
+                } else {
+                    // 특정 채널 선택 시: 해당 채널만 표시
+                    const channelSeries = buildSeries(channel);
+                    labels = channelSeries.labels;
+                    const channelIndex = Object.keys(DATA.on || {}).filter(key => key !== '온라인 전체').indexOf(channel);
+                    const blueColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1d4ed8', '#1e40af'];
+                    ds = [{
+                        label: channel,
+                        data: channelSeries.data,
+                        borderColor: blueColors[channelIndex % blueColors.length] || '#3b82f6',
+                        backgroundColor: `rgba(59, 130, 246, 0.1)`,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }];
                 }
             } else if (key === 'off') {
                 const channel = s.selectedChannel || '오프라인 전체';

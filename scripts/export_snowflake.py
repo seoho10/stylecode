@@ -54,6 +54,7 @@ def main():
             A.BRD_CD,
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
+            B.SHOP_NM_SHORT,
             A.COLOR_CD,
             A.SIZE_CD,
             CASE 
@@ -80,6 +81,7 @@ def main():
             A.BRD_CD, 
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
+            B.SHOP_NM_SHORT,
             A.COLOR_CD,
             A.SIZE_CD,
             A.ONLINE_YN
