@@ -25,8 +25,7 @@ def main():
     schema = must_env("SF_SCHEMA")
 
     role = os.getenv("SF_ROLE")
-    # 브랜드 코드가 설정되어 있지 않으면 기본값 'X'를 사용합니다.
-    brd_cd = os.getenv("BRD_CD", "X")
+    # 브랜드 필터 제거: 모든 브랜드 데이터를 한꺼번에 가져옴
 
     # 최근 30일 데이터 추출 범위 설정
     end_dt = datetime.utcnow().date()
@@ -68,8 +67,7 @@ def main():
         INNER JOIN PRCS.DB_SHOP B
             ON A.SHOP_ID = B.SHOP_ID
             AND A.BRD_CD = B.BRD_CD
-        WHERE A.BRD_CD = %s
-          AND A.SALE_DT BETWEEN %s AND %s
+        WHERE A.SALE_DT BETWEEN %s AND %s
           AND A.PART_CD IS NOT NULL
           AND B.ANAL_CNTRY_NM = '한국'
           AND B.MNG_TYPE_NM = '위탁'
@@ -81,7 +79,7 @@ def main():
             A.ONLINE_YN
         ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
         """
-        cur.execute(sql, (brd_cd, str(start_dt), str(end_dt)))
+        cur.execute(sql, (str(start_dt), str(end_dt)))
 
         rows = cur.fetchall()
         cols = [c[0] for c in cur.description]
@@ -113,7 +111,6 @@ def main():
         payload = {
             "generated_at_utc": datetime.utcnow().isoformat() + "Z",
             "range": {"start": str(start_dt), "end": str(end_dt)},
-            "brd_cd": brd_cd,
             "data": data,
         }
 
@@ -122,14 +119,22 @@ def main():
 
         print(f"OK: wrote {out_path} rows={len(data)}")
 
-        # 2. 브랜드 목록 추출 쿼리
+        # 2. 브랜드 목록 추출 쿼리 (실제 판매 데이터가 있는 모든 브랜드)
         brand_sql = """
-        SELECT DISTINCT BRD_CD
-        FROM PRCS.DB_SHOP
-        WHERE BRD_CD IN ('M','I','ST','V','X')
-        ORDER BY BRD_CD
+        SELECT DISTINCT A.BRD_CD
+        FROM PRCS.DW_SALE A
+        INNER JOIN PRCS.DB_SHOP B
+            ON A.SHOP_ID = B.SHOP_ID
+            AND A.BRD_CD = B.BRD_CD
+        WHERE A.SALE_DT BETWEEN %s AND %s
+          AND A.PART_CD IS NOT NULL
+          AND B.ANAL_CNTRY_NM = '한국'
+          AND B.MNG_TYPE_NM = '위탁'
+          AND B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점', '온라인')
+          AND A.BRD_CD IS NOT NULL
+        ORDER BY A.BRD_CD
         """
-        cur.execute(brand_sql)
+        cur.execute(brand_sql, (str(start_dt), str(end_dt)))
         brand_rows = cur.fetchall()
         brands = [r[0] for r in brand_rows]
 
