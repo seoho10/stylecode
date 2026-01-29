@@ -380,38 +380,17 @@
                 
                 console.log('데이터 로드 성공:', dashboardData.length, '건');
 
-                // sales_daily.json에서 브랜드 코드(BRD_CD) 중복 제거하여 추출
-                const brandSet = new Set();
-                dashboardData.forEach(row => {
-                    if (row.BRD_CD && String(row.BRD_CD).trim() !== '') {
-                        brandSet.add(String(row.BRD_CD).trim());
-                    }
-                });
-                const extractedBrands = Array.from(brandSet).sort();
-                console.log('추출된 브랜드 목록:', extractedBrands);
-
-                // 브랜드 드롭다운 옵션 채우기 (sales_daily.json의 BRD_CD 우선)
+                // 브랜드 드롭다운 옵션 채우기 (sales_daily.json의 BRD_CD에서 추출)
                 await updateBrandDropdown();
                 
-                // 첫 번째 브랜드 자동 선택 및 품번 드롭다운 채우기
-                const brandSelect = document.getElementById('brand-filter');
-                if (brandSelect && extractedBrands.length > 0) {
-                    // 첫 번째 브랜드 선택 (정렬된 순서대로)
-                    const firstBrand = extractedBrands[0];
-                    brandSelect.value = firstBrand;
-                    
-                    // Select2 동기화
-                    if (window.jQuery && jQuery(brandSelect).data('select2')) {
-                        jQuery(brandSelect).val(firstBrand).trigger('change.select2');
-                    }
-                    
-                    // 선택된 브랜드에 맞는 품번 드롭다운 즉시 채우기
-                    updatePartCdDropdown(firstBrand);
-                    console.log(`초기 브랜드 선택: ${firstBrand}, 품번 드롭다운 업데이트 완료`);
-                }
+                // 품번 드롭다운 채우기 ('전체' 브랜드 기준)
+                updatePartCdDropdown('전체');
                 
                 // 날짜 필터 기본값 설정 (데이터의 가장 빠른/늦은 날짜)
                 updateDateRangeDefaults();
+                
+                // 페이지 로드 시 자동으로 대시보드 업데이트
+                await updateDashboard();
 
                 return dashboardData;
             } catch (error) {
@@ -543,18 +522,15 @@
                 select.appendChild(opt);
             });
 
-            // selection 유지 (없으면 '전체' 또는 첫 번째 브랜드)
+            // selection 유지: 이전 선택값이 있으면 유지, 없으면 항상 '전체' 선택
             const exists = [...select.options].some(o => o.value === prev);
-            let selectedValue = '전체'; // 기본값은 '전체'
+            let selectedValue = '전체'; // 기본값은 항상 '전체'
             
-            if (exists) {
-                // 이전 선택값이 있으면 유지
+            if (exists && prev !== '전체') {
+                // 이전 선택값이 있고 '전체'가 아니면 유지
                 selectedValue = prev;
-            } else if (brands.length > 0) {
-                // 이전 선택값이 없으면 첫 번째 브랜드 선택
-                selectedValue = brands[0];
             }
-            // brands.length === 0이면 '전체' 유지
+            // 그 외의 경우는 항상 '전체' 선택
             
             select.value = selectedValue;
 
@@ -1169,18 +1145,8 @@
                 });
             }
 
-            // 브랜드 드롭다운 먼저 채우기 (데이터 로드 전에도 brands.json에서 가져올 수 있음)
-            await updateBrandDropdown();
-            
-            // 데이터 로드 후 드롭다운 채우기
+            // 데이터 로드 (내부에서 updateBrandDropdown() -> updatePartCdDropdown() -> updateDashboard() 자동 호출)
             await loadData();
-            
-            // 데이터 로드 후 브랜드 드롭다운 다시 업데이트 (sales_daily.json의 브랜드도 반영)
-            await updateBrandDropdown();
-            
-            // 선택된 브랜드 기준으로 품번 드롭다운 업데이트
-            const initialBrand = getSelectedBrand();
-            updatePartCdDropdown(initialBrand);
         });
 
         function setChart(key, type, val) {
