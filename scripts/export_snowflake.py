@@ -46,9 +46,27 @@ def main():
     conn = snowflake.connector.connect(**conn_args)
     cur = conn.cursor()
 
+    # DW_SALE 테이블에서 회원번호 컬럼 찾기 (CUST_ID, ITM_CUST_NO 등)
+    cust_column = None
     try:
-        # 1. 판매 데이터 추출 쿼리 (JOIN 및 필터 조건 적용)
-        sql = """
+        cur.execute("DESCRIBE TABLE PRCS.DW_SALE")
+        describe_rows = cur.fetchall()
+        desc_cols = [c[0].upper() for c in (cur.description or [])]
+        name_idx = desc_cols.index("NAME") if "NAME" in desc_cols else 0
+        col_names = [r[name_idx] for r in describe_rows] if describe_rows else []
+        for candidate in ("CUST_ID", "ITM_CUST_NO", "CUST_NO", "CUSTOMER_ID", "CUST_CD"):
+            if any(c.upper() == candidate.upper() for c in col_names):
+                cust_column = candidate
+                break
+        if not cust_column:
+            print("WARN: PRCS.DW_SALE에 회원번호 컬럼 없음. 사용 가능 컬럼:", ", ".join(col_names[:30]) + (" ..." if len(col_names) > 30 else ""))
+    except Exception as e:
+        print("WARN: DW_SALE 컬럼 조회 실패:", e)
+
+    try:
+        # 1. 판매 데이터 추출 쿼리 (회원번호 컬럼 있으면 포함)
+        if cust_column:
+            sql = f"""
         SELECT 
             A.SALE_DT,
             A.BRD_CD,
@@ -64,9 +82,46 @@ def main():
             END AS ANLYS_ON_OFF_CLS_NM,
             SUM(A.SALE_AMT) AS ALL_AMT,
             SUM(A.QTY) AS ALL_QTY,
-            0 AS CID_AMT,
-            0 AS CID_QTY,
-            0 AS CID_CNT
+            TRIM(CAST(A.{cust_column} AS VARCHAR)) AS CUST_ID
+        FROM PRCS.DW_SALE A
+        INNER JOIN PRCS.DB_SHOP B
+            ON A.SHOP_ID = B.SHOP_ID
+            AND A.BRD_CD = B.BRD_CD
+        WHERE A.SALE_DT BETWEEN %s AND %s
+          AND A.PART_CD IS NOT NULL
+          AND B.ANAL_CNTRY_NM = '한국'
+          AND B.MNG_TYPE_NM = '위탁'
+          AND B.ANAL_DIST_TYPE_NM IN ('백화점', '직영점', '대리점', '온라인')
+        GROUP BY 
+            A.SALE_DT, 
+            A.BRD_CD, 
+            A.PART_CD,
+            B.ANAL_DIST_TYPE_NM,
+            B.SHOP_NM_SHORT,
+            A.COLOR_CD,
+            A.SIZE_CD,
+            A.ONLINE_YN,
+            A.{cust_column}
+        ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
+            """
+        else:
+            sql = """
+        SELECT 
+            A.SALE_DT,
+            A.BRD_CD,
+            A.PART_CD,
+            B.ANAL_DIST_TYPE_NM,
+            B.SHOP_NM_SHORT,
+            A.COLOR_CD,
+            A.SIZE_CD,
+            CASE 
+                WHEN A.ONLINE_YN = 'Y' THEN '온라인'
+                WHEN A.ONLINE_YN = 'N' THEN '오프라인'
+                ELSE '기타'
+            END AS ANLYS_ON_OFF_CLS_NM,
+            SUM(A.SALE_AMT) AS ALL_AMT,
+            SUM(A.QTY) AS ALL_QTY,
+            NULL AS CUST_ID
         FROM PRCS.DW_SALE A
         INNER JOIN PRCS.DB_SHOP B
             ON A.SHOP_ID = B.SHOP_ID
@@ -86,14 +141,14 @@ def main():
             A.SIZE_CD,
             A.ONLINE_YN
         ORDER BY A.SALE_DT, A.BRD_CD, A.PART_CD, ANLYS_ON_OFF_CLS_NM
-        """
+            """
         cur.execute(sql, (str(start_dt), str(end_dt)))
 
         rows = cur.fetchall()
         cols = [c[0] for c in cur.description]
         raw_data = [dict(zip(cols, r)) for r in rows]
 
-        # 데이터 전처리 (날짜 형식 및 Null 처리, '기타' 제외)
+        # 데이터 전처리 (날짜 형식, CUST_ID 직렬화, '기타' 제외)
         data = []
         for item in raw_data:
             # ANLYS_ON_OFF_CLS_NM이 '기타'인 경우 제외
@@ -106,6 +161,13 @@ def main():
             
             # REGION_NM: 대시보드 지역별 분포용 (쿼리에 없으면 ANAL_DIST_TYPE_NM 사용)
             item["REGION_NM"] = str(item.get("REGION_NM") or item.get("ANAL_DIST_TYPE_NM") or "기타").strip()
+            
+            # CUST_ID: 회원 판별용. None/빈문자열이면 비회원
+            cid = item.get("CUST_ID")
+            if cid is not None and not (isinstance(cid, str) and not cid.strip()):
+                item["CUST_ID"] = str(cid).strip() if cid is not None else None
+            else:
+                item["CUST_ID"] = None
             
             for num_field in ["ALL_AMT", "ALL_QTY", "CID_AMT", "CID_QTY", "CID_CNT"]:
                 if item.get(num_field) is None:
