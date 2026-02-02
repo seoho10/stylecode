@@ -26,8 +26,8 @@ wheels/
 .installed.cfg
 *.egg
 
-# 데이터 파일 (선택적 - 필요시 주석 해제)
-# data/*.json
+# 데이터 파일 (매출 등 민감 데이터 - GitHub에 올리지 않음)
+data/*.json
 
 # IDE 관련
 .vscode/
