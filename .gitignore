@@ -28,6 +28,9 @@ wheels/
 
 # 데이터 파일 (선택적 - 필요시 주석 해제)
 # data/*.json
+# data 폴더 JSON은 반드시 추적 (전역/다른 *.json 무시가 있어도 예외)
+!data/sales_daily.json
+!data/brands.json
 
 # IDE 관련
 .vscode/
@@ -39,3 +42,6 @@ wheels/
 # OS 관련
 .DS_Store
 Thumbs.db
+
+!data/sales_daily.json
+!data/brands.json

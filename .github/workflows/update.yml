@@ -3,7 +3,8 @@ name: Snowflake JSON Export
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "20 * * * *"
+    # 한국 시간 새벽 2시 (UTC 전날 17시)
+    - cron: "0 17 * * * "
 
 permissions:
   contents: write
