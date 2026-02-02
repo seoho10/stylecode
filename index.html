@@ -877,6 +877,10 @@
             // 온라인 채널별 집계 (SHOP_NM_SHORT 기준)
             const onlineChannelStats = {};
             
+            // 오프라인 채널별 매장(SHOP_NM_SHORT) 집계 및 지역(REGION_NM) 집계
+            const offlineShopStats = { '오프라인 전체': {}, '백화점': {}, '직영점': {}, '대리점': {} };
+            const offlineGeoStats = { '오프라인 전체': {}, '백화점': {}, '직영점': {}, '대리점': {} };
+            
             // COLOR_CD와 SIZE_CD별 집계 초기화 (전체용)
             const colorStats = {};
             const sizeStats = {};
@@ -896,6 +900,7 @@
                 const channel = item.ANLYS_ON_OFF_CLS_NM || '전체';
                 const distType = item.ANAL_DIST_TYPE_NM || '';
                 const shopNmShort = String(item.SHOP_NM_SHORT || '').trim();
+                const regionNm = String(item.REGION_NM || item.ANAL_DIST_TYPE_NM || '').trim();
                 const colorCd = String(item.COLOR_CD || '').trim();
                 const sizeCd = String(item.SIZE_CD || '').trim();
                 
@@ -912,6 +917,24 @@
                     // 각 유통 유형별 사이즈 통계
                     if (sizeCd) {
                         distTypeStats[distType].sizes[sizeCd] = (distTypeStats[distType].sizes[sizeCd] || 0) + allQty;
+                    }
+                }
+                
+                // 1-2. 오프라인 채널별 매장(SHOP_NM_SHORT) 및 지역(REGION_NM) 집계
+                if (distType === '백화점' || distType === '직영점' || distType === '대리점') {
+                    if (shopNmShort) {
+                        ['오프라인 전체', distType].forEach(key => {
+                            if (!offlineShopStats[key][shopNmShort]) offlineShopStats[key][shopNmShort] = { amt: 0, qty: 0 };
+                            offlineShopStats[key][shopNmShort].amt += allAmt;
+                            offlineShopStats[key][shopNmShort].qty += allQty;
+                        });
+                    }
+                    if (regionNm) {
+                        ['오프라인 전체', distType].forEach(key => {
+                            if (!offlineGeoStats[key][regionNm]) offlineGeoStats[key][regionNm] = { amt: 0, qty: 0 };
+                            offlineGeoStats[key][regionNm].amt += allAmt;
+                            offlineGeoStats[key][regionNm].qty += allQty;
+                        });
                     }
                 }
                 
@@ -1106,10 +1129,10 @@
                     )
                 },
                 off: {
-                    '오프라인 전체': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes, geo: {} },
-                    '백화점': { qty: distTypeStats['백화점'].qty, sales: distTypeStats['백화점'].amt, colors: distTypeStats['백화점'].colors, sizes: distTypeStats['백화점'].sizes, geo: {} },
-                    '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes, geo: {} },
-                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes, geo: {} }
+                    '오프라인 전체': { qty: offlineQtyFromDistType, sales: offlineAmtFromDistType, colors: offlineColors, sizes: offlineSizes, shops: offlineShopStats['오프라인 전체'], geo: offlineGeoStats['오프라인 전체'] },
+                    '백화점': { qty: distTypeStats['백화점'].qty, sales: distTypeStats['백화점'].amt, colors: distTypeStats['백화점'].colors, sizes: distTypeStats['백화점'].sizes, shops: offlineShopStats['백화점'], geo: offlineGeoStats['백화점'] },
+                    '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes, shops: offlineShopStats['직영점'], geo: offlineGeoStats['직영점'] },
+                    '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes, shops: offlineShopStats['대리점'], geo: offlineGeoStats['대리점'] }
                 },
                 cust: {
                     '회원 전체': { 
@@ -1692,15 +1715,34 @@
         }
 
         function updateShopRank(channel) {
-            const body = document.getElementById('shop-rank-body'); body.innerHTML = '';
-            body.innerHTML = `<tr><td colspan="4" class="text-slate-400 font-bold text-center py-6">매장 랭킹 데이터가 없습니다.</td></tr>`;
+            const body = document.getElementById('shop-rank-body');
+            if (!body) return;
+            body.innerHTML = '';
+            const d = (DATA && DATA.off) ? (DATA.off[channel] || DATA.off['오프라인 전체']) : null;
+            const shops = (d && d.shops) ? d.shops : {};
+            const arr = Object.entries(shops).map(([name, v]) => ({ name, amt: Number(v.amt) || 0, qty: Number(v.qty) || 0 }));
+            arr.sort((a, b) => b.amt - a.amt);
+            const top15 = arr.slice(0, 15);
+            if (top15.length === 0) {
+                body.innerHTML = `<tr><td colspan="4" class="text-slate-400 font-bold text-center py-6">매장 랭킹 데이터가 없습니다.</td></tr>`;
+                return;
+            }
+            top15.forEach((row, i) => {
+                body.innerHTML += `<tr><td class="font-bold">${i + 1}</td><td>${row.name}</td><td>${(row.amt || 0).toLocaleString()}원</td><td>${(row.qty || 0).toLocaleString()}</td></tr>`;
+            });
         }
 
         function updateRegionTable(geoData, totalQty) {
-            const body = document.getElementById('region-rank-body'); body.innerHTML = '';
-            Object.entries(geoData).forEach(([region, qty]) => {
-                const sales = qty * 75000;
-                body.innerHTML += `<tr><td class="font-bold">${region}</td><td>${sales.toLocaleString()}원</td><td>${qty.toLocaleString()}</td><td class="text-blue-600 font-black">${((qty/totalQty)*100).toFixed(1)}%</td></tr>`;
+            const body = document.getElementById('region-rank-body');
+            if (!body) return;
+            body.innerHTML = '';
+            if (!geoData || typeof geoData !== 'object') return;
+            const total = Number(totalQty) || 1;
+            Object.entries(geoData).forEach(([region, v]) => {
+                const amt = (v && typeof v === 'object' && v.amt != null) ? Number(v.amt) : 0;
+                const qty = (v && typeof v === 'object' && v.qty != null) ? Number(v.qty) : (Number(v) || 0);
+                const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : '0.0';
+                body.innerHTML += `<tr><td class="font-bold">${region}</td><td>${amt.toLocaleString()}원</td><td>${qty.toLocaleString()}</td><td class="text-blue-600 font-black">${pct}%</td></tr>`;
             });
         }
 

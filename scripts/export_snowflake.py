@@ -27,9 +27,9 @@ def main():
     role = os.getenv("SF_ROLE")
     # 브랜드 필터 제거: 모든 브랜드 데이터를 한꺼번에 가져옴
 
-    # 최근 7일 데이터 추출 범위 설정
+    # 최근 3일 데이터 추출 범위 설정
     end_dt = datetime.utcnow().date()
-    start_dt = end_dt - timedelta(days=7)
+    start_dt = end_dt - timedelta(days=3)
 
     conn_args = {
         "account": account,
@@ -103,6 +103,9 @@ def main():
             v = item.get("SALE_DT")
             if hasattr(v, "isoformat"):
                 item["SALE_DT"] = v.isoformat()
+            
+            # REGION_NM: 대시보드 지역별 분포용 (쿼리에 없으면 ANAL_DIST_TYPE_NM 사용)
+            item["REGION_NM"] = str(item.get("REGION_NM") or item.get("ANAL_DIST_TYPE_NM") or "기타").strip()
             
             for num_field in ["ALL_AMT", "ALL_QTY", "CID_AMT", "CID_QTY", "CID_CNT"]:
                 if item.get(num_field) is None:
