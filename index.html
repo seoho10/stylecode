@@ -272,7 +272,7 @@
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-                <div class="lg:col-span-4">
+                <div class="lg:col-span-3">
                     <div class="bg-white p-6 rounded-2xl shadow-md border-2 border-slate-300" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>회원 채널별 실적 (3-Depth)</span></div>
                         <div class="table-container flex-1" style="height: calc(100% - 60px);">
@@ -285,13 +285,19 @@
                         </div>
                     </div>
                 </div>
-                <div class="lg:col-span-4">
+                <div class="lg:col-span-3">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
+                        <div class="section-title mb-4"><span>회원 비중</span></div>
+                        <div style="height: 320px; flex: 1;"><canvas id="memberShareChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="lg:col-span-3">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>컬러별 판매 현황</span><span id="cust-t-color" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                         <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>컬러</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="cust-color-body"></tbody></table></div>
                     </div>
                 </div>
-                <div class="lg:col-span-4">
+                <div class="lg:col-span-3">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200" style="height: 480px; display: flex; flex-direction: column;">
                         <div class="section-title mb-4"><span>사이즈별 판매 현황</span><span id="cust-t-size" class="badge bg-purple-100 text-purple-600">회원 전체</span></div>
                         <div class="table-container flex-1" style="height: calc(100% - 60px);"><table><thead><tr><th>사이즈</th><th>판매수량</th><th>비중</th></tr></thead><tbody id="cust-size-body"></tbody></table></div>
@@ -322,7 +328,7 @@
                                 <button id="age-qty" onclick="setAgeChart('qty')" class="btn-toggle btn-inactive">판매량</button>
                             </div>
                         </div>
-                        <div style="height: 350px; flex: 1;"><canvas id="ageChart"></canvas></div>
+                        <div id="ageChartContainer" style="height: 350px; flex: 1; position: relative;"><canvas id="ageChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -866,6 +872,19 @@
         function buildDATA(filteredData) {
             if (!filteredData || !Array.isArray(filteredData)) return null;
             
+            // 회원 판별: CUST_ID가 있고 비어있지 않으며 '0'이 아니면 회원만 집계 (DATA.cust는 오직 여기서만 누적)
+            function isMemberRow(row) {
+                const v = row.CUST_ID;
+                if (v == null) return false;
+                const s = String(v).trim();
+                return s !== '' && s !== '0';
+            }
+            
+            // 회원 전용 집계 (채널별·컬러·사이즈) — if (isMemberRow(item)) 안에서만 누적
+            let memberOnlineAmt = 0, memberOnlineQty = 0, memberOfflineAmt = 0, memberOfflineQty = 0;
+            const memberColors = {}, memberSizes = {};
+            const memberOnlineColors = {}, memberOnlineSizes = {}, memberOfflineColors = {}, memberOfflineSizes = {};
+            
             // ANAL_DIST_TYPE_NM별 집계 초기화 (백화점, 직영점, 대리점, 온라인)
             const distTypeStats = {
                 '백화점': { amt: 0, qty: 0, colors: {}, sizes: {} },
@@ -903,6 +922,24 @@
                 const regionNm = String(item.REGION_NM || item.ANAL_DIST_TYPE_NM || '').trim();
                 const colorCd = String(item.COLOR_CD || '').trim();
                 const sizeCd = String(item.SIZE_CD || '').trim();
+                const isMember = isMemberRow(item);
+                
+                // 0. 회원만 집계 — DATA.cust는 이 블록 안에서만 금액/수량 합산 (전체 데이터와 격리)
+                if (isMember) {
+                    if (channel === '온라인') {
+                        memberOnlineAmt += allAmt;
+                        memberOnlineQty += allQty;
+                        if (colorCd) memberOnlineColors[colorCd] = (memberOnlineColors[colorCd] || 0) + allQty;
+                        if (sizeCd) memberOnlineSizes[sizeCd] = (memberOnlineSizes[sizeCd] || 0) + allQty;
+                    } else if (channel === '오프라인') {
+                        memberOfflineAmt += allAmt;
+                        memberOfflineQty += allQty;
+                        if (colorCd) memberOfflineColors[colorCd] = (memberOfflineColors[colorCd] || 0) + allQty;
+                        if (sizeCd) memberOfflineSizes[sizeCd] = (memberOfflineSizes[sizeCd] || 0) + allQty;
+                    }
+                    if (colorCd) memberColors[colorCd] = (memberColors[colorCd] || 0) + allQty;
+                    if (sizeCd) memberSizes[sizeCd] = (memberSizes[sizeCd] || 0) + allQty;
+                }
                 
                 // 1. ANAL_DIST_TYPE_NM별 매출/수량 집계 및 컬러/사이즈 통계
                 if (distType === '백화점' || distType === '직영점' || distType === '대리점' || distType === '온라인') {
@@ -1073,6 +1110,12 @@
             const totalAmt = offlineAmtFromDistType + distTypeStats['온라인'].amt;
             const totalQty = offlineQtyFromDistType + distTypeStats['온라인'].qty;
             
+            // 회원/비회원 합계 (회원 비중 차트·회원 채널별 실적용)
+            const memberTotalAmt = memberOnlineAmt + memberOfflineAmt;
+            const memberTotalQty = memberOnlineQty + memberOfflineQty;
+            const nonMemberAmt = Math.max(0, totalAmt - memberTotalAmt);
+            const nonMemberQty = Math.max(0, totalQty - memberTotalQty);
+            
             // 오프라인 합계의 컬러/사이즈 통계 (백화점 + 직영점 + 대리점)
             const offlineColors = {};
             const offlineSizes = {};
@@ -1134,43 +1177,52 @@
                     '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes, shops: offlineShopStats['직영점'], geo: offlineGeoStats['직영점'] },
                     '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes, shops: offlineShopStats['대리점'], geo: offlineGeoStats['대리점'] }
                 },
+                // cust: 회원만 집계한 값만 사용 (memberTotalAmt/Qty, memberOnline*, memberOffline* — DATA.total과 혼용 금지)
                 cust: {
                     '회원 전체': { 
-                        qty: totalQty, 
-                        sales: totalAmt, 
-                        colors: {}, 
-                        sizes: {},
+                        qty: memberTotalQty, 
+                        sales: memberTotalAmt, 
+                        colors: memberColors, 
+                        sizes: memberSizes,
                         members: {
-                            기존회원: { qty: Math.floor(totalCidQty * 0.7), sales: Math.floor(totalCidAmt * 0.7) },
-                            신규회원: { qty: Math.floor(totalCidQty * 0.3), sales: Math.floor(totalCidAmt * 0.3) }
+                            기존회원: { qty: Math.floor(memberTotalQty * 0.7), sales: Math.floor(memberTotalAmt * 0.7) },
+                            신규회원: { qty: Math.floor(memberTotalQty * 0.3), sales: Math.floor(memberTotalAmt * 0.3) }
                         },
                         ageGender: { male: {}, female: {} }
                     },
                     '온라인': { 
-                        qty: totalOnlineQty, 
-                        sales: totalOnlineAmt, 
-                        colors: {}, 
-                        sizes: {},
+                        qty: memberOnlineQty, 
+                        sales: memberOnlineAmt, 
+                        colors: memberOnlineColors, 
+                        sizes: memberOnlineSizes,
                         members: {
-                            기존회원: { qty: Math.floor(totalOnlineQty * 0.7), sales: Math.floor(totalOnlineAmt * 0.7) },
-                            신규회원: { qty: Math.floor(totalOnlineQty * 0.3), sales: Math.floor(totalOnlineAmt * 0.3) }
+                            기존회원: { qty: Math.floor(memberOnlineQty * 0.7), sales: Math.floor(memberOnlineAmt * 0.7) },
+                            신규회원: { qty: Math.floor(memberOnlineQty * 0.3), sales: Math.floor(memberOnlineAmt * 0.3) }
                         },
                         ageGender: { male: {}, female: {} }
                     },
                     '오프라인': { 
-                        qty: totalOfflineQty, 
-                        sales: totalOfflineAmt, 
-                        colors: {}, 
-                        sizes: {},
+                        qty: memberOfflineQty, 
+                        sales: memberOfflineAmt, 
+                        colors: memberOfflineColors, 
+                        sizes: memberOfflineSizes,
                         members: {
-                            기존회원: { qty: Math.floor(totalOfflineQty * 0.7), sales: Math.floor(totalOfflineAmt * 0.7) },
-                            신규회원: { qty: Math.floor(totalOfflineQty * 0.3), sales: Math.floor(totalOfflineAmt * 0.3) }
+                            기존회원: { qty: Math.floor(memberOfflineQty * 0.7), sales: Math.floor(memberOfflineAmt * 0.7) },
+                            신규회원: { qty: Math.floor(memberOfflineQty * 0.3), sales: Math.floor(memberOfflineAmt * 0.3) }
                         },
                         ageGender: { male: {}, female: {} }
                     }
                 },
+                memberShare: { member: { amt: memberTotalAmt, qty: memberTotalQty }, nonMember: { amt: nonMemberAmt, qty: nonMemberQty } },
                 trendData: dateGroups
             };
+            
+            // 검증: 회원 전체 매출은 전체 매출보다 작아야 함 (회원 채널별 실적이 TOTAL과 동일하면 버그)
+            const totalSales = DATA.total['전체'].sales;
+            const memberSales = DATA.cust['회원 전체'].sales;
+            console.log('Member Total (회원 전체):', memberSales);
+            console.log('Total (전체):', totalSales);
+            console.log('Member < Total?', memberSales < totalSales, memberSales < totalSales ? '(정상)' : '(확인 필요)');
             
             return DATA;
         }
@@ -1683,25 +1735,29 @@
             renderAgeChart();
         }
 
+        // 회원 전용 테이블: 반드시 DATA.cust[채널명]에서만 전달 (d.members, d.qty, d.sales). DATA.total 사용 금지.
         function fillMemberTable(id, members, totalQty, totalSales, channelName) {
             const b = document.getElementById(id);
             b.innerHTML = '';
+            const safeQty = Number(totalQty) || 0;
+            const safeSales = Number(totalSales) || 0;
             
             // SUM 행 추가 (선택한 채널명 표시)
             b.innerHTML += `<tr class="font-black bg-purple-50">
                 <td>${channelName}</td>
-                <td>${totalSales.toLocaleString()}</td>
-                <td>${totalQty.toLocaleString()}</td>
+                <td>${safeSales.toLocaleString()}</td>
+                <td>${safeQty.toLocaleString()}</td>
                 <td class="text-purple-600">100.0%</td>
             </tr>`;
             
             // 기존회원, 신규회원 행 추가
+            const divQty = safeQty || 1;
             Object.entries(members).forEach(([memberType, data]) => {
-                const qtyRatio = ((data.qty / totalQty) * 100).toFixed(1);
+                const qtyRatio = ((Number(data.qty) || 0) / divQty * 100).toFixed(1);
                 b.innerHTML += `<tr>
                     <td class="font-bold">${memberType}</td>
-                    <td>${data.sales.toLocaleString()}</td>
-                    <td>${data.qty.toLocaleString()}</td>
+                    <td>${(Number(data.sales) || 0).toLocaleString()}</td>
+                    <td>${(Number(data.qty) || 0).toLocaleString()}</td>
                     <td class="text-slate-400">${qtyRatio}%</td>
                 </tr>`;
             });
@@ -1709,8 +1765,10 @@
 
         function fillTable(id, obj, total) {
             const b = document.getElementById(id); b.innerHTML = '';
-            Object.entries(obj).forEach(([k, v]) => {
-                b.innerHTML += `<tr><td>${k}</td><td class="font-bold">${v.toLocaleString()}</td><td class="text-slate-400">${((v/total)*100).toFixed(1)}%</td></tr>`;
+            const safeTotal = Number(total) || 1;
+            Object.entries(obj || {}).forEach(([k, v]) => {
+                const val = Number(v) || 0;
+                b.innerHTML += `<tr><td>${k}</td><td class="font-bold">${val.toLocaleString()}</td><td class="text-slate-400">${((val / safeTotal) * 100).toFixed(1)}%</td></tr>`;
             });
         }
 
@@ -1938,17 +1996,86 @@
             renderAgeChart();
         }
 
+        function renderMemberShareChart() {
+            const canvasEl = document.getElementById('memberShareChart');
+            if (!canvasEl || !DATA || !DATA.memberShare) return;
+            if (window.memberShareChartInstance) window.memberShareChartInstance.destroy();
+            const m = DATA.memberShare.member || { amt: 0, qty: 0 };
+            const n = DATA.memberShare.nonMember || { amt: 0, qty: 0 };
+            const totalAmt = m.amt + n.amt;
+            if (totalAmt <= 0) {
+                window.memberShareChartInstance = new Chart(canvasEl.getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: ['회원 매출', '비회원 매출'], datasets: [{ data: [0, 0], backgroundColor: ['#8b5cf6', '#cbd5e1'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+                return;
+            }
+            const memberPct = ((m.amt / totalAmt) * 100).toFixed(1);
+            const nonMemberPct = ((n.amt / totalAmt) * 100).toFixed(1);
+            window.memberShareChartInstance = new Chart(canvasEl.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['회원 매출 (' + memberPct + '%)', '비회원 매출 (' + nonMemberPct + '%)'],
+                    datasets: [{
+                        data: [m.amt, n.amt],
+                        backgroundColor: ['#8b5cf6', '#cbd5e1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const v = ctx.parsed;
+                                    const pct = totalAmt > 0 ? ((v / totalAmt) * 100).toFixed(1) : '0';
+                                    return ctx.label + ': ' + Number(v).toLocaleString() + '원 (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function renderAgeChart() {
             const canvasEl = document.getElementById('ageChart');
+            const container = document.getElementById('ageChartContainer');
             if(!canvasEl) return;
             const s = states.age;
             if (s.chart) s.chart.destroy();
+            s.chart = null;
 
             const ageLabels = ['15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60~'];
             const channelName = s.selectedChannel || '회원 전체';
-            const d = DATA.cust[channelName];
-            
-            if (!d || !d.ageGender) return;
+            const d = (DATA && DATA.cust) ? DATA.cust[channelName] : null;
+            const hasAgeGender = d && d.ageGender && (
+                Object.keys(d.ageGender.male || {}).length > 0 || Object.keys(d.ageGender.female || {}).length > 0
+            );
+
+            if (!d || !d.ageGender || !hasAgeGender) {
+                if (container) {
+                    let placeholder = container.querySelector('.age-chart-placeholder');
+                    if (!placeholder) {
+                        placeholder = document.createElement('div');
+                        placeholder.className = 'age-chart-placeholder flex items-center justify-center h-full text-slate-400 font-bold text-sm text-center px-4';
+                        placeholder.textContent = '데이터 준비 중 (회원 정보 조인 필요)';
+                        container.insertBefore(placeholder, canvasEl);
+                    }
+                    canvasEl.style.display = 'none';
+                }
+                return;
+            }
+
+            if (container) {
+                const placeholder = container.querySelector('.age-chart-placeholder');
+                if (placeholder) placeholder.remove();
+                canvasEl.style.display = '';
+            }
 
             const maleData = ageLabels.map(age => {
                 const data = d.ageGender.male[age] || {qty: 0, sales: 0};
@@ -2144,6 +2271,7 @@
             renderSingleChart('main'); renderSingleChart('on'); renderSingleChart('off'); 
             updateIndicator('on', states.on.selectedChannel, null);
             updateIndicator('off', states.off.selectedChannel, null);
+            renderMemberShareChart();
             renderAgeChart();
             document.getElementById('main-chart-title').innerText = `TOTAL TREND: ${states.main.selectedChannel || '전체'}`;
             
