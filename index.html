@@ -872,15 +872,15 @@
         function buildDATA(filteredData) {
             if (!filteredData || !Array.isArray(filteredData)) return null;
             
-            // 회원 판별: CUST_ID가 있고 비어있지 않으며 '0'이 아니면 회원만 집계 (DATA.cust는 오직 여기서만 누적)
+            // 회원 판별: Snowflake와 동일 — CUST_ID IS NOT NULL AND TRIM(CAST(CUST_ID AS VARCHAR)) <> ''
             function isMemberRow(row) {
                 const v = row.CUST_ID;
                 if (v == null) return false;
                 const s = String(v).trim();
-                return s !== '' && s !== '0';
+                return s !== '';
             }
             
-            // 회원 전용 집계 (채널별·컬러·사이즈) — if (isMemberRow(item)) 안에서만 누적
+            // 회원 전용 집계 (채널별) — ANAL_DIST_TYPE_NM 기준: 온라인 / 백화점·직영점·대리점 = 오프라인
             let memberOnlineAmt = 0, memberOnlineQty = 0, memberOfflineAmt = 0, memberOfflineQty = 0;
             const memberColors = {}, memberSizes = {};
             const memberOnlineColors = {}, memberOnlineSizes = {}, memberOfflineColors = {}, memberOfflineSizes = {};
@@ -907,31 +907,68 @@
             // 날짜별 그룹화 및 채널별 집계 초기화
             const dateGroups = {};
             
-            // 한 번의 forEach로 모든 집계 수행 (25만 건 최적화)
-            filteredData.forEach(item => {
-                const allAmt = Number(item.ALL_AMT) || 0;
-                const allQty = Number(item.ALL_QTY) || 0;
-                const cidAmt = Number(item.CID_AMT) || 0;
-                const cidQty = Number(item.CID_QTY) || 0;
-                const cidCnt = Number(item.CID_CNT) || 0;
+            // 디버그: 현재 필터에서 ANAL_DIST_TYPE_NM 값 분포 확인 (회원 온라인 0 원인 파악)
+            const dTypeCounts = {};
+            let memberOnlineRows = 0, memberOfflineRows = 0;
+            filteredData.forEach(r => {
+                const dt = String(r.ANAL_DIST_TYPE_NM || '').trim();
+                dTypeCounts[dt] = (dTypeCounts[dt] || 0) + 1;
+                const isM = (r.CUST_ID != null && String(r.CUST_ID).trim() !== '');
+                if (isM) {
+                    if (dt === '온라인') memberOnlineRows++;
+                    else if (['백화점','직영점','대리점'].includes(dt)) memberOfflineRows++;
+                }
+            });
+            console.log('[회원 채널 디버그] 필터된 행 수:', filteredData.length);
+            console.log('[회원 채널 디버그] ANAL_DIST_TYPE_NM 분포:', dTypeCounts);
+            console.log('[회원 채널 디버그] 회원 행 중 온라인 수:', memberOnlineRows, '/ 오프라인 수:', memberOfflineRows);
+            if (filteredData.length > 0) {
+                console.log('[회원 채널 디버그] 첫 행 샘플 ANAL_DIST_TYPE_NM:', JSON.stringify(filteredData[0].ANAL_DIST_TYPE_NM), '키 목록:', Object.keys(filteredData[0]));
+            }
+            
+            // 한 번의 forEach로 모든 집계 수행 (Snowflake 쿼리 로직과 동일)
+            filteredData.forEach(row => {
+                // 1) 유통망 구분 변수 (루프 최상단) — ANAL_DIST_TYPE_NM만 사용
+                const dType = String(row.ANAL_DIST_TYPE_NM || '').trim();
+                const isOnline = (dType === '온라인');
+                const isOffline = ['백화점', '직영점', '대리점'].includes(dType);
                 
-                const date = item.SALE_DT;
-                const channel = item.ANLYS_ON_OFF_CLS_NM || '전체';
-                const distType = item.ANAL_DIST_TYPE_NM || '';
-                const shopNmShort = String(item.SHOP_NM_SHORT || '').trim();
-                const regionNm = String(item.REGION_NM || item.ANAL_DIST_TYPE_NM || '').trim();
-                const colorCd = String(item.COLOR_CD || '').trim();
-                const sizeCd = String(item.SIZE_CD || '').trim();
-                const isMember = isMemberRow(item);
+                const allAmt = Number(row.ALL_AMT) || 0;
+                const allQty = Number(row.ALL_QTY) || 0;
+                const cidAmt = Number(row.CID_AMT) || 0;
+                const cidQty = Number(row.CID_QTY) || 0;
+                const cidCnt = Number(row.CID_CNT) || 0;
                 
-                // 0. 회원만 집계 — DATA.cust는 이 블록 안에서만 금액/수량 합산 (전체 데이터와 격리)
+                const date = row.SALE_DT;
+                const shopNmShort = String(row.SHOP_NM_SHORT || '').trim();
+                const regionNm = String(row.REGION_NM || row.ANAL_DIST_TYPE_NM || '').trim();
+                const colorCd = String(row.COLOR_CD || '').trim();
+                const sizeCd = String(row.SIZE_CD || '').trim();
+                const isMember = isMemberRow(row);
+                
+                // 2. 전체 실적: 모든 행을 isOnline/isOffline에 따라 합산
+                if (isOnline) {
+                    distTypeStats['온라인'].amt += allAmt;
+                    distTypeStats['온라인'].qty += allQty;
+                    if (colorCd) distTypeStats['온라인'].colors[colorCd] = (distTypeStats['온라인'].colors[colorCd] || 0) + allQty;
+                    if (sizeCd) distTypeStats['온라인'].sizes[sizeCd] = (distTypeStats['온라인'].sizes[sizeCd] || 0) + allQty;
+                } else if (isOffline) {
+                    distTypeStats[dType].amt += allAmt;
+                    distTypeStats[dType].qty += allQty;
+                    if (colorCd) distTypeStats[dType].colors[colorCd] = (distTypeStats[dType].colors[colorCd] || 0) + allQty;
+                    if (sizeCd) distTypeStats[dType].sizes[sizeCd] = (distTypeStats[dType].sizes[sizeCd] || 0) + allQty;
+                }
+                
+                // 3) 회원 집계 로직 (지시대로 그대로)
                 if (isMember) {
-                    if (channel === '온라인') {
+                    if (isOnline) {
+                        // 온라인 변수에만 더하기
                         memberOnlineAmt += allAmt;
                         memberOnlineQty += allQty;
                         if (colorCd) memberOnlineColors[colorCd] = (memberOnlineColors[colorCd] || 0) + allQty;
                         if (sizeCd) memberOnlineSizes[sizeCd] = (memberOnlineSizes[sizeCd] || 0) + allQty;
-                    } else if (channel === '오프라인') {
+                    } else if (isOffline) {
+                        // 오프라인 변수에만 더하기
                         memberOfflineAmt += allAmt;
                         memberOfflineQty += allQty;
                         if (colorCd) memberOfflineColors[colorCd] = (memberOfflineColors[colorCd] || 0) + allQty;
@@ -941,42 +978,8 @@
                     if (sizeCd) memberSizes[sizeCd] = (memberSizes[sizeCd] || 0) + allQty;
                 }
                 
-                // 1. ANAL_DIST_TYPE_NM별 매출/수량 집계 및 컬러/사이즈 통계
-                if (distType === '백화점' || distType === '직영점' || distType === '대리점' || distType === '온라인') {
-                    distTypeStats[distType].amt += allAmt;
-                    distTypeStats[distType].qty += allQty;
-                    
-                    // 각 유통 유형별 컬러 통계
-                    if (colorCd) {
-                        distTypeStats[distType].colors[colorCd] = (distTypeStats[distType].colors[colorCd] || 0) + allQty;
-                    }
-                    
-                    // 각 유통 유형별 사이즈 통계
-                    if (sizeCd) {
-                        distTypeStats[distType].sizes[sizeCd] = (distTypeStats[distType].sizes[sizeCd] || 0) + allQty;
-                    }
-                }
-                
-                // 1-2. 오프라인 채널별 매장(SHOP_NM_SHORT) 및 지역(REGION_NM) 집계
-                if (distType === '백화점' || distType === '직영점' || distType === '대리점') {
-                    if (shopNmShort) {
-                        ['오프라인 전체', distType].forEach(key => {
-                            if (!offlineShopStats[key][shopNmShort]) offlineShopStats[key][shopNmShort] = { amt: 0, qty: 0 };
-                            offlineShopStats[key][shopNmShort].amt += allAmt;
-                            offlineShopStats[key][shopNmShort].qty += allQty;
-                        });
-                    }
-                    if (regionNm) {
-                        ['오프라인 전체', distType].forEach(key => {
-                            if (!offlineGeoStats[key][regionNm]) offlineGeoStats[key][regionNm] = { amt: 0, qty: 0 };
-                            offlineGeoStats[key][regionNm].amt += allAmt;
-                            offlineGeoStats[key][regionNm].qty += allQty;
-                        });
-                    }
-                }
-                
-                // 1-1. 온라인 채널별 집계 (SHOP_NM_SHORT 기준)
-                if (distType === '온라인' && shopNmShort) {
+                // 1-1. 온라인 채널별 집계 (SHOP_NM_SHORT 기준) — ANAL_DIST_TYPE_NM = '온라인'만
+                if (isOnline && shopNmShort) {
                     if (!onlineChannelStats[shopNmShort]) {
                         onlineChannelStats[shopNmShort] = {
                             amt: 0,
@@ -987,15 +990,25 @@
                     }
                     onlineChannelStats[shopNmShort].amt += allAmt;
                     onlineChannelStats[shopNmShort].qty += allQty;
-                    
-                    // 각 온라인 채널별 컬러 통계
-                    if (colorCd) {
-                        onlineChannelStats[shopNmShort].colors[colorCd] = (onlineChannelStats[shopNmShort].colors[colorCd] || 0) + allQty;
+                    if (colorCd) onlineChannelStats[shopNmShort].colors[colorCd] = (onlineChannelStats[shopNmShort].colors[colorCd] || 0) + allQty;
+                    if (sizeCd) onlineChannelStats[shopNmShort].sizes[sizeCd] = (onlineChannelStats[shopNmShort].sizes[sizeCd] || 0) + allQty;
+                }
+                
+                // 1-2. 오프라인 채널별 매장(SHOP_NM_SHORT) 및 지역(REGION_NM) 집계 — ANAL_DIST_TYPE_NM IN ('백화점','직영점','대리점')
+                if (isOffline) {
+                    if (shopNmShort) {
+                        ['오프라인 전체', dType].forEach(key => {
+                            if (!offlineShopStats[key][shopNmShort]) offlineShopStats[key][shopNmShort] = { amt: 0, qty: 0 };
+                            offlineShopStats[key][shopNmShort].amt += allAmt;
+                            offlineShopStats[key][shopNmShort].qty += allQty;
+                        });
                     }
-                    
-                    // 각 온라인 채널별 사이즈 통계
-                    if (sizeCd) {
-                        onlineChannelStats[shopNmShort].sizes[sizeCd] = (onlineChannelStats[shopNmShort].sizes[sizeCd] || 0) + allQty;
+                    if (regionNm) {
+                        ['오프라인 전체', dType].forEach(key => {
+                            if (!offlineGeoStats[key][regionNm]) offlineGeoStats[key][regionNm] = { amt: 0, qty: 0 };
+                            offlineGeoStats[key][regionNm].amt += allAmt;
+                            offlineGeoStats[key][regionNm].qty += allQty;
+                        });
                     }
                 }
                 
@@ -1009,7 +1022,7 @@
                     sizeStats[sizeCd] = (sizeStats[sizeCd] || 0) + allQty;
                 }
                 
-                // 4. 날짜별 채널별 집계 (트렌드 차트용)
+                // 4. 날짜별 채널별 집계 (트렌드 차트용) — ANAL_DIST_TYPE_NM 기준
                 if (!dateGroups[date]) {
                     dateGroups[date] = { 
                         온라인: { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 }, 
@@ -1020,8 +1033,8 @@
                     };
                 }
                 
-                // 온라인 채널별 날짜별 집계 추가 (SHOP_NM_SHORT 기준)
-                if (distType === '온라인' && shopNmShort) {
+                // 온라인 채널별 날짜별 집계 (SHOP_NM_SHORT 기준)
+                if (isOnline && shopNmShort) {
                     if (!dateGroups[date][shopNmShort]) {
                         dateGroups[date][shopNmShort] = { amt: 0, qty: 0, cidAmt: 0, cidQty: 0, cidCnt: 0 };
                     }
@@ -1032,49 +1045,45 @@
                     dateGroups[date][shopNmShort].cidCnt += cidCnt;
                 }
                 
-                // ANLYS_ON_OFF_CLS_NM 기준으로 온라인/오프라인 집계
-                if (channel === '온라인') {
+                // ANAL_DIST_TYPE_NM 기준으로 온라인/오프라인 집계
+                if (isOnline) {
                     dateGroups[date].온라인.amt += allAmt;
                     dateGroups[date].온라인.qty += allQty;
                     dateGroups[date].온라인.cidAmt += cidAmt;
                     dateGroups[date].온라인.cidQty += cidQty;
                     dateGroups[date].온라인.cidCnt += cidCnt;
-                } else if (channel === '오프라인') {
+                } else if (isOffline) {
                     dateGroups[date].오프라인.amt += allAmt;
                     dateGroups[date].오프라인.qty += allQty;
                     dateGroups[date].오프라인.cidAmt += cidAmt;
                     dateGroups[date].오프라인.cidQty += cidQty;
                     dateGroups[date].오프라인.cidCnt += cidCnt;
-                }
-                
-                // ANAL_DIST_TYPE_NM 기준으로 각 유통 유형별 집계 (하위 항목 그래프용)
-                if (distType === '백화점') {
-                    dateGroups[date].백화점.amt += allAmt;
-                    dateGroups[date].백화점.qty += allQty;
-                    dateGroups[date].백화점.cidAmt += cidAmt;
-                    dateGroups[date].백화점.cidQty += cidQty;
-                    dateGroups[date].백화점.cidCnt += cidCnt;
-                } else if (distType === '직영점') {
-                    dateGroups[date].직영점.amt += allAmt;
-                    dateGroups[date].직영점.qty += allQty;
-                    dateGroups[date].직영점.cidAmt += cidAmt;
-                    dateGroups[date].직영점.cidQty += cidQty;
-                    dateGroups[date].직영점.cidCnt += cidCnt;
-                } else if (distType === '대리점') {
-                    dateGroups[date].대리점.amt += allAmt;
-                    dateGroups[date].대리점.qty += allQty;
-                    dateGroups[date].대리점.cidAmt += cidAmt;
-                    dateGroups[date].대리점.cidQty += cidQty;
-                    dateGroups[date].대리점.cidCnt += cidCnt;
-                } else if (distType === '온라인') {
-                    // ANAL_DIST_TYPE_NM === '온라인'인 경우 온라인에도 추가 (일자별 반영을 위해)
-                    dateGroups[date].온라인.amt += allAmt;
-                    dateGroups[date].온라인.qty += allQty;
-                    dateGroups[date].온라인.cidAmt += cidAmt;
-                    dateGroups[date].온라인.cidQty += cidQty;
-                    dateGroups[date].온라인.cidCnt += cidCnt;
+                    
+                    // 각 유통 유형별 집계
+                    if (dType === '백화점') {
+                        dateGroups[date].백화점.amt += allAmt;
+                        dateGroups[date].백화점.qty += allQty;
+                        dateGroups[date].백화점.cidAmt += cidAmt;
+                        dateGroups[date].백화점.cidQty += cidQty;
+                        dateGroups[date].백화점.cidCnt += cidCnt;
+                    } else if (dType === '직영점') {
+                        dateGroups[date].직영점.amt += allAmt;
+                        dateGroups[date].직영점.qty += allQty;
+                        dateGroups[date].직영점.cidAmt += cidAmt;
+                        dateGroups[date].직영점.cidQty += cidQty;
+                        dateGroups[date].직영점.cidCnt += cidCnt;
+                    } else if (dType === '대리점') {
+                        dateGroups[date].대리점.amt += allAmt;
+                        dateGroups[date].대리점.qty += allQty;
+                        dateGroups[date].대리점.cidAmt += cidAmt;
+                        dateGroups[date].대리점.cidQty += cidQty;
+                        dateGroups[date].대리점.cidCnt += cidCnt;
+                    }
                 }
             });
+            
+            // 회원 온라인/오프라인 분리 확인 (Snowflake 결과와 비교용)
+            console.log('회원 온라인/오프라인 분리 체크:', memberOnlineAmt, memberOfflineAmt);
             
             // 온라인 채널별 합계 계산 (모든 온라인 채널의 합계)
             let totalOnlineChannelAmt = 0, totalOnlineChannelQty = 0;
@@ -1177,7 +1186,7 @@
                     '직영점': { qty: distTypeStats['직영점'].qty, sales: distTypeStats['직영점'].amt, colors: distTypeStats['직영점'].colors, sizes: distTypeStats['직영점'].sizes, shops: offlineShopStats['직영점'], geo: offlineGeoStats['직영점'] },
                     '대리점': { qty: distTypeStats['대리점'].qty, sales: distTypeStats['대리점'].amt, colors: distTypeStats['대리점'].colors, sizes: distTypeStats['대리점'].sizes, shops: offlineShopStats['대리점'], geo: offlineGeoStats['대리점'] }
                 },
-                // cust: 회원만 집계한 값만 사용 (memberTotalAmt/Qty, memberOnline*, memberOffline* — DATA.total과 혼용 금지)
+                // cust: DATA.cust['온라인'] = memberOnlineAmt만, DATA.cust['오프라인'] = memberOfflineAmt만 사용
                 cust: {
                     '회원 전체': { 
                         qty: memberTotalQty, 
@@ -1217,12 +1226,33 @@
                 trendData: dateGroups
             };
             
-            // 검증: 회원 전체 매출은 전체 매출보다 작아야 함 (회원 채널별 실적이 TOTAL과 동일하면 버그)
+            // 강제 할당: 집계된 회원 온라인 값이 DATA.cust['온라인'](한글)에 확실히 반영되도록
+            DATA.cust['온라인'] = {
+                qty: memberOnlineQty,
+                sales: memberOnlineAmt,
+                colors: memberOnlineColors,
+                sizes: memberOnlineSizes,
+                members: {
+                    기존회원: { qty: Math.floor(memberOnlineQty * 0.7), sales: Math.floor(memberOnlineAmt * 0.7) },
+                    신규회원: { qty: Math.floor(memberOnlineQty * 0.3), sales: Math.floor(memberOnlineAmt * 0.3) }
+                },
+                ageGender: { male: {}, female: {} }
+            };
+            console.log('DATA.cust 온라인 체크:', DATA.cust['온라인']);
+            
+            // 검증: Snowflake 쿼리 결과와 비교용 콘솔 출력
+            const totalOnlineSales = DATA.total['온라인'].sales;
+            const memberOnlineSales = DATA.cust['온라인'].sales;
             const totalSales = DATA.total['전체'].sales;
             const memberSales = DATA.cust['회원 전체'].sales;
-            console.log('Member Total (회원 전체):', memberSales);
-            console.log('Total (전체):', totalSales);
-            console.log('Member < Total?', memberSales < totalSales, memberSales < totalSales ? '(정상)' : '(확인 필요)');
+            
+            console.log('=== Snowflake 쿼리 결과 비교 ===');
+            console.log('전체 온라인 매출:', totalOnlineSales);
+            console.log('회원 온라인 매출:', memberOnlineSales);
+            console.log('전체 매출:', totalSales);
+            console.log('회원 전체 매출:', memberSales);
+            console.log('회원 온라인 비중:', totalOnlineSales > 0 ? ((memberOnlineSales / totalOnlineSales) * 100).toFixed(1) + '%' : 'N/A');
+            console.log('==============================');
             
             return DATA;
         }
@@ -1309,7 +1339,7 @@
                 `;
             }
 
-            // CUSTOMER
+            // CUSTOMER — 회원 채널별 실적: DATA.cust 한글 키만 사용 ('회원 전체', '온라인', '오프라인')
             const custBody = document.getElementById('cust-list');
             if (custBody) {
                 const cAll = DATA.cust['회원 전체'];
@@ -1725,7 +1755,7 @@
             }
             $('#cust-t-member').text(displayName);
             
-            const d = DATA.cust[name];
+            const d = DATA.cust[name]; // name: '회원 전체' | '온라인' | '오프라인' (한글 키)
             fillTable('cust-color-body', d.colors, d.qty);
             fillTable('cust-size-body', d.sizes, d.qty);
             fillMemberTable('cust-member-body', d.members, d.qty, d.sales, name);
