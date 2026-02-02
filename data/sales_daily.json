@@ -1,47 +1,54 @@
-[
-  {
-    "SALE_DT": "2026-01-22",
-    "BRD_CD": "I",
-    "PART_CD": "7ABGB016N",
-    "ANAL_DIST_TYPE_NM": "\uc628\ub77c\uc778",
-    "SHOP_NM_SHORT": "SSG\ub2f7\ucef4(\uc81c\ud734\ubab0)",
-    "COLOR_CD": "50LDS",
-    "SIZE_CD": "F",
-    "ANLYS_ON_OFF_CLS_NM": "\uc624\ud504\ub77c\uc778",
-    "ALL_AMT": 33000,
-    "ALL_QTY": 1,
-    "CID_AMT": 0,
-    "CID_QTY": 0,
-    "CID_CNT": 0
+{
+  "generated_at_utc": "2026-02-02T02:15:55.380256Z",
+  "range": {
+    "start": "",
+    "end": ""
   },
-  {
-    "SALE_DT": "2026-01-22",
-    "BRD_CD": "I",
-    "PART_CD": "7ABKB016N",
-    "ANAL_DIST_TYPE_NM": "\uc628\ub77c\uc778",
-    "SHOP_NM_SHORT": "\uc628\ub77c\uc778\uc1fc\ud551\ubab0(\uc9c1)",
-    "COLOR_CD": "50LDS",
-    "SIZE_CD": "F",
-    "ANLYS_ON_OFF_CLS_NM": "\uc624\ud504\ub77c\uc778",
-    "ALL_AMT": 176100,
-    "ALL_QTY": 1,
-    "CID_AMT": 0,
-    "CID_QTY": 0,
-    "CID_CNT": 0
-  },
-  {
-    "SALE_DT": "2026-01-22",
-    "BRD_CD": "I",
-    "PART_CD": "7ABKB016N",
-    "ANAL_DIST_TYPE_NM": "\ubc31\ud654\uc810",
-    "SHOP_NM_SHORT": "\uc2e0\uc138\uacc4\uc601\ub4f1\ud3ec",
-    "COLOR_CD": "50LDS",
-    "SIZE_CD": "F",
-    "ANLYS_ON_OFF_CLS_NM": "\uc624\ud504\ub77c\uc778",
-    "ALL_AMT": 0,
-    "ALL_QTY": 0,
-    "CID_AMT": 0,
-    "CID_QTY": 0,
-    "CID_CNT": 0
-  }
-]
+  "data": [
+    {
+      "SALE_DT": "2026-01-22",
+      "BRD_CD": "I",
+      "PART_CD": "7ABGB016N",
+      "ANAL_DIST_TYPE_NM": "온라인",
+      "SHOP_NM_SHORT": "SSG닷컴(제휴몰)",
+      "COLOR_CD": "50LDS",
+      "SIZE_CD": "F",
+      "ANLYS_ON_OFF_CLS_NM": "오프라인",
+      "ALL_AMT": 33000,
+      "ALL_QTY": 1,
+      "CID_AMT": 0,
+      "CID_QTY": 0,
+      "CID_CNT": 0
+    },
+    {
+      "SALE_DT": "2026-01-22",
+      "BRD_CD": "I",
+      "PART_CD": "7ABKB016N",
+      "ANAL_DIST_TYPE_NM": "온라인",
+      "SHOP_NM_SHORT": "온라인쇼핑몰(직)",
+      "COLOR_CD": "50LDS",
+      "SIZE_CD": "F",
+      "ANLYS_ON_OFF_CLS_NM": "오프라인",
+      "ALL_AMT": 176100,
+      "ALL_QTY": 1,
+      "CID_AMT": 0,
+      "CID_QTY": 0,
+      "CID_CNT": 0
+    },
+    {
+      "SALE_DT": "2026-01-22",
+      "BRD_CD": "I",
+      "PART_CD": "7ABKB016N",
+      "ANAL_DIST_TYPE_NM": "백화점",
+      "SHOP_NM_SHORT": "신세계영등포",
+      "COLOR_CD": "50LDS",
+      "SIZE_CD": "F",
+      "ANLYS_ON_OFF_CLS_NM": "오프라인",
+      "ALL_AMT": 0,
+      "ALL_QTY": 0,
+      "CID_AMT": 0,
+      "CID_QTY": 0,
+      "CID_CNT": 0
+    }
+  ]
+}
