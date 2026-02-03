@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import snowflake.connector
 from dotenv import load_dotenv
 
@@ -28,7 +28,7 @@ def main():
     # 브랜드 필터 제거: 모든 브랜드 데이터를 한꺼번에 가져옴
 
     # 최근 3일 데이터 추출 범위 설정
-    end_dt = datetime.utcnow().date()
+    end_dt = datetime.now(timezone.utc).date()
     start_dt = end_dt - timedelta(days=3)
 
     conn_args = {
@@ -73,6 +73,7 @@ def main():
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
             B.SHOP_NM_SHORT,
+            B.REGION_NM,
             A.COLOR_CD,
             A.SIZE_CD,
             CASE 
@@ -98,6 +99,7 @@ def main():
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
             B.SHOP_NM_SHORT,
+            B.REGION_NM,
             A.COLOR_CD,
             A.SIZE_CD,
             A.ONLINE_YN,
@@ -112,6 +114,7 @@ def main():
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
             B.SHOP_NM_SHORT,
+            B.REGION_NM,
             A.COLOR_CD,
             A.SIZE_CD,
             CASE 
@@ -137,6 +140,7 @@ def main():
             A.PART_CD,
             B.ANAL_DIST_TYPE_NM,
             B.SHOP_NM_SHORT,
+            B.REGION_NM,
             A.COLOR_CD,
             A.SIZE_CD,
             A.ONLINE_YN
@@ -159,8 +163,9 @@ def main():
             if hasattr(v, "isoformat"):
                 item["SALE_DT"] = v.isoformat()
             
-            # REGION_NM: 대시보드 지역별 분포용 (쿼리에 없으면 ANAL_DIST_TYPE_NM 사용)
-            item["REGION_NM"] = str(item.get("REGION_NM") or item.get("ANAL_DIST_TYPE_NM") or "기타").strip()
+            # REGION_NM: 무조건 DB_SHOP(B).REGION_NM만 사용, 대체 금지 (없으면 None → 프론트에서 '미분류')
+            v = item.get("REGION_NM")
+            item["REGION_NM"] = (str(v).strip() if v is not None and str(v).strip() else None)
             
             # CUST_ID: 회원 판별용. None/빈문자열이면 비회원
             cid = item.get("CUST_ID")
@@ -182,7 +187,7 @@ def main():
         # 판매 데이터 저장
         out_path = os.path.join(data_dir, "sales_daily.json")
         payload = {
-            "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+            "generated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "range": {"start": str(start_dt), "end": str(end_dt)},
             "data": data,
         }
@@ -214,7 +219,7 @@ def main():
         # 브랜드 목록 저장
         brand_out_path = os.path.join(data_dir, "brands.json")
         brand_payload = {
-            "generated_at_utc": datetime.utcnow().isoformat() + "Z",
+            "generated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "brands": brands
         }
 
