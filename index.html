@@ -941,7 +941,8 @@
                 
                 const date = row.SALE_DT;
                 const shopNmShort = String(row.SHOP_NM_SHORT || '').trim();
-                const regionNm = String(row.REGION_NM || row.ANAL_DIST_TYPE_NM || '').trim();
+                // 전국 지역별 매출 분포: REGION_NM만 사용 (없으면 '미분류'). ANAL_DIST_TYPE_NM 사용 금지.
+                const region = (row.REGION_NM != null && String(row.REGION_NM).trim() !== '') ? String(row.REGION_NM).trim() : '미분류';
                 const colorCd = String(row.COLOR_CD || '').trim();
                 const sizeCd = String(row.SIZE_CD || '').trim();
                 const isMember = isMemberRow(row);
@@ -994,7 +995,7 @@
                     if (sizeCd) onlineChannelStats[shopNmShort].sizes[sizeCd] = (onlineChannelStats[shopNmShort].sizes[sizeCd] || 0) + allQty;
                 }
                 
-                // 1-2. 오프라인 채널별 매장(SHOP_NM_SHORT) 및 지역(REGION_NM) 집계 — ANAL_DIST_TYPE_NM IN ('백화점','직영점','대리점')
+                // 1-2. 오프라인 채널별 매장(SHOP_NM_SHORT) 및 지역(REGION_NM) 집계 — 키는 region(REGION_NM 또는 '미분류')만 사용
                 if (isOffline) {
                     if (shopNmShort) {
                         ['오프라인 전체', dType].forEach(key => {
@@ -1003,13 +1004,11 @@
                             offlineShopStats[key][shopNmShort].qty += allQty;
                         });
                     }
-                    if (regionNm) {
-                        ['오프라인 전체', dType].forEach(key => {
-                            if (!offlineGeoStats[key][regionNm]) offlineGeoStats[key][regionNm] = { amt: 0, qty: 0 };
-                            offlineGeoStats[key][regionNm].amt += allAmt;
-                            offlineGeoStats[key][regionNm].qty += allQty;
-                        });
-                    }
+                    ['오프라인 전체', dType].forEach(key => {
+                        if (!offlineGeoStats[key][region]) offlineGeoStats[key][region] = { amt: 0, qty: 0 };
+                        offlineGeoStats[key][region].amt += allAmt;
+                        offlineGeoStats[key][region].qty += allQty;
+                    });
                 }
                 
                 // 2. COLOR_CD별 ALL_QTY 합계 (전체 컬러별 판매 현황 차트용)
