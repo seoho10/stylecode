@@ -1287,10 +1287,11 @@
             if (onBody) {
                 const onAll = DATA.on['온라인 전체'] || { sales: 0, qty: 0 };
                 
-                // 온라인 채널 목록 추출 (온라인 전체 제외, SHOP_NM_SHORT 값들)
-                const onlineChannels = Object.keys(DATA.on)
-                    .filter(key => key !== '온라인 전체')
-                    .sort();
+                // 온라인 채널 목록 추출 (온라인 전체 제외), 매출 높은 순 정렬
+                const onlineChannels = Object.entries(DATA.on)
+                    .filter(([key]) => key !== '온라인 전체')
+                    .map(([name, d]) => ({ name, sales: d.sales || 0, qty: d.qty || 0 }))
+                    .sort((a, b) => b.sales - a.sales);
                 
                 let rowsHtml = `
                     <tr id="on-total-row" class="clickable-row selected-online" onclick="updateIndicator('on', '온라인 전체', this)">
@@ -1298,13 +1299,9 @@
                     </tr>
                 `;
                 
-                // 각 온라인 채널을 하위 행으로 추가 (SHOP_NM_SHORT 값 사용)
-                onlineChannels.forEach(channelName => {
-                    const channelData = DATA.on[channelName] || { sales: 0, qty: 0 };
-                    const channelSales = channelData.sales || 0;
-                    const channelQty = channelData.qty || 0;
+                // 각 온라인 채널을 하위 행으로 추가 (매출 높은 순)
+                onlineChannels.forEach(({ name: channelName, sales: channelSales, qty: channelQty }) => {
                     const salesRatio = onAll.sales > 0 ? ratio(channelSales, onAll.sales) : '0.0';
-                    
                     rowsHtml += `
                         <tr class="clickable-row" onclick="updateIndicator('on', '${channelName}', this)">
                             <td class="pl-6 text-slate-500">└ ${channelName}</td><td>${formatAmt(channelSales)}</td><td>${formatQty(channelQty)}</td><td>${salesRatio}%</td>
@@ -1315,27 +1312,26 @@
                 onBody.innerHTML = rowsHtml;
             }
 
-            // OFF
+            // OFF — 오프라인 전체 고정, 백화점·직영점·대리점은 매출 높은 순 정렬
             const offBody = document.getElementById('off-list');
             if (offBody) {
                 const offAll = DATA.off['오프라인 전체'] || { sales: 0, qty: 0 };
-                const off백화점 = DATA.off['백화점'] || { sales: 0, qty: 0 };
-                const off직영점 = DATA.off['직영점'] || { sales: 0, qty: 0 };
-                const off대리점 = DATA.off['대리점'] || { sales: 0, qty: 0 };
-                offBody.innerHTML = `
+                const offChannels = ['백화점', '직영점', '대리점']
+                    .map(name => ({ name, ...(DATA.off[name] || { sales: 0, qty: 0 }) }))
+                    .sort((a, b) => (b.sales || 0) - (a.sales || 0));
+                let offRowsHtml = `
                     <tr id="off-total-row" class="clickable-row selected-offline" onclick="updateIndicator('off', '오프라인 전체', this)">
                         <td>오프라인 전체</td><td>${formatAmt(offAll.sales)}</td><td>${formatQty(offAll.qty)}</td><td>100%</td>
                     </tr>
-                    <tr class="clickable-row" onclick="updateIndicator('off', '백화점', this)">
-                        <td class="pl-6 text-slate-500">└ 백화점</td><td>${formatAmt(off백화점.sales)}</td><td>${formatQty(off백화점.qty)}</td><td>${ratio(off백화점.sales, offAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateIndicator('off', '직영점', this)">
-                        <td class="pl-6 text-slate-500">└ 직영점</td><td>${formatAmt(off직영점.sales)}</td><td>${formatQty(off직영점.qty)}</td><td>${ratio(off직영점.sales, offAll.sales)}%</td>
-                    </tr>
-                    <tr class="clickable-row" onclick="updateIndicator('off', '대리점', this)">
-                        <td class="pl-6 text-slate-500">└ 대리점</td><td>${formatAmt(off대리점.sales)}</td><td>${formatQty(off대리점.qty)}</td><td>${ratio(off대리점.sales, offAll.sales)}%</td>
-                    </tr>
                 `;
+                offChannels.forEach(({ name, sales, qty }) => {
+                    offRowsHtml += `
+                    <tr class="clickable-row" onclick="updateIndicator('off', '${name}', this)">
+                        <td class="pl-6 text-slate-500">└ ${name}</td><td>${formatAmt(sales)}</td><td>${formatQty(qty)}</td><td>${ratio(sales, offAll.sales)}%</td>
+                    </tr>
+                    `;
+                });
+                offBody.innerHTML = offRowsHtml;
             }
 
             // CUSTOMER — 회원 채널별 실적: DATA.cust 한글 키만 사용 ('회원 전체', '온라인', '오프라인')
@@ -1795,8 +1791,10 @@
         function fillTable(id, obj, total) {
             const b = document.getElementById(id); b.innerHTML = '';
             const safeTotal = Number(total) || 1;
-            Object.entries(obj || {}).forEach(([k, v]) => {
-                const val = Number(v) || 0;
+            const entries = Object.entries(obj || {})
+                .map(([k, v]) => ({ k, val: Number(v) || 0 }))
+                .sort((a, b) => b.val - a.val);
+            entries.forEach(({ k, val }) => {
                 b.innerHTML += `<tr><td>${k}</td><td class="font-bold">${val.toLocaleString()}</td><td class="text-slate-400">${((val / safeTotal) * 100).toFixed(1)}%</td></tr>`;
             });
         }
@@ -1825,9 +1823,14 @@
             body.innerHTML = '';
             if (!geoData || typeof geoData !== 'object') return;
             const total = Number(totalQty) || 1;
-            Object.entries(geoData).forEach(([region, v]) => {
-                const amt = (v && typeof v === 'object' && v.amt != null) ? Number(v.amt) : 0;
-                const qty = (v && typeof v === 'object' && v.qty != null) ? Number(v.qty) : (Number(v) || 0);
+            const entries = Object.entries(geoData)
+                .map(([region, v]) => {
+                    const amt = (v && typeof v === 'object' && v.amt != null) ? Number(v.amt) : 0;
+                    const qty = (v && typeof v === 'object' && v.qty != null) ? Number(v.qty) : (Number(v) || 0);
+                    return { region, amt, qty };
+                })
+                .sort((a, b) => b.amt - a.amt);
+            entries.forEach(({ region, amt, qty }) => {
                 const pct = total > 0 ? ((qty / total) * 100).toFixed(1) : '0.0';
                 body.innerHTML += `<tr><td class="font-bold">${region}</td><td>${amt.toLocaleString()}원</td><td>${qty.toLocaleString()}</td><td class="text-blue-600 font-black">${pct}%</td></tr>`;
             });
